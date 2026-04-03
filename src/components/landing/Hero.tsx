@@ -1,7 +1,12 @@
 import React, { useRef } from 'react';
 import { Button } from '../ui/Button';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Hash, Send, Search, Shield, Zap, Globe, List, Lock } from 'lucide-react';
+import { 
+  Hash, Users, 
+  MessageCircle, CheckCircle,
+  Monitor, ArrowRight, Lock,
+  Heart, Smile
+} from 'lucide-react';
 
 const HeroCard: React.FC<{ 
   children: React.ReactNode; 
@@ -9,17 +14,20 @@ const HeroCard: React.FC<{
   initialRotate?: number;
   initialX?: number;
   initialY?: number;
-}> = ({ children, className, initialRotate = 0, initialX = 0, initialY = 0 }) => (
+  hoverX?: number;
+}> = ({ children, className, initialRotate = 0, initialX = 0, initialY = 0, hoverX }) => (
   <motion.div
     initial={{ rotate: initialRotate, x: initialX, y: initialY }}
     whileHover={{ 
-      scale: 1.15, 
+      scale: 1.08, 
       rotate: 0, 
-      y: initialY - 60,
-      zIndex: 100,
-      transition: { type: "spring", stiffness: 400, damping: 15 }
+      x: hoverX !== undefined ? hoverX : initialX,
+      y: initialY - 15,
+      z: 50,
     }}
-    className={`glass-layer-main w-full max-w-[420px] aspect-[4/5] p-8 flex flex-col cursor-pointer transition-shadow hover:shadow-primary/20 ${className}`}
+    transition={{ type: "spring", stiffness: 120, damping: 20, mass: 1 }}
+    style={{ transformStyle: "preserve-3d" }}
+    className={`rounded-3xl border border-white/10 shadow-2xl w-full max-w-[380px] aspect-[4/5] p-6 lg:p-8 flex flex-col cursor-pointer transition-shadow hover:shadow-primary/20 will-change-transform ${className}`}
   >
     {children}
   </motion.div>
@@ -31,11 +39,11 @@ export const Hero: React.FC = () => {
   // 3D Perspective Tilt on the whole container
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
+  const mouseXSpring = useSpring(x, { stiffness: 100, damping: 40, mass: 1 });
+  const mouseYSpring = useSpring(y, { stiffness: 100, damping: 40, mass: 1 });
   
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["5deg", "-5deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-5deg", "5deg"]);
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -51,152 +59,218 @@ export const Hero: React.FC = () => {
 
   return (
     <section className="hero-section" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-      <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-24 relative z-10 text-center">
+      <div className="max-w-[90rem] mx-auto px-6 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10 w-full min-h-[80vh]">
         
-        {/* Top: 3-Card Interactive Workspace */}
+        {/* Left: Branding & Title */}
+        <motion.div
+           initial={{ opacity: 0, x: -50 }}
+           animate={{ opacity: 1, x: 0 }}
+           transition={{ duration: 0.8, ease: "easeOut" }}
+           className="w-full lg:w-[45%] flex flex-col items-start gap-8 text-left z-20 relative pt-10 pb-10 lg:py-0"
+        >
+
+
+          <div className="relative">
+            {/* Soft, strictly minimalist ambient glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-gradient-to-tr from-white/10 via-slate-400/5 to-transparent blur-[80px] -z-10 pointer-events-none" />
+            
+            <h1 className="text-[3.5rem] lg:text-[5rem] font-semibold tracking-tighter leading-[1.05]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-white via-zinc-200 to-zinc-400 pr-2">
+                Where Elite Teams
+              </span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-400 via-slate-500 to-zinc-700 block mt-1 pb-2">
+                Build the Future.
+              </span>
+            </h1>
+          </div>
+          
+          <p className="text-slate-400 max-w-xl text-lg lg:text-xl leading-relaxed mt-2">
+            NeoPlane is a high-performance communication layer designed for elite teams. 
+            Encrypted by default. Layered for absolute clarity. Faster than thought.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4 mt-8">
+            <Button className="bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl px-6 py-2.5 text-sm font-medium flex items-center gap-2 group transition-all backdrop-blur-md shadow-sm">
+               Launch Protocol
+               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button variant="ghost" className="border border-white/5 hover:bg-white/10 text-white/70 hover:text-white px-6 py-2.5 text-sm font-medium rounded-xl hidden sm:flex transition-all backdrop-blur-md">
+               View Docs
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Right: 3-Card Interactive Stack */}
         <motion.div
            ref={containerRef}
-           initial={{ opacity: 0, y: 40 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 1, delay: 0.2 }}
+           initial={{ opacity: 0, scale: 0.9 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ duration: 1, delay: 0.3 }}
            style={{ 
              perspective: "2000px",
              rotateX,
              rotateY,
              transformStyle: "preserve-3d"
            }}
-           className="relative w-full max-w-6xl flex items-center justify-center py-24"
+           className="w-full lg:w-[55%] relative flex items-center justify-center py-10 min-h-[500px]"
         >
-          {/* Card 1: Sidebar/Organization (Left) */}
-          <HeroCard initialRotate={-6} initialX={-180} initialY={30} className="absolute left-[5%]">
-             <div className="flex items-center gap-3 mb-8">
-                <List size={20} className="text-primary" />
-                <span className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Workspace</span>
+          {/* Card 1: Workspace Activity (Left, Pushed Back) */ }
+          <HeroCard initialRotate={-8} initialX={-140} initialY={40} hoverX={-40} className="absolute left-[5%] lg:left-[10%] shadow-2xl bg-white/[0.02] backdrop-blur-2xl border-white/5 ring-1 ring-white/10">
+             <div className="flex items-center gap-2 mb-6 pb-3 border-b border-white/5">
+                <Users size={14} className="text-white/50" />
+                <span className="text-xs font-semibold text-white/90 tracking-wide">Active Teams</span>
              </div>
-             <div className="space-y-8 text-left">
-                {[
-                  { name: "General", active: true },
-                  { name: "Dev-Logs", active: false },
-                  { name: "Security", active: false },
-                  { name: "Analytics", active: false },
-                ].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-4 ${!item.active ? 'opacity-30' : ''}`}>
-                    <Hash size={16} className={item.active ? 'text-primary' : 'text-white/40'} />
-                    <div className={`h-2.5 rounded-full bg-white/20 ${item.active ? 'w-32' : 'w-24'}`} />
+             
+             {/* Rich Workspace Content */}
+             <div className="flex flex-col gap-5 flex-grow">
+               
+               <div className="p-3 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-3">
+                     <div className="relative">
+                       <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="User" className="h-10 w-10 rounded-xl object-cover border border-white/10 shadow-lg" />
+                       <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-[#0b101e] rounded-full flex items-center justify-center">
+                          <div className="h-2 w-2 bg-accent rounded-full shadow-[0_0_5px_rgba(34,197,94,0.5)] animate-pulse" />
+                       </div>
+                     </div>
+                     <div className="flex flex-col text-left">
+                        <span className="text-xs font-bold text-white">Engineering Core</span>
+                        <span className="text-[10px] text-white/40">12 online • Voice active</span>
+                     </div>
                   </div>
-                ))}
+                  <Monitor size={14} className="text-white/30 group-hover:text-white/80 transition-colors" />
+               </div>
+
+               <div className="p-3 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-3">
+                     <div className="relative">
+                       <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User" className="h-10 w-10 rounded-xl object-cover border border-white/10 shadow-lg" />
+                       <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-[#0b101e] rounded-full flex items-center justify-center">
+                          <div className="h-2 w-2 bg-white/20 rounded-full" />
+                       </div>
+                     </div>
+                     <div className="flex flex-col text-left">
+                        <span className="text-xs font-bold text-white">Design Strike</span>
+                        <span className="text-[10px] text-white/40">3 online • Typing...</span>
+                     </div>
+                  </div>
+                  <MessageCircle size={14} className="text-white/30 group-hover:text-white/80 transition-colors" />
+               </div>
+
+               <div className="flex flex-col gap-2 mt-4 text-left">
+                  <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest pl-1 lg:pl-2">Pinned Channels</span>
+                  {[
+                    { icon: Hash, name: "deployments", alert: true },
+                    { icon: Lock, name: "exec-lounge", alert: false },
+                  ].map((ch, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer">
+                      <ch.icon size={14} className="text-white/40" />
+                      <span className="text-xs font-medium text-white/70">{ch.name}</span>
+                      {ch.alert && <div className="ml-auto w-2 h-2 rounded-full bg-primary" />}
+                    </div>
+                  ))}
+               </div>
              </div>
-             <div className="mt-auto pt-8 border-t border-white/5 text-left">
-                <span className="text-[10px] font-bold text-white/20 uppercase block mb-4">Active Team</span>
-                <div className="flex -space-x-3">
-                   {[1,2,3,4].map(i => (
-                     <div key={i} className="h-10 w-10 rounded-2xl border-2 border-slate-900 bg-slate-800" />
+          </HeroCard>
+
+          {/* Card 2: Development & Chat (Center, Brought Forward) */}
+          <HeroCard initialRotate={0} initialX={0} initialY={0} hoverX={0} className="relative z-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-white/10 bg-[#070b14]/70 backdrop-blur-2xl ring-1 ring-white/10 scale-[1.05]">
+             <div className="pb-3 border-b border-white/5 flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                   <Hash size={14} className="text-white/40" />
+                   <span className="text-xs font-semibold text-white/90">trip-planning</span>
+                </div>
+                <div className="flex -space-x-1.5">
+                   {['1535713875002-d1d0cf377fde', '1599566150163-29194dcaad36', '1438761681033-6461ffad8d80'].map((id, i) => (
+                     <img key={i} src={`https://images.unsplash.com/photo-${id}?w=100&h=100&fit=crop`} alt="User avatar" className="h-5 w-5 rounded-full border border-black/40 object-cover shadow-sm flex-shrink-0" />
                    ))}
                 </div>
              </div>
+             
+             <div className="space-y-5 flex-grow text-left">
+                <div className="flex gap-3">
+                   <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="Sarah" className="w-7 h-7 rounded-md object-cover border border-white/10 mt-1 shadow-sm" />
+                   <div className="flex flex-col gap-1.5 w-full pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-white">Sarah</span>
+                        <span className="text-[9px] text-white/30">1m</span>
+                      </div>
+                      <p className="text-[12px] text-slate-300 leading-snug">Just booked the flights to Tokyo! 🗼 We leave on the 14th.</p>
+                      <div className="mt-1 flex items-center gap-2">
+                         <div className="px-2 py-1 rounded bg-white/5 border border-white/10 flex items-center gap-1.5 text-[10px] text-white/60">
+                            <CheckCircle size={10} className="text-green-400" /> Itinerary.pdf
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                   <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop" alt="Alex" className="w-7 h-7 rounded-md object-cover border border-white/10 mt-1 shadow-sm" />
+                   <div className="flex flex-col gap-1.5 w-full pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-white">Alex</span>
+                        <span className="text-[9px] text-white/30">Just now</span>
+                      </div>
+                      <p className="text-[12px] text-slate-300 leading-snug">Amazing! I'll look into reserving the Bullet Train passes for us. 🚄</p>
+                   </div>
+                </div>
+             </div>
+             <div className="mt-5 pt-4 border-t border-white/5">
+                <div className="h-10 bg-black/30 border border-white/10 rounded-xl px-4 flex items-center justify-between shadow-inner">
+                   <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Type a message...</span>
+                   <div className="px-2 py-1 flex items-center gap-1 rounded bg-white/5 border border-white/10 text-[9px] text-white/40 font-mono">
+                      <span>⌘</span><span>↵</span>
+                   </div>
+                </div>
+             </div>
           </HeroCard>
 
-          {/* Card 2: Main Chat (Center - On Top) */}
-          <HeroCard initialRotate={0} initialX={0} initialY={0} className="relative z-20 shadow-primary/10">
-             <div className="p-2 border-b border-white/5 flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2 text-left">
-                   <div className="h-2.5 w-2.5 rounded-full bg-accent animate-pulse" />
-                   <span className="text-[11px] font-bold text-white uppercase tracking-[0.2em]"># Development</span>
+          {/* Card 3: Picture Sharing (Right, Pushed Back) */}
+          <HeroCard initialRotate={9} initialX={140} initialY={50} hoverX={40} className="absolute right-[5%] lg:right-[10%] shadow-xl bg-white/[0.02] backdrop-blur-2xl border-white/5 ring-1 ring-white/10">
+             <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                   <Hash size={14} className="text-white/40" />
+                   <span className="text-xs font-semibold text-white/90">weekend-crew</span>
                 </div>
-                <Search size={16} className="text-white/20" />
              </div>
-             <div className="space-y-8 flex-grow text-left">
-                {[
-                  { user: "Emma", text: "New SDK is live! 🚢" },
-                  { user: "Alex", text: "Latency is at 8ms. ⚡" },
-                  { user: "You", text: "Perfect. Deploying. 🚀" },
-                ].map((msg, i) => (
-                  <div key={i} className="flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">{msg.user}</span>
-                    <div className="bg-white/5 p-4 rounded-3xl border border-white/5 text-[12px] text-slate-300 leading-relaxed">
-                       {msg.text}
-                    </div>
-                  </div>
-                ))}
-             </div>
-             <div className="mt-8 pt-6 border-t border-white/5">
-                <div className="h-12 bg-black/20 border border-white/5 rounded-2xl px-6 flex items-center justify-between">
-                   <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Type...</span>
-                   <Send size={16} className="text-primary/60" />
+             
+             <div className="flex flex-col gap-3 flex-grow text-left">
+                <div className="flex items-start gap-2">
+                   <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" alt="Marcus" className="h-6 w-6 rounded-full object-cover border border-white/10 mt-0.5" />
+                   <div className="flex flex-col">
+                      <span className="text-[11px] font-bold text-white">Marcus</span>
+                      <span className="text-[10px] text-white/50">Look who joined the office today! 🐶</span>
+                   </div>
+                </div>
+                
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 mt-1 shadow-lg group cursor-pointer">
+                   <img src="https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=500&h=300&fit=crop" alt="Golden Retriever" className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-500" />
+                   <div className="absolute bottom-2 left-2 flex gap-1.5">
+                      <div className="px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 flex items-center gap-1.5 hover:bg-black/80 transition-colors">
+                         <Heart size={10} className="text-red-400 fill-red-400" />
+                         <span className="text-[9px] font-bold text-white">12</span>
+                      </div>
+                      <div className="px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 flex items-center gap-1.5 hover:bg-black/80 transition-colors">
+                         <Smile size={10} className="text-yellow-400 fill-yellow-400" />
+                         <span className="text-[9px] font-bold text-white">4</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex gap-2 mt-2 py-2 border-t border-white/5 border-dashed">
+                   <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" alt="Sarah" className="w-6 h-6 rounded-full object-cover border border-white/10 mt-0.5" />
+                   <div className="flex flex-col gap-0.5 w-full">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-white">Sarah</span>
+                        <span className="text-[8px] text-white/30">1m</span>
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-snug">Omg so cute! What's his name? 😍</p>
+                   </div>
                 </div>
              </div>
           </HeroCard>
 
-          {/* Card 3: Security & Encryption (Right) */}
-          <HeroCard initialRotate={6} initialX={180} initialY={30} className="absolute right-[5%]">
-             <div className="flex items-center gap-3 mb-8">
-                <Shield size={20} className="text-accent" />
-                <span className="text-[11px] font-bold text-white/40 uppercase tracking-[0.2em]">Security</span>
-             </div>
-             <div className="p-6 bg-accent/5 border border-accent/20 rounded-3xl flex flex-col gap-6 mb-8 text-left">
-                <div className="flex items-center justify-between">
-                   <span className="text-[11px] font-bold text-accent uppercase tracking-tighter">E2E Protocol Active</span>
-                   <Lock size={14} className="text-accent" />
-                </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                   <motion.div 
-                     animate={{ width: ["30%", "90%", "60%", "100%"] }}
-                     transition={{ duration: 4, repeat: Infinity }}
-                     className="h-full bg-accent shadow-[0_0_10px_#22d3ee]" 
-                   />
-                </div>
-             </div>
-             <div className="grid grid-cols-2 gap-6 text-left">
-                {[
-                  { label: "Uptime", value: "99.9%" },
-                  { label: "Encryption", value: "AES-256" },
-                  { label: "Nodes", value: "148" },
-                  { label: "Auth", value: "Biometric" },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white/5 p-4 rounded-2xl border border-white/5 transition-colors hover:bg-white/[0.08]">
-                    <span className="text-[9px] font-bold text-white/30 uppercase block mb-1">{stat.label}</span>
-                    <span className="text-sm font-bold text-white leading-none">{stat.value}</span>
-                  </div>
-                ))}
-             </div>
-             <div className="mt-auto flex items-center justify-center p-6">
-                 <Globe size={48} className="text-white/5 animate-spin-slow" />
-             </div>
-          </HeroCard>
         </motion.div>
-
-        {/* Bottom: Branding & Title */}
-        <motion.div
-           initial={{ opacity: 0, y: 30 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.8 }}
-           className="flex flex-col items-center gap-10 max-w-5xl"
-        >
-          <div className="hero-tag border-white/5 bg-white/[0.02] backdrop-blur-md">
-            <Zap size={14} className="text-primary animate-pulse" />
-            <span className="text-[10px] font-bold text-white/40 tracking-[0.3em] uppercase">Shadow-Protocol v4.0 Active</span>
-          </div>
-
-          <h1 className="hero-title text-white">
-            Communicate <span className="text-primary italic">Better</span>.<br />
-            Focus <span className="text-secondary">Sharper</span>.
-          </h1>
-          
-          <p className="hero-subtitle text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">
-            NeoPlane is a high-performance communication layer designed for elite teams. 
-            Encrypted by default. Layered for absolute clarity.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-8 mt-6">
-            <Button variant="primary" className="btn-primary-lg px-14 py-4 shadow-3xl shadow-primary/20 text-lg">
-               Launch NeoPlane
-            </Button>
-            <Button variant="ghost" className="btn-ghost-lg border border-white/10 hover:bg-white/[0.03] px-14 py-4 text-lg">
-               View Protocol
-            </Button>
-          </div>
-        </motion.div>
-
       </div>
     </section>
   );

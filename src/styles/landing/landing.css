@@ -9,7 +9,7 @@
 @layer components {
   /* Layout & Containers */
   .landing-wrapper {
-    @apply min-h-screen bg-background text-foreground font-outfit;
+    @apply min-h-screen bg-transparent text-foreground font-outfit;
   }
 
   /* Glassmorphic Components */
@@ -46,15 +46,15 @@
 
   /* Navbar */
   .nav-container {
-    @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-white/5;
+    @apply fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300;
   }
   .nav-scrolled {
-    @apply py-3;
-    background-color: color-mix(in srgb, var(--background), transparent 30%);
+    @apply py-4 border-b border-white/5;
+    background-color: color-mix(in srgb, var(--color-background), transparent 30%);
     backdrop-filter: blur(24px);
   }
   .nav-initial {
-    @apply bg-transparent border-transparent py-5;
+    @apply bg-transparent border-b border-transparent py-4;
   }
   .nav-logo-box {
     @apply h-10 w-10 bg-primary rounded-2xl flex items-center justify-center transition-transform duration-300;
@@ -73,7 +73,7 @@
 
   /* Hero Section */
   .hero-section {
-    @apply relative pt-32 pb-40 overflow-hidden min-h-screen flex items-center bg-transparent;
+    @apply relative pt-16 lg:pt-20 pb-20 overflow-hidden min-h-[80vh] flex items-start bg-transparent;
   }
   .hero-tag {
     @apply inline-flex items-center gap-2 px-3 py-1 border border-white/10 rounded-full w-fit;

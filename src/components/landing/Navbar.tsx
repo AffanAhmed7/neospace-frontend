@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
-import { Plane } from 'lucide-react';
+import { Hexagon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Navbar: React.FC = () => {
@@ -17,24 +17,22 @@ export const Navbar: React.FC = () => {
   return (
     <nav className={`nav-container ${scrolled ? 'nav-scrolled' : 'nav-initial'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="nav-logo-box">
-            <Plane className="text-white" size={22} />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">NeoPlane</span>
+        <Link to="/" className="flex items-center gap-3 group z-10 relative">
+          <Hexagon className="text-white group-hover:text-primary transition-all duration-300" size={24} strokeWidth={1.5} />
+          <span className="text-[1.6rem] font-serif italic tracking-[0.05em] text-foreground lowercase pr-1 mt-1">neo.</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 mr-auto ml-12">
-            <a href="#features" className="nav-link">Features</a>
-            <a href="#showcase" className="nav-link">Product</a>
-            <a href="#use-cases" className="nav-link">Solutions</a>
+        <div className="hidden md:flex items-center justify-center gap-10 absolute left-1/2 -translate-x-1/2">
+            <a href="#features" className="nav-link text-sm font-medium tracking-wide">Features</a>
+            <a href="#showcase" className="nav-link text-sm font-medium tracking-wide">Product</a>
+            <a href="#use-cases" className="nav-link text-sm font-medium tracking-wide">Solutions</a>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" className="text-foreground/70 hover:text-foreground">
+        <div className="flex items-center gap-2 z-10 justify-end relative">
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground font-medium px-4 tracking-wide whitespace-nowrap">
             Login
           </Button>
-          <Button variant="primary" className="rounded-2xl px-6 shadow-lg shadow-primary/25 hover:scale-105 active:scale-95 transition-all">
+          <Button variant="ghost" className="text-foreground/70 hover:text-foreground font-medium px-4 tracking-wide whitespace-nowrap">
             Get Started
           </Button>
         </div>
