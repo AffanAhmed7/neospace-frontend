@@ -97,7 +97,7 @@
 
   /* Feature Sections */
   .feature-section {
-    @apply py-24 overflow-hidden;
+    @apply pt-10 pb-24 overflow-hidden;
   }
   .feature-icon-box {
     @apply h-14 w-14 rounded-2xl flex items-center justify-center text-primary mb-2;
