@@ -1,0 +1,185 @@
+/* Landing page styles */
+
+/* Reset standard selection without @apply to avoid v4 parser issues */
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary), transparent 70%);
+  color: var(--color-foreground);
+}
+
+@layer components {
+  /* Layout & Containers */
+  .landing-wrapper {
+    @apply min-h-screen bg-background text-foreground font-outfit;
+  }
+
+  /* Glassmorphic Components */
+  .bubble-glass {
+    @apply rounded-2xl border border-white/5 px-4 py-2 text-sm font-medium shadow-2xl absolute whitespace-nowrap z-20;
+    background-color: color-mix(in srgb, var(--color-surface), transparent 40%);
+    backdrop-filter: blur(16px);
+    color: var(--foreground);
+  }
+
+  /* Layered Glassmorphism */
+  .glass-layer-deep {
+    @apply rounded-3xl border border-white/5 shadow-2xl;
+    background-color: color-mix(in srgb, var(--color-background), transparent 20%);
+    backdrop-filter: blur(40px);
+  }
+  .glass-layer-main {
+    @apply rounded-3xl border border-white/10 shadow-2xl;
+    background-color: color-mix(in srgb, var(--color-surface), transparent 40%);
+    backdrop-filter: blur(32px);
+  }
+  .glass-layer-floating {
+    @apply rounded-2xl border border-white/20 shadow-2xl;
+    background-color: color-mix(in srgb, var(--color-surface), transparent 20%);
+    backdrop-filter: blur(24px);
+  }
+  .glass-border {
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--background), var(--background)), 
+                      linear-gradient(to bottom right, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+  }
+
+  /* Navbar */
+  .nav-container {
+    @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-white/5;
+  }
+  .nav-scrolled {
+    @apply py-3;
+    background-color: color-mix(in srgb, var(--background), transparent 30%);
+    backdrop-filter: blur(24px);
+  }
+  .nav-initial {
+    @apply bg-transparent border-transparent py-5;
+  }
+  .nav-logo-box {
+    @apply h-10 w-10 bg-primary rounded-2xl flex items-center justify-center transition-transform duration-300;
+    box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary), transparent 80%);
+  }
+  .nav-logo-box:hover {
+     @apply scale-105;
+  }
+  .nav-link {
+    @apply text-sm font-medium text-foreground transition-colors;
+    color: color-mix(in srgb, var(--foreground), transparent 40%);
+  }
+  .nav-link:hover {
+    @apply text-primary;
+  }
+
+  /* Hero Section */
+  .hero-section {
+    @apply relative pt-32 pb-40 overflow-hidden min-h-screen flex items-center bg-transparent;
+  }
+  .hero-tag {
+    @apply inline-flex items-center gap-2 px-3 py-1 border border-white/10 rounded-full w-fit;
+    background-color: color-mix(in srgb, var(--color-surface), transparent 50%);
+    backdrop-filter: blur(10px);
+  }
+  .hero-title {
+    @apply text-5xl lg:text-7xl font-bold tracking-tight text-foreground leading-tight;
+  }
+  .hero-subtitle {
+    @apply text-xl leading-relaxed max-w-lg;
+    color: color-mix(in srgb, var(--foreground), transparent 50%);
+  }
+  .hero-preview-card {
+    @apply rounded-3xl overflow-hidden flex flex-col transition-all duration-500 transform;
+    transform-style: preserve-3d;
+  }
+  .hero-avatar-stack {
+      @apply h-10 w-10 rounded-2xl border-2 border-background bg-surface flex items-center justify-center overflow-hidden;
+  }
+
+  /* Feature Sections */
+  .feature-section {
+    @apply py-24 overflow-hidden;
+  }
+  .feature-icon-box {
+    @apply h-14 w-14 rounded-2xl flex items-center justify-center text-primary mb-2;
+    background-color: color-mix(in srgb, var(--color-primary), transparent 90%);
+  }
+  .feature-subtitle {
+    @apply text-primary font-bold tracking-widest text-xs uppercase mb-2;
+  }
+  .feature-title {
+    @apply text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-tight;
+  }
+  .feature-desc {
+    @apply text-lg leading-relaxed max-w-lg;
+    color: color-mix(in srgb, var(--foreground), transparent 50%);
+  }
+  .feature-visual-wrapper {
+    @apply relative z-10 rounded-3xl border border-white/5 bg-card/20 p-4 shadow-2xl overflow-hidden min-h-[300px] flex items-center justify-center;
+    backdrop-filter: blur(24px);
+  }
+
+  /* Showcase Section */
+  .showcase-container {
+    @apply rounded-3xl border border-white/5 bg-card/10 overflow-hidden flex flex-col relative;
+    backdrop-filter: blur(32px);
+    box-shadow: 0 25px 50px -12px color-mix(in srgb, var(--color-primary), transparent 90%);
+    aspect-ratio: 16/9;
+  }
+  .mockup-header {
+    @apply h-14 border-b border-white/5 flex items-center justify-between px-6 shrink-0;
+    background-color: color-mix(in srgb, var(--background), transparent 50%);
+    backdrop-filter: blur(12px);
+  }
+  .mockup-sidebar {
+    @apply w-80 flex flex-col shrink-0 overflow-hidden hidden md:flex;
+    background-color: color-mix(in srgb, var(--color-surface), transparent 80%);
+  }
+
+  /* Use Cases */
+  .use-case-card {
+    @apply p-8 rounded-3xl border border-white/5 transition-all duration-300 flex flex-col gap-6;
+    background-color: color-mix(in srgb, var(--card), transparent 60%);
+    backdrop-filter: blur(16px);
+  }
+  .use-case-card:hover {
+     background-color: color-mix(in srgb, var(--color-surface), transparent 50%);
+     border-color: color-mix(in srgb, var(--color-primary), transparent 70%);
+  }
+  .use-case-icon {
+    @apply h-16 w-16 rounded-2xl flex items-center justify-center bg-card shadow-lg transition-transform duration-300;
+  }
+  .use-case-card:hover .use-case-icon {
+     @apply scale-110;
+  }
+
+  /* CTA Section */
+  .cta-wrapper {
+    @apply max-w-4xl mx-auto px-6 text-center border border-white/10 rounded-[40px] p-16 shadow-2xl relative;
+    background-color: color-mix(in srgb, var(--card), transparent 40%);
+    backdrop-filter: blur(40px);
+  }
+
+  /* Buttons */
+  .btn-primary-lg {
+    @apply rounded-2xl px-8 h-14 text-lg font-bold transition-all;
+    box-shadow: 0 15px 30px -5px color-mix(in srgb, var(--color-primary), transparent 75%);
+  }
+  .btn-primary-lg:hover {
+    @apply scale-105;
+  }
+  .btn-primary-lg:active {
+    @apply scale-95;
+  }
+  .btn-ghost-lg {
+    @apply rounded-2xl px-8 h-14 text-lg font-bold transition-all;
+  }
+  .btn-ghost-lg:hover {
+    background-color: color-mix(in srgb, var(--color-surface), transparent 50%);
+  }
+
+  /* Utility & Micro-interactions */
+  .glass-blur {
+    backdrop-filter: blur(40px);
+    background-color: color-mix(in srgb, white, transparent 90%);
+  }
+}

@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366F1;
+  --color-secondary: #0EA5E9;
+  --color-accent: #22C55E;
+  --color-danger: #EF4444;
+  --color-background-dark: #0F172A;
+  --color-surface: #1E293B;
+
+  /* Functional Mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-outfit: "Outfit", sans-serif;
+
+  --radius-2xl: 1rem;
+}
+
+@layer base {
+  :root {
+    --background: white;
+    --foreground: #0F172A;
+    --card: #F1F5F9;
+    --card-foreground: #0F172A;
+    --border: #E2E8F0;
+    --input: #E2E8F0;
+    --ring: #6366F1;
+  }
+
+  .dark {
+    --background: #020617;
+    --foreground: #F8FAFC;
+    --card: #0F172A;
+    --card-foreground: #F8FAFC;
+    --border: #1E293B;
+    --input: #1E293B;
+    --ring: #6366F1;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-outfit antialiased;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md border border-white/10;
+    background-color: color-mix(in srgb, white, transparent 30%);
+  }
+}
+
+/* Landing Page Styles */
+@import "./styles/landing/landing.css";
