@@ -19,7 +19,7 @@ export const AppShell: React.FC = () => {
   const { user } = useSettingsStore();
 
   return (
-    <div className="flex h-screen w-full bg-bg-deep overflow-hidden relative">
+    <div className="flex h-screen w-full bg-transparent overflow-hidden relative">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[120px]" />

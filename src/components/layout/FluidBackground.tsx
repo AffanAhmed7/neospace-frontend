@@ -73,8 +73,8 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
           background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.3) 0%, transparent 70%)',
           mixBlendMode: 'screen',
           // Interactive light shift with scroll
-          x: !isStatic ? lightX : 0,
-          y: !isStatic ? lightY : 0,
+          x: !isStatic ? lightX : undefined,
+          y: !isStatic ? lightY : undefined,
           willChange: !isStatic ? 'transform' : 'auto',
         }}
       />
@@ -99,9 +99,9 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
               left: blob.left,
               opacity: isStatic ? 0.6 : 0.75,
               // Add scroll-driven transforms on top of the base animation
-              translateX: !isStatic ? scrollTransforms[i].x : 0,
-              translateY: !isStatic ? scrollTransforms[i].y : 0,
-              rotate: !isStatic ? scrollTransforms[i].rotate : 0,
+              translateX: !isStatic ? scrollTransforms[i].x : undefined,
+              translateY: !isStatic ? scrollTransforms[i].y : undefined,
+              rotate: !isStatic ? scrollTransforms[i].rotate : undefined,
               // Hardware-accelerated CSS blur instead of expensive SVG gooey filter
               filter: 'blur(40px)',
               // Force composite layers for buttery smooth 60fps scrolling

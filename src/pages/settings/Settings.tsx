@@ -202,9 +202,9 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-bg-deep overflow-hidden relative">
+    <div className="flex h-screen w-full bg-transparent overflow-hidden relative">
       {/* Background stays deep and liquid */}
-      <div className="absolute inset-0 z-0 bg-[#010204] opacity-50" />
+      <div className="absolute inset-0 z-0 bg-[#010204]/50" />
       <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 flex h-full w-full">
