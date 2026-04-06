@@ -10,6 +10,8 @@ interface AppState {
   activeConversationId: string | null;
   commandPaletteOpen: boolean;
   notificationPanelOpen: boolean;
+  authModalOpen: boolean;
+  authModalMode: 'login' | 'signup';
 
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
@@ -17,6 +19,7 @@ interface AppState {
   setActiveConversation: (id: string | null) => void;
   toggleCommandPalette: () => void;
   toggleNotificationPanel: () => void;
+  setAuthModal: (open: boolean, mode?: 'login' | 'signup') => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -28,6 +31,8 @@ export const useAppStore = create<AppState>()(
       activeConversationId: null,
       commandPaletteOpen: false,
       notificationPanelOpen: false,
+      authModalOpen: false,
+      authModalMode: 'login',
 
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -35,6 +40,10 @@ export const useAppStore = create<AppState>()(
       setActiveConversation: (id) => set({ activeConversationId: id }),
       toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
       toggleNotificationPanel: () => set((state) => ({ notificationPanelOpen: !state.notificationPanelOpen })),
+      setAuthModal: (open, mode) => set((state) => ({ 
+        authModalOpen: open, 
+        authModalMode: mode || state.authModalMode 
+      })),
     }),
     {
       name: 'neoplane-app-state',

@@ -16,11 +16,12 @@ export const Showcase: React.FC = () => {
 
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
-           initial={{ opacity: 0, y: 40 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: true }}
-           transition={{ duration: 1, ease: "easeOut" }}
-           className="showcase-container"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="showcase-container"
+            style={{ willChange: "transform, opacity" }}
         >
           {/* Top Bar */}
           <div className="mockup-header">

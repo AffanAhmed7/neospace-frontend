@@ -1,4 +1,8 @@
 /* Landing page styles */
+html {
+  scroll-behavior: smooth;
+}
+
 
 /* Reset standard selection without @apply to avoid v4 parser issues */
 ::selection {
@@ -100,11 +104,12 @@
     @apply pt-10 pb-24 overflow-hidden;
   }
   .feature-icon-box {
-    @apply h-14 w-14 rounded-2xl flex items-center justify-center text-primary mb-2;
-    background-color: color-mix(in srgb, var(--color-primary), transparent 90%);
+    @apply h-10 w-10 rounded-2xl flex items-center justify-center text-primary mb-3;
+    background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
   }
   .feature-subtitle {
-    @apply text-primary font-bold tracking-widest text-xs uppercase mb-2;
+    @apply text-sm font-semibold mb-2;
+    color: color-mix(in srgb, var(--color-primary), transparent 20%);
   }
   .feature-title {
     @apply text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-tight;
@@ -154,8 +159,9 @@
 
   /* CTA Section */
   .cta-wrapper {
-    @apply max-w-4xl mx-auto px-6 text-center border border-white/10 rounded-[40px] p-16 shadow-2xl relative;
-    background-color: color-mix(in srgb, var(--card), transparent 40%);
+    @apply max-w-4xl mx-auto px-6 text-center rounded-[40px] p-16 shadow-2xl relative;
+    border: 1px solid rgba(99, 102, 241, 0.12);
+    background-color: color-mix(in srgb, var(--card), transparent 50%);
     backdrop-filter: blur(40px);
   }
 

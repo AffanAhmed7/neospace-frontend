@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, Globe, Users, MessageSquare } from 'lucide-react';
+import { Hexagon, Globe, Users, MessageSquare } from 'lucide-react';
 
 const footerLinks = [
   {
@@ -22,8 +22,8 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8 mb-20">
         <div className="lg:col-span-2 flex flex-col gap-6 text-left">
            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                 <Plane size={22} />
+              <div className="h-10 w-10 flex items-center justify-center text-primary transition-all duration-300">
+                 <Hexagon size={24} strokeWidth={1.5} />
               </div>
               <span className="text-xl font-bold tracking-tight text-foreground">NeoPlane</span>
            </div>
@@ -53,14 +53,10 @@ export const Footer: React.FC = () => {
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-12 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-         <p className="text-xs font-bold text-foreground/20 leading-relaxed uppercase tracking-widest">
+      <div className="max-w-7xl mx-auto px-6 pt-12 border-t border-border flex items-center justify-center">
+         <p className="text-xs font-bold text-foreground/20 leading-relaxed uppercase tracking-widest text-center">
             © 2026 NeoPlane. All rights reserved.
          </p>
-         <div className="flex items-center gap-8">
-            <span className="text-xs font-bold text-foreground/30 hover:text-foreground/50 cursor-pointer transition-colors uppercase tracking-widest">Status: Healthy</span>
-            <span className="text-xs font-bold text-foreground/30 hover:text-foreground/50 cursor-pointer transition-colors uppercase tracking-widest">Security</span>
-         </div>
       </div>
     </footer>
   );

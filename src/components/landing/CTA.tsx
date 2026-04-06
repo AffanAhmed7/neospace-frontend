@@ -1,41 +1,45 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '../ui/Button';
-import { ArrowRight, Plane } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
 
 export const CTA: React.FC = () => {
+  const { setAuthModal } = useAppStore();
+
   return (
-    <section className="py-32 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full bg-primary/20 blur-[150px] -z-10 rounded-full" />
-      
-      <div className="cta-wrapper">
+    <section className="pt-0 pb-20 relative overflow-hidden text-center">
+      {/* Subtle glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[150px] bg-indigo-500/5 blur-[80px] -z-10 rounded-full" />
+
+      <div className="max-w-4xl mx-auto px-6">
         <motion.div
-           initial={{ opacity: 0, scale: 0.9 }}
-           whileInView={{ opacity: 1, scale: 1 }}
-           viewport={{ once: true }}
-           transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="flex flex-col items-center gap-6"
         >
-          <div className="h-20 w-20 bg-primary rounded-[30px] flex items-center justify-center text-white mx-auto mb-8 shadow-xl shadow-primary/25">
-             <Plane size={40} />
-          </div>
-          <h2 className="text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-6 text-center">
-             Start your <span className="text-primary italic">workspace</span> today.
+          {/* Reduced weight to font-semibold and smaller tracking */}
+          <h2
+            className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight uppercase leading-tight text-white/80 text-center"
+          >
+            What are you
+            <br />
+            waiting for?
           </h2>
-          <p className="text-xl text-foreground/50 mb-12 max-w-xl mx-auto font-medium text-center">
-             Bring your team together in a place where work feels effortless.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-             <Button variant="primary" className="rounded-2xl h-16 px-10 text-xl font-bold group shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto">
-                Get Started for Free
-                <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
-             </Button>
-             <div className="text-sm font-bold text-foreground/40 border-b border-border pb-1 hover:text-foreground/60 transition-colors cursor-pointer">
-                Contact Sales
-             </div>
-          </div>
-          <p className="mt-8 text-sm text-foreground/30 font-medium text-center">
-             No credit card required • Unlimited users • Self-serve
-          </p>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setAuthModal(true, 'signup')}
+            className="group flex items-center gap-2 px-8 py-3.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-white font-bold uppercase tracking-tight hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+          >
+            <span className="text-xs">Get started</span>
+            <ArrowRight
+              size={14}
+              className="group-hover:translate-x-1 transition-transform opacity-70"
+            />
+          </motion.button>
         </motion.div>
       </div>
     </section>

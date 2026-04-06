@@ -8,6 +8,8 @@ import {
   Heart, Smile
 } from 'lucide-react';
 
+import { useAppStore } from '../../store/useAppStore';
+
 const HeroCard: React.FC<{ 
   children: React.ReactNode; 
   className?: string; 
@@ -25,7 +27,7 @@ const HeroCard: React.FC<{
       y: initialY - 15,
       z: 50,
     }}
-    transition={{ type: "spring", stiffness: 120, damping: 20, mass: 1 }}
+    transition={{ type: "spring", stiffness: 80, damping: 25, mass: 1 }}
     style={{ transformStyle: "preserve-3d" }}
     className={`rounded-3xl border border-white/10 shadow-2xl w-full max-w-[380px] aspect-[4/5] p-6 lg:p-8 flex flex-col cursor-pointer transition-shadow hover:shadow-primary/20 will-change-transform ${className}`}
   >
@@ -39,11 +41,13 @@ export const Hero: React.FC = () => {
   // 3D Perspective Tilt on the whole container
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const mouseXSpring = useSpring(x, { stiffness: 100, damping: 40, mass: 1 });
-  const mouseYSpring = useSpring(y, { stiffness: 100, damping: 40, mass: 1 });
+  const mouseXSpring = useSpring(x, { stiffness: 80, damping: 50, mass: 1 });
+  const mouseYSpring = useSpring(y, { stiffness: 80, damping: 50, mass: 1 });
   
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
+
+  const { setAuthModal } = useAppStore();
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -91,11 +95,18 @@ export const Hero: React.FC = () => {
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-8">
-            <Button className="bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl px-6 py-2.5 text-sm font-medium flex items-center gap-2 group transition-all backdrop-blur-md shadow-sm">
-               Explore
+            <Button 
+              onClick={() => setAuthModal(true, 'signup')}
+              className="bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl px-6 py-2.5 text-sm font-medium flex items-center gap-2 group transition-all backdrop-blur-md shadow-sm"
+            >
+               Get Started
                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="ghost" className="border border-white/5 hover:bg-white/10 text-white/70 hover:text-white px-6 py-2.5 text-sm font-medium rounded-xl hidden sm:flex transition-all backdrop-blur-md">
+            <Button 
+              variant="ghost" 
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              className="border border-white/5 hover:bg-white/10 text-white/70 hover:text-white px-6 py-2.5 text-sm font-medium rounded-xl hidden sm:flex transition-all backdrop-blur-md"
+            >
                About Us
             </Button>
           </div>
@@ -111,7 +122,8 @@ export const Hero: React.FC = () => {
              perspective: "2000px",
              rotateX,
              rotateY,
-             transformStyle: "preserve-3d"
+             transformStyle: "preserve-3d",
+             willChange: "transform"
            }}
            className="w-full lg:w-[55%] relative flex items-center justify-center py-10 min-h-[500px]"
         >
