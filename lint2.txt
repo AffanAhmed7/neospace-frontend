@@ -1,0 +1,53 @@
+
+E:\Professional\Portfolio\NeoPlane\apps\frontend\src\components\onboarding\CompletionStep.tsx
+  15:11  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+E:\Professional\Portfolio\NeoPlane\apps\frontend\src\components\onboarding\CompletionStep.tsx:15:11
+  13 |   const particles = React.useMemo(() => {
+  14 |     return Array.from({ length: 12 }).map(() => ({
+> 15 |       x: (Math.random() - 0.5) * 200,
+     |           ^^^^^^^^^^^^^ Cannot call impure function
+  16 |       y: (Math.random() - 0.5) * 200,
+  17 |       rotate: Math.random() * 360,
+  18 |       delay: Math.random() * 2,  react-hooks/purity
+  16:11  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+E:\Professional\Portfolio\NeoPlane\apps\frontend\src\components\onboarding\CompletionStep.tsx:16:11
+  14 |     return Array.from({ length: 12 }).map(() => ({
+  15 |       x: (Math.random() - 0.5) * 200,
+> 16 |       y: (Math.random() - 0.5) * 200,
+     |           ^^^^^^^^^^^^^ Cannot call impure function
+  17 |       rotate: Math.random() * 360,
+  18 |       delay: Math.random() * 2,
+  19 |     }));                                   react-hooks/purity
+  17:15  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+E:\Professional\Portfolio\NeoPlane\apps\frontend\src\components\onboarding\CompletionStep.tsx:17:15
+  15 |       x: (Math.random() - 0.5) * 200,
+  16 |       y: (Math.random() - 0.5) * 200,
+> 17 |       rotate: Math.random() * 360,
+     |               ^^^^^^^^^^^^^ Cannot call impure function
+  18 |       delay: Math.random() * 2,
+  19 |     }));
+  20 |   }, []);                                                                        react-hooks/purity
+  18:14  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+E:\Professional\Portfolio\NeoPlane\apps\frontend\src\components\onboarding\CompletionStep.tsx:18:14
+  16 |       y: (Math.random() - 0.5) * 200,
+  17 |       rotate: Math.random() * 360,
+> 18 |       delay: Math.random() * 2,
+     |              ^^^^^^^^^^^^^ Cannot call impure function
+  19 |     }));
+  20 |   }, []);
+  21 |                                                                                                               react-hooks/purity
+
+Γ£û 4 problems (4 errors, 0 warnings)
+
