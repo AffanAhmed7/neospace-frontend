@@ -10,9 +10,21 @@ export interface Toast {
 interface UserProfile {
   username: string;
   bio: string;
-  avatar: string | null;
+  avatar: string;
   status: 'online' | 'offline' | 'busy' | 'away';
 }
+
+export const AVATAR_OPTIONS = [
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jasper',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aria',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya',
+];
+
 
 interface SettingsState {
   user: UserProfile;
@@ -40,7 +52,7 @@ const initialState = {
   user: {
     username: 'Jane Doe',
     bio: 'Product Designer at NeoPlane. Loves minimalist UIs and dark mode.',
-    avatar: null,
+    avatar: AVATAR_OPTIONS[0],
     status: 'online' as const,
   },
   notifications: {

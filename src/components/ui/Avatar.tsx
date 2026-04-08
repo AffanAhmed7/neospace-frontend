@@ -21,9 +21,9 @@ export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 'md', isOnline,
   };
 
   const statusSizes = {
-    sm: 'h-2 w-2 right-0 bottom-0 ring-2 ring-background',
-    md: 'h-3 w-3 right-0 bottom-0 ring-2 ring-background',
-    lg: 'h-3.5 w-3.5 right-0.5 bottom-0.5 ring-2 ring-background',
+    sm: 'h-2 w-2 right-0 bottom-0 ring-2 ring-bg-main',
+    md: 'h-3 w-3 right-0 bottom-0 ring-2 ring-bg-main',
+    lg: 'h-3.5 w-3.5 right-0.5 bottom-0.5 ring-2 ring-bg-main',
   };
 
   const initials = alt
@@ -51,7 +51,7 @@ export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 'md', isOnline,
       {isOnline !== undefined && (
         <span
           className={cn(
-            'absolute rounded-full ring-2 ring-background',
+            'absolute rounded-full ring-2 ring-bg-main',
             isOnline ? 'bg-accent' : 'bg-foreground/20',
             statusSizes[size]
           )}

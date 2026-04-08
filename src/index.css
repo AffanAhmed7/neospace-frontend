@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:wght@300;400;500;600@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -10,6 +10,7 @@
   /* Deep Shadowy Palette */
   --color-bg-deep: #050505;
   --color-bg-main: #0A0A0C;
+  --color-surface-lighter: rgba(255, 255, 255, 0.05);
   --color-surface-glass: rgba(15, 23, 42, 0.4);
   --color-border-subtle: rgba(255, 255, 255, 0.05);
 
@@ -94,16 +95,87 @@
     box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
   }
 
+  /* Noise texture overlay – adds organic grain on top of glass panels */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 128px;
+    mix-blend-mode: screen;
+  }
+
+  /* Gradient underline effect for active nav items */
+  .nav-active-glow {
+    background: linear-gradient(90deg, rgba(99,102,241,0) 0%, rgba(99,102,241,0.12) 40%, rgba(99,102,241,0) 100%);
+  }
+
+  /* Unified Premium Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
   /* Compact Scrollbars */
   .custom-scrollbar-compact::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
   }
   .custom-scrollbar-compact::-webkit-scrollbar-track {
     background: transparent;
   }
   .custom-scrollbar-compact::-webkit-scrollbar-thumb {
-    @apply bg-white/5 rounded-full hover:bg-white/10 transition-colors;
+    background: rgba(255,255,255,0.06);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar-compact::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* Shimmer animation for skeleton loaders */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* Pulse glow for presence indicators */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(52, 211, 153, 0.4); }
+    50% { box-shadow: 0 0 10px rgba(52, 211, 153, 0.7); }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Smooth floating animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
   }
 }
 

@@ -7,7 +7,11 @@ import { Badge } from '../ui/Badge';
 export const CommandPalette: React.FC = () => {
   const commandPaletteOpen = useAppStore((state) => state.commandPaletteOpen);
   const toggleCommandPalette = useAppStore((state) => state.toggleCommandPalette);
+  const activeConversationId = useAppStore((state) => state.activeConversationId);
+  const conversationMeta = useAppStore((state) => state.conversationMeta);
   const [query, setQuery] = useState('');
+
+  const activeChannel = activeConversationId ? conversationMeta[activeConversationId] : null;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -20,12 +24,24 @@ export const CommandPalette: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleCommandPalette]);
 
-  const results = [
-    { id: '1', title: 'general', type: 'channel', icon: <Hash size={16} /> },
-    { id: '2', title: 'Alex Rivera', type: 'user', icon: <User size={16} /> },
-    { id: '3', title: 'engineering', type: 'channel', icon: <Hash size={16} /> },
-    { id: '4', title: 'Search for "neoplane"', type: 'action', icon: <Search size={16} /> },
+  const defaultResults = [
+    { id: 'f1', title: 'Search for Friends', type: 'context', icon: <User size={16} /> },
+    { id: 'c1', title: 'Search in Channels', type: 'context', icon: <Hash size={16} /> },
+    ...(activeChannel ? [{ 
+      id: 'cc1', 
+      title: `Search in #${activeChannel.name}`, 
+      type: 'context', 
+      icon: <Search size={16} /> 
+    }] : []),
   ];
+
+  const results = query 
+    ? [
+        { id: '1', title: 'general', type: 'channel', icon: <Hash size={16} /> },
+        { id: '2', title: 'Alex Rivera', type: 'user', icon: <User size={16} /> },
+        { id: '4', title: `Search for "${query}"`, type: 'action', icon: <Search size={16} /> },
+      ]
+    : defaultResults;
 
   return (
     <Modal
@@ -33,16 +49,16 @@ export const CommandPalette: React.FC = () => {
       onClose={toggleCommandPalette}
       className="p-0 max-w-2xl overflow-hidden"
     >
-      <div className="flex items-center px-4 py-3 border-b border-border">
-        <Search size={20} className="text-foreground/30 mr-3 shrink-0" />
+      <div className="flex items-center px-4 py-3 border-b border-white/[0.03] bg-transparent backdrop-blur-none">
+        <Search size={20} className="text-foreground/20 mr-3 shrink-0" />
         <input
           autoFocus
-          placeholder="Search for channels, people, or commands..."
+          placeholder="Where should we look?"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-grow bg-transparent border-0 outline-none text-base text-foreground placeholder:text-foreground/30 h-10"
+          className="flex-grow bg-transparent border-0 outline-none text-base text-foreground placeholder:text-foreground/20 h-10 ring-0 focus:ring-0"
         />
-        <Badge variant="outline" className="ml-2 text-[10px] uppercase font-bold py-0.5 px-1.5 opacity-50">
+        <Badge variant="outline" className="ml-2 text-[9px] uppercase font-bold py-0.5 px-1.5 opacity-30 border-white/10">
           Esc
         </Badge>
       </div>
