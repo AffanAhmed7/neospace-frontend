@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Hash, User, Terminal, ChevronRight } from 'lucide-react';
+import { Search, Hash, User, Terminal, ChevronRight, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { Modal } from '../ui/Modal';
-import { Badge } from '../ui/Badge';
 
 export const CommandPalette: React.FC = () => {
   const commandPaletteOpen = useAppStore((state) => state.commandPaletteOpen);
@@ -48,6 +47,7 @@ export const CommandPalette: React.FC = () => {
       isOpen={commandPaletteOpen}
       onClose={toggleCommandPalette}
       className="p-0 max-w-2xl overflow-hidden"
+      showCloseButton={false}
     >
       <div className="flex items-center px-4 py-3 border-b border-white/[0.03] bg-transparent backdrop-blur-none">
         <Search size={20} className="text-foreground/20 mr-3 shrink-0" />
@@ -58,9 +58,12 @@ export const CommandPalette: React.FC = () => {
           onChange={(e) => setQuery(e.target.value)}
           className="flex-grow bg-transparent border-0 outline-none text-base text-foreground placeholder:text-foreground/20 h-10 ring-0 focus:ring-0"
         />
-        <Badge variant="outline" className="ml-2 text-[9px] uppercase font-bold py-0.5 px-1.5 opacity-30 border-white/10">
-          Esc
-        </Badge>
+        <button 
+          onClick={toggleCommandPalette}
+          className="ml-2 h-8 w-8 rounded-xl flex items-center justify-center text-foreground/20 hover:text-rose-500 hover:bg-rose-500/10 transition-all group/close shrink-0"
+        >
+          <X size={16} className="group-hover/close:rotate-90 transition-transform duration-300" />
+        </button>
       </div>
 
       <div className="max-h-[400px] overflow-y-auto p-2">

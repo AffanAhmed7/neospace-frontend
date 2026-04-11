@@ -16,7 +16,7 @@ interface AppState {
   profileUserId: string | null;
   activeThreadId: string | null;
   activeGroupId: string | null;
-  activeView: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group';
+  activeView: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group' | 'message-requests';
   rightPanelTab: 'members' | 'threads' | 'pinned';
   conversationMeta: Record<string, { 
     name: string; 
@@ -26,6 +26,8 @@ interface AppState {
     online: { name: string; avatar: string }[];
     heroImage?: string;
     groups?: { id: string; name: string; description?: string; joined: boolean; }[];
+    isDM?: boolean;
+    friends?: any[];
     threads?: Record<string, { replies: number; lastReply: string }>;
   }>;
   pinnedChannelIds: string[];
@@ -53,7 +55,7 @@ interface AppState {
   setActiveConversation: (id: string | null) => void;
   setActiveGroup: (id: string | null) => void;
   setActiveThread: (id: string | null) => void;
-  setActiveView: (view: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group') => void;
+  setActiveView: (view: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group' | 'message-requests') => void;
   setRightPanelTab: (tab: 'members' | 'threads' | 'pinned') => void;
   toggleCommandPalette: () => void;
   toggleNotificationPanel: () => void;
@@ -71,6 +73,9 @@ interface AppState {
   toggleMuteChannel: (id: string) => void;
   toggleMuteGroup: (channelId: string, groupId: string) => void;
   toggleMuteUser: (userId: string) => void;
+  acceptedRequestIds: string[];
+  acceptRequest: (id: string) => void;
+  deleteRequest: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -96,8 +101,18 @@ export const useAppStore = create<AppState>()(
       mutedChannelIds: [],
       mutedGroupIds: [],
       mutedUserIds: [],
+      acceptedRequestIds: [],
+      acceptRequest: (id) => set((state) => ({ 
+        acceptedRequestIds: [...state.acceptedRequestIds, id],
+        friendIds: [...state.friendIds, id]
+      })),
+      deleteRequest: (id) => set((state) => {
+        const newConvMeta = { ...state.conversationMeta };
+        delete newConvMeta[id];
+        return { conversationMeta: newConvMeta };
+      }),
       conversationMeta: {
-        '1': { 
+        'c1': { 
           name: 'Casuals', 
           description: 'The heartbeat of NeoPlane — a space for everything and nothing.', 
           memberCount: 24, 
@@ -116,7 +131,7 @@ export const useAppStore = create<AppState>()(
             'm2': { replies: 5, lastReply: '1h ago' }
           }
         },
-        '2': { 
+        'c2': { 
           name: 'global-chat',
           description: 'General discussion for everyone',
           memberCount: 24, 
@@ -125,7 +140,7 @@ export const useAppStore = create<AppState>()(
           ],
           friends: []
         },
-        '3': { 
+        'c3': { 
           name: 'engineering', 
           description: 'Where bugs go to die', 
           memberCount: 8, 
@@ -140,10 +155,52 @@ export const useAppStore = create<AppState>()(
             { id: 'g5', name: 'Infrastructure', description: 'Cloud, DevOps, and deployment pipelines.', joined: false }
           ]
         },
+        '1': {
+          name: 'Alex Rivera',
+          description: 'Software Engineer @ NeoPlane. Building the visual future.',
+          memberCount: 2,
+          online: [{ name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' }],
+          isDM: true
+        },
+        '2': {
+          name: 'Jordan Lee',
+          description: 'Product Designer @ NeoPlane. Obsessed with details.',
+          memberCount: 2,
+          online: [{ name: 'Jordan Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' }],
+          isDM: true
+        },
+        '3': { 
+          name: 'Sarah Chen', 
+          description: 'Frontend Architect. Pushing pixels to perfection.', 
+          memberCount: 0, 
+          online: [], 
+          isDM: true 
+        },
+        '4': { 
+          name: 'Marcus Wright', 
+          description: 'Security & Backend. Keeping NeoPlane safe.', 
+          memberCount: 0, 
+          online: [], 
+          isDM: true 
+        },
+        '5': { 
+          name: 'Elena Rossi', 
+          description: 'Product Designer. Obsessed with high-fidelity interactions.', 
+          memberCount: 0, 
+          online: [], 
+          isDM: true 
+        },
+        'p1': { 
+          name: 'David Kim', 
+          description: 'Unknown User. Potential security risk.', 
+          memberCount: 0, 
+          online: [], 
+          isDM: true 
+        },
       },
       pinnedMessageIds: {},
       messages: {
-        '1': [
+        'c1': [
           {
             id: 'm1',
             user: { name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
@@ -168,6 +225,35 @@ export const useAppStore = create<AppState>()(
             reactions: [],
             isOwn: true,
           },
+        ],
+        '1': [
+          {
+             id: 'dm-a-1',
+             user: { name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
+             content: 'Hey Jane! Have you had a chance to look at those new mockups?',
+             time: '10:15 AM',
+             reactions: [],
+             isOwn: false
+          }
+        ],
+        '2': [
+          {
+             id: 'dm-j-1',
+             user: { name: 'Jordan Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
+             content: 'The glassmorphism on the sidebar looks slick! Good job on the implementation.',
+             time: 'Yesterday',
+             reactions: [{ emoji: '✨', count: 1 }],
+             isOwn: false
+          }
+        ],
+        '4': [
+          { id: '1', user: { name: 'Marcus Wright', avatar: '' }, content: "Hey! I saw your work on the NeoPlane design system. Any chance you're open for a quick chat about a collab?", time: '2:00 PM', reactions: [], isOwn: false }
+        ],
+        '5': [
+          { id: '1', user: { name: 'Elena Rossi', avatar: '' }, content: "Found your profile through the engineering channel. Wanted to ask about the deployment pipeline you mentioned.", time: '5:00 PM', reactions: [], isOwn: false }
+        ],
+        'p1': [
+          { id: '1', user: { name: 'David Kim', avatar: '' }, content: "URGENT: Click here to claim your NeoPlane reward! bit.ly/not-a-scam-trust-me", time: 'Yesterday', reactions: [], isOwn: false }
         ]
       },
 
@@ -184,11 +270,12 @@ export const useAppStore = create<AppState>()(
             profilePanelOpen: false
           };
         }
+        const meta = state.conversationMeta[id];
         return { 
           activeConversationId: id, 
           activeGroupId: null,
           activeView: 'chat',
-          rightPanelOpen: state.activeConversationId !== id ? true : state.rightPanelOpen
+          rightPanelOpen: (meta?.isDM) ? false : (state.activeConversationId !== id ? true : state.rightPanelOpen)
         };
       }),
       setActiveGroup: (id) => set({ activeGroupId: id }),

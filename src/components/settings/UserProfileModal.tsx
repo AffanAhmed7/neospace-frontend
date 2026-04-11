@@ -50,12 +50,19 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   
   // Resolve user data
   const user = isOwnProfile 
-    ? { ...currentUser, email: 'jane@neoplane.io', joined: 'March 15, 2026', role: 'Admin', bannerColor: 'bg-primary' } 
+    ? { 
+        ...currentUser, 
+        email: 'jane@neoplane.io', 
+        joined: 'March 15, 2026', 
+        role: 'Admin',
+      } 
     : mockUsersData[profileUserId!] || { 
         username: 'Voyager', status: 'offline', bio: 'Just passing through the NeoPlane.', 
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUserId || 'guest'}`, 
-        email: 'ghost@neoplane.io', joined: 'Ancient', role: 'Visitor', bannerColor: 'bg-white/5'
+        email: 'ghost@neoplane.io', joined: 'Ancient', role: 'Visitor', banner: 'bg-white/5'
       };
+
+  const bannerStyle = user.banner || 'bg-primary';
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,10 +92,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         className="relative w-full max-w-[500px] bg-[#111214] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-white/[0.05]"
       >
         {/* Banner */}
-        <div className={clsx("h-[100px] w-full relative", user.bannerColor)}>
+        <div className={clsx(
+          "h-[100px] w-full relative", 
+          bannerStyle.startsWith('bg-') ? bannerStyle : ''
+        )}>
+          {(!bannerStyle.startsWith('bg-')) && (
+            <img src={bannerStyle} alt="Banner" className="h-full w-full object-cover" />
+          )}
           <button 
             onClick={() => onClose()}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-10"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-20"
           >
             <X size={16} />
           </button>

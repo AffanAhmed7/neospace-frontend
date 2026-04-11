@@ -13,12 +13,12 @@ import { clsx } from 'clsx';
 const categories = ['All', 'Engineering', 'Design', 'Marketing', 'Gaming', 'Casual', 'Support', 'Other'];
 
 const suggestedChannels = [
-  { id: '1', name: 'general', description: 'The town square for all NeoPlane users. Announcements, general discussion, and watercooler chat.', members: 1240, online: 156, category: 'Casual', isJoined: true },
-  { id: '2', name: 'global-chat', description: 'Real-time conversation with the entire world network. High volume.', members: 890, online: 42, category: 'All', isJoined: true },
-  { id: '3', name: 'engineering', description: 'Deep dives into code, architecture, and deployment pipelines. Core PR discussions happen here.', members: 450, online: 28, category: 'Engineering', isJoined: true },
-  { id: '4', name: 'design-system', description: 'Polishing pixels and defining the visual future. Feedback on UI/UX components.', members: 320, online: 15, category: 'Design', isJoined: false },
-  { id: '5', name: 'marketing-ops', description: 'Planning the next big launch and reviewing campaign metrics.', members: 180, online: 5, category: 'Marketing', isJoined: false },
-  { id: '6', name: 'customer-success', description: 'Helping our users get the most out of NeoPlane. Support workflows.', members: 210, online: 12, category: 'Support', isJoined: false },
+  { id: 'c1', name: 'general', description: 'The town square for all NeoPlane users. Announcements, general discussion, and watercooler chat.', members: 1240, online: 156, category: 'Casual', isJoined: true },
+  { id: 'c2', name: 'global-chat', description: 'Real-time conversation with the entire world network. High volume.', members: 890, online: 42, category: 'All', isJoined: true },
+  { id: 'c3', name: 'engineering', description: 'Deep dives into code, architecture, and deployment pipelines. Core PR discussions happen here.', members: 450, online: 28, category: 'Engineering', isJoined: true },
+  { id: 'c4', name: 'design-system', description: 'Polishing pixels and defining the visual future. Feedback on UI/UX components.', members: 320, online: 15, category: 'Design', isJoined: false },
+  { id: 'c5', name: 'marketing-ops', description: 'Planning the next big launch and reviewing campaign metrics.', members: 180, online: 5, category: 'Marketing', isJoined: false },
+  { id: 'c6', name: 'customer-success', description: 'Helping our users get the most out of NeoPlane. Support workflows.', members: 210, online: 12, category: 'Support', isJoined: false },
 ];
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -26,14 +26,24 @@ const suggestedChannels = [
 export const ExploreChannels: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [showFilter, setShowFilter] = useState(false);
+  const [sortBy, setSortBy] = useState<'popularity' | 'name'>('popularity');
+  const [hideJoined, setHideJoined] = useState(false);
+
   const setActiveConversation = useAppStore((state) => state.setActiveConversation);
   const setActiveView = useAppStore((state) => state.setActiveView);
 
-  const filteredChannels = suggestedChannels.filter(ch => {
+  const sortedChannels = [...suggestedChannels].sort((a, b) => {
+    if (sortBy === 'popularity') return b.members - a.members;
+    return a.name.localeCompare(b.name);
+  });
+
+  const filteredChannels = sortedChannels.filter(ch => {
     const matchesSearch = ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           ch.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'All' || ch.category === activeCategory;
-    return matchesSearch && matchesCategory;
+    const matchesJoined = hideJoined ? !ch.isJoined : true;
+    return matchesSearch && matchesCategory && matchesJoined;
   });
 
   const containerVariants = {
@@ -79,7 +89,7 @@ export const ExploreChannels: React.FC = () => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 w-full max-w-sm ml-auto">
+        <div className="flex items-center gap-3 w-full max-w-sm ml-auto relative">
           <div className="relative w-full group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" size={14} />
             <input 
@@ -90,9 +100,87 @@ export const ExploreChannels: React.FC = () => {
               className="w-full h-8 pl-9 pr-4 bg-white/[0.02] border border-white/[0.05] rounded-lg text-[13px] font-medium focus:outline-none focus:border-primary/30 transition-all outline-none"
             />
           </div>
-          <button className="h-8 px-2 rounded-lg text-foreground/40 hover:text-primary hover:bg-white/[0.04] transition-all">
-            <Filter size={16} />
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowFilter(!showFilter)}
+              className={clsx(
+                "h-8 px-2 rounded-lg transition-all",
+                showFilter ? "text-primary bg-primary/10" : "text-foreground/40 hover:text-primary hover:bg-white/[0.04]"
+              )}
+            >
+              <Filter size={16} />
+            </button>
+
+            <AnimatePresence>
+              {showFilter && (
+                <>
+                  {/* Backdrop for click-outside */}
+                  <div 
+                    className="fixed inset-0 z-[60]" 
+                    onClick={() => setShowFilter(false)} 
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-[#0A0A0C] border border-white/[0.08] rounded-2xl shadow-2xl z-[70] overflow-hidden backdrop-blur-xl p-2"
+                  >
+                    <div className="p-3 space-y-4">
+                      {/* Sort Section */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-foreground/20 px-2">Sort By</label>
+                        <div className="grid grid-cols-1 gap-1">
+                          {[
+                            { id: 'popularity', label: 'Most Popular' },
+                            { id: 'name', label: 'Alphabetical (A-Z)' }
+                          ].map(opt => (
+                            <button
+                              key={opt.id}
+                              onClick={() => { setSortBy(opt.id as any); setShowFilter(false); }}
+                              className={clsx(
+                                "flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all",
+                                sortBy === opt.id ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/[0.03] hover:text-foreground/60"
+                              )}
+                            >
+                              {opt.label}
+                              {sortBy === opt.id && <Hash size={12} className="opacity-50" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-white/[0.03] mx-2" />
+
+                      {/* Toggles */}
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => setHideJoined(!hideJoined)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group"
+                        >
+                          <span className={clsx(
+                            "text-[12px] font-bold transition-colors",
+                            hideJoined ? "text-foreground" : "text-foreground/40 group-hover:text-foreground/60"
+                          )}>
+                            Hide Joined
+                          </span>
+                          <div className={clsx(
+                            "w-8 h-4 rounded-full relative transition-all duration-300",
+                            hideJoined ? "bg-primary" : "bg-white/[0.06]"
+                          )}>
+                            <div className={clsx(
+                              "absolute top-1 w-2 h-2 rounded-full bg-white transition-all duration-300",
+                              hideJoined ? "left-5" : "left-1"
+                            )} />
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 

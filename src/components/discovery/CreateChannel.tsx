@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Hash, Globe, Shield, AlertCircle, ArrowLeft, Link, Copy, Check, Search, Plus, UserPlus, RefreshCw } from 'lucide-react';
+import { Hash, Globe, Shield, AlertCircle, ArrowLeft, Link, Copy, Check, Search, Plus, UserPlus, RefreshCw, Upload, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
@@ -26,6 +26,7 @@ const HERO_PRESETS = [
 export const CreateChannel: React.FC = () => {
   const setActiveView = useAppStore((s) => s.setActiveView);
   const createChannel = useAppStore((s) => s.createChannel);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -38,6 +39,34 @@ export const CreateChannel: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [friendSearch, setFriendSearch] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size too large (max 5MB)');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCustomHeroUrl(reader.result as string);
+      setIsUploading(false);
+    };
+    reader.onerror = () => {
+      setError('Failed to read file');
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const generateLink = () => {
     const hash = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -87,7 +116,7 @@ export const CreateChannel: React.FC = () => {
         >
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Page Header */}
-            <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 z-50 sticky top-0 backdrop-blur-md">
+            <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 z-50">
               <div className="flex items-start gap-5">
                 <button
                   onClick={() => setActiveView('home')}
@@ -215,15 +244,48 @@ export const CreateChannel: React.FC = () => {
                       ))}
                     </div>
 
-                    <div className="relative group">
-                      <Plus size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" />
-                      <input
-                        type="text"
-                        value={customHeroUrl}
-                        onChange={(e) => setCustomHeroUrl(e.target.value)}
-                        placeholder="Or paste custom image URL..."
-                        className="w-full h-12 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[12px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                    <div className="flex gap-2 relative group">
+                      <div className="flex-1 relative">
+                        <Plus size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" />
+                        <input
+                          type="text"
+                          value={customHeroUrl.startsWith('data:') ? 'Local file uploaded' : customHeroUrl}
+                          readOnly={customHeroUrl.startsWith('data:')}
+                          onChange={(e) => setCustomHeroUrl(e.target.value)}
+                          placeholder="Or paste custom image URL..."
+                          className="w-full h-12 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[12px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                        />
+                        {customHeroUrl && (
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setCustomHeroUrl('');
+                              if (fileInputRef.current) fileInputRef.current.value = '';
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/20 hover:text-rose-400 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                      
+                      <input 
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept="image/*"
+                        className="hidden"
                       />
+                      
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="h-12 px-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-[11px] font-black uppercase tracking-widest text-foreground hover:bg-white/[0.06] hover:text-primary transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
+                      >
+                        {isUploading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
+                        Upload
+                      </button>
                     </div>
                   </div>
 

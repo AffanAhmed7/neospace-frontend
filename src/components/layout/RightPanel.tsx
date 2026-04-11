@@ -68,7 +68,7 @@ export const RightPanel: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'members', icon: Users, label: 'Members', count: meta?.memberCount || 0 },
+    ...(meta?.isDM ? [] : [{ id: 'members', icon: Users, label: 'Members', count: meta?.memberCount || 0 }]),
     { id: 'threads', icon: MessageSquare, label: 'Threads', count: threads.length },
     { id: 'pinned',  icon: Pin,           label: 'Pinned',  count: displayPinnedMessages.length },
   ] as const;
@@ -200,7 +200,7 @@ export const RightPanel: React.FC = () => {
       </div>
 
       {/* Channel Header / Description */}
-      {meta && (
+      {meta && !meta.isDM && (
         <div className="px-4 py-5 border-b border-white/[0.03] space-y-4 shrink-0">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-black uppercase tracking-widest text-foreground/50 flex items-center gap-2">

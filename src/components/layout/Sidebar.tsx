@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { 
-  Plus, Hash, Moon, Sun, Pin,
+  Plus, Hash, Pin,
   Hexagon, ChevronDown, ChevronRight, 
   Search as SearchIcon, Settings, Telescope, Users, Mail
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { useTheme } from '../../hooks/useTheme';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
-import { useNavigate } from 'react-router-dom';
 
-const mainChannelIds = ['2', '1', '3'];
+const mainChannelIds = ['c2', 'c1', 'c3'];
 
 const dms = [
   { 
-    id: '4', 
+    id: '1', 
     name: 'Alex Rivera', 
     status: 'online' as const, 
     unread: 2, 
@@ -24,7 +23,7 @@ const dms = [
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' 
   },
   { 
-    id: '5', 
+    id: '2', 
     name: 'Jordan Lee', 
     status: 'busy' as const, 
     unread: 0, 
@@ -32,12 +31,12 @@ const dms = [
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' 
   },
   { 
-    id: '6', 
-    name: 'Taylor Swift', 
-    status: 'offline' as const, 
+    id: '3', 
+    name: 'Sarah Chen', 
+    status: 'idle' as const, 
     unread: 0, 
     lastMsg: 'Catch you later ✌️',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Taylor' 
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' 
   },
 ];
 
@@ -45,14 +44,15 @@ const statusConfig = {
   online: { color: 'bg-emerald-400', ring: 'shadow-[0_0_6px_rgba(52,211,153,0.6)]', label: 'Online' },
   busy: { color: 'bg-rose-400', ring: 'shadow-[0_0_6px_rgba(251,113,133,0.6)]', label: 'Busy' },
   offline: { color: 'bg-white/20', ring: '', label: 'Offline' },
-  away: { color: 'bg-amber-400', ring: '', label: 'Away' },
+  away: { color: 'bg-amber-400', ring: 'shadow-[0_0_6px_rgba(251,191,36,0.6)]', label: 'Away' },
+  idle: { color: 'bg-amber-400', ring: 'shadow-[0_0_6px_rgba(251,191,36,0.6)]', label: 'Idle' },
+  dnd: { color: 'bg-rose-500', ring: 'shadow-[0_0_6px_rgba(244,63,94,0.6)]', label: 'Do Not Disturb' },
 };
 
 export const Sidebar: React.FC = () => {
   const activeConversationId = useAppStore((state) => state.activeConversationId);
   const activeView = useAppStore((state) => state.activeView);
   const conversationMeta = useAppStore((state) => state.conversationMeta);
-  const toggleGroupMembership = useAppStore((state) => state.toggleGroupMembership);
   const setActiveConversation = useAppStore((state) => state.setActiveConversation);
   const setActiveView = useAppStore((state) => state.setActiveView);
   const activeGroupId = useAppStore((state) => state.activeGroupId);
@@ -60,13 +60,12 @@ export const Sidebar: React.FC = () => {
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
   const pinnedChannelIds = useAppStore((state) => state.pinnedChannelIds);
   const togglePinChannel = useAppStore((state) => state.togglePinChannel);
+
   const { user } = useSettingsStore();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [hovered, setHovered] = useState<string | null>(null);
   const [expandedChannels, setExpandedChannels] = useState<Record<string, boolean>>({
-    '1': true,
-    '3': true
+    'c1': true,
+    'c3': true
   });
 
   const toggleChannelGroups = (id: string) => {
@@ -90,23 +89,21 @@ export const Sidebar: React.FC = () => {
           <span className="font-bold text-xl tracking-tighter text-foreground uppercase group-hover:text-glow transition-all duration-300">neo.</span>
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="p-2 ml-1 rounded-lg hover:bg-white/5 text-foreground/30 hover:text-primary transition-all duration-300 shrink-0"
-        >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
+
       </div>
 
       {/* Quick Navigation */}
       <div className="px-3 mb-6 space-y-4">
         <button 
           onClick={() => useAppStore.getState().toggleCommandPalette()}
-          className="w-full flex items-center gap-3 px-4 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] text-foreground/40 hover:text-foreground/80 hover:bg-white/[0.06] transition-all group/search"
+          className="flex items-center gap-3 w-full h-10 px-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-foreground/20 hover:text-primary/60 hover:border-primary/20 hover:bg-primary/5 transition-all group/search shadow-lg relative overflow-hidden"
         >
-          <SearchIcon size={16} className="text-foreground/20 group-hover/search:text-primary transition-colors" />
-          <span className="text-[13px] font-medium flex-grow text-left">Search everything...</span>
-          <div className="px-1.5 py-0.5 rounded border border-white/10 text-[9px] opacity-20 font-black">⌘K</div>
+          <SearchIcon size={14} className="group-hover/search:scale-110 transition-transform duration-300 group-hover/search:text-primary shrink-0" />
+          <span className="text-[11px] font-bold uppercase tracking-widest group-hover/search:text-primary/80 transition-colors">Search</span>
+          <div className="ml-auto flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.05] group-hover/search:border-primary/20 transition-colors">
+            <span className="text-[9px] font-black opacity-40 group-hover/search:opacity-60 transition-opacity">⌘</span>
+            <span className="text-[9px] font-black opacity-40 group-hover/search:opacity-60 transition-opacity">K</span>
+          </div>
         </button>
 
         <div className="flex flex-col gap-1">
@@ -119,12 +116,15 @@ export const Sidebar: React.FC = () => {
               setActiveView('friends');
             }}
             className={clsx(
-              "group relative w-full h-11 flex items-center px-4 rounded-xl transition-all duration-300",
+              "group relative w-full h-11 flex items-center px-4 rounded-xl transition-all duration-300 overflow-hidden",
               activeView === 'friends' 
                 ? "bg-white/[0.04] border border-white/[0.08] shadow-inner" 
                 : "bg-transparent border border-transparent hover:bg-white/[0.02]"
             )}
           >
+            <div className="absolute -right-3 -bottom-3 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
+              <Users size={64} strokeWidth={1} className="-rotate-12" />
+            </div>
             <div className={clsx(
               "relative z-10 flex items-center justify-center w-5 h-5 mr-3 transition-colors duration-300",
               activeView === 'friends' ? "text-primary" : "text-foreground/40 group-hover:text-primary/60"
@@ -377,20 +377,7 @@ export const Sidebar: React.FC = () => {
                                 <Pin size={10} className={clsx(isGroupPinned ? "fill-primary/20" : "rotate-45")} />
                               </button>
 
-                              {!group.joined && (
-                                <button
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    toggleGroupMembership(id, group.id);
-                                  }}
-                                  className={clsx(
-                                    "text-[8px] font-black uppercase tracking-tighter px-2 py-1 rounded transition-all",
-                                    "bg-white/[0.05] text-foreground/20 hover:text-foreground/40 opacity-0 group-hover/group-item:opacity-100"
-                                  )}
-                                >
-                                  Join
-                                </button>
-                              )}
+
                             </div>
                           </div>
                         );
@@ -418,11 +405,22 @@ export const Sidebar: React.FC = () => {
           {/* Message Requests Button */}
           <div className="px-2 mb-2">
             <button 
-              onClick={() => { /* Handle message requests view */ }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/20 hover:text-primary hover:bg-primary/5 transition-all group/req"
+              onClick={() => {
+                setActiveConversation(null);
+                setActiveView('message-requests');
+              }}
+              className={clsx(
+                "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all group/req",
+                activeView === 'message-requests'
+                  ? "bg-primary/20 text-primary border border-primary/20"
+                  : "text-foreground/20 hover:text-primary hover:bg-primary/5"
+              )}
             >
-              <div className="flex items-center justify-center w-5 h-5 rounded-lg bg-white/[0.03] group-hover/req:bg-primary/10 transition-colors">
-                <Mail size={12} className="group-hover/req:text-primary transition-colors" />
+              <div className={clsx(
+                "flex items-center justify-center w-5 h-5 rounded-lg transition-colors",
+                activeView === 'message-requests' ? "bg-primary/20" : "bg-white/[0.03] group-hover/req:bg-primary/10"
+              )}>
+                <Mail size={12} className={clsx("transition-colors", activeView === 'message-requests' ? "text-primary" : "group-hover/req:text-primary")} />
               </div>
               <span>Message Requests</span>
               <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(99,102,241,0.6)] animate-pulse" />
@@ -437,8 +435,6 @@ export const Sidebar: React.FC = () => {
                 <motion.button
                   key={dm.id}
                   onClick={() => setActiveConversation(dm.id)}
-                  onHoverStart={() => setHovered(dm.id)}
-                  onHoverEnd={() => setHovered(null)}
                   className={clsx(
                     'group relative flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-200 outline-none overflow-hidden',
                     isActive
@@ -467,26 +463,17 @@ export const Sidebar: React.FC = () => {
                     )} />
                   </div>
 
-                  <div className="flex flex-col text-left overflow-hidden flex-grow min-w-0">
-                    <span className={clsx(
-                      'text-[12px] font-semibold leading-tight truncate transition-colors',
-                      isActive ? 'text-primary' : 'text-foreground/60 group-hover:text-foreground/80'
-                    )}>
-                      {dm.name}
-                    </span>
-                    <AnimatePresence>
-                      {(hovered === dm.id || isActive) ? (
-                        <motion.span
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="text-[10px] text-foreground/25 truncate leading-tight font-medium"
-                        >
-                          {dm.lastMsg}
-                        </motion.span>
-                      ) : null}
-                    </AnimatePresence>
-                  </div>
+                    <div className="flex flex-col text-left overflow-hidden flex-grow min-w-0">
+                      <span className={clsx(
+                        'text-[12px] font-semibold leading-tight truncate transition-colors',
+                        isActive ? 'text-primary' : 'text-foreground/60 group-hover:text-foreground/80'
+                      )}>
+                        {dm.name}
+                      </span>
+                      <span className="text-[10px] text-foreground/25 truncate leading-tight font-medium mt-0.5">
+                        {dm.lastMsg}
+                      </span>
+                    </div>
 
                   {dm.unread > 0 && (
                     <span className="px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold min-w-[18px] text-center shadow-[0_0_8px_rgba(99,102,241,0.4)] shrink-0">

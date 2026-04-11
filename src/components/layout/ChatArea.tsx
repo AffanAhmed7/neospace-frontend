@@ -16,7 +16,7 @@ import { MessageInput } from './MessageInput';
 
 // ─── Emoji Quick Reactions ─────────────────────────────────────────────────────
 
-const quickReactions = ['👍', '❤️', '😂', '🔥', '🤯', '🎉'];
+const quickReactions = ['👍', '❤️', '😂', '🔥', '🤯', '🎉', '👀', '✨', '🫡', '💯', '🚀', '🤔'];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -33,8 +33,17 @@ export const ChatArea: React.FC = () => {
   const togglePinMessage = useAppStore((state) => state.togglePinMessage);
   
   const addMessage = useAppStore(state => state.addMessage);
+  const acceptedRequestIds = useAppStore(state => state.acceptedRequestIds);
+  const friendIds = useAppStore(state => state.friendIds);
+  const acceptRequest = useAppStore(state => state.acceptRequest);
+  const deleteRequest = useAppStore(state => state.deleteRequest);
   
   const meta = activeConversationId ? conversationMeta[activeConversationId] : null;
+
+  // A conversation is "pending" only if it's a DM with someone who is NOT already a friend
+  // and has not been explicitly accepted yet.
+  const isAlreadyFriend = activeConversationId ? friendIds.includes(activeConversationId) : false;
+  const isPending = activeConversationId && meta?.isDM && !isAlreadyFriend && !acceptedRequestIds.includes(activeConversationId);
   const activeGroup = (meta?.groups && activeGroupId) ? meta.groups.find(g => g.id === activeGroupId) : null;
   const channelMessages = activeConversationId ? messages[activeConversationId] || [] : [];
   const currentPinnedIds = activeConversationId ? pinnedMessageIds[activeConversationId] || [] : [];
@@ -67,19 +76,31 @@ export const ChatArea: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 8 }}
                 transition={{ duration: 0.2 }}
-                onClick={() => setActiveView('info')}
+                onClick={() => {
+                  if (meta.isDM) {
+                    toggleProfilePanel(activeConversationId);
+                  } else {
+                    setActiveView('info');
+                  }
+                }}
                 className="flex items-center gap-4 cursor-pointer group/header-title"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
                   <div className="flex flex-col text-left">
                     <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase">
-                      #{activeGroup?.name || meta.name}
+                      {!meta.isDM && '# '}{activeGroup?.name || meta.name}
                     </h2>
                     <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/20 leading-none">
-                      <span className="group-hover/header-title:text-foreground/40 transition-colors">{meta.name}</span>
-                      <span className="opacity-20">/</span>
-                      <span className="text-primary/40 group-hover/header-title:text-primary/60 transition-colors font-black">{activeGroup?.name || 'Main Hub'}</span>
+                      <span className="group-hover/header-title:text-foreground/40 transition-colors">
+                        {meta.isDM ? 'Direct Message' : meta.name}
+                      </span>
+                      {!meta.isDM && (
+                        <>
+                          <span className="opacity-20">/</span>
+                          <span className="text-primary/40 group-hover/header-title:text-primary/60 transition-colors font-black">{activeGroup?.name || 'Main Hub'}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -145,21 +166,25 @@ export const ChatArea: React.FC = () => {
             </div>
           )}
 
-          <Button 
-            variant="ghost" 
-            className="p-2 h-auto rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" 
-            onClick={() => setActiveView('info')}
-          >
-            <Info size={17} />
-          </Button>
-          <div className="w-px h-4 bg-white/[0.03] mx-0.5 hidden lg:block" />
-          <Button
-            variant="ghost"
-            className="p-2 h-auto hidden lg:flex rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all"
-            onClick={toggleRightPanel}
-          >
-            <PanelRight size={17} />
-          </Button>
+          {meta && !meta.isDM && (
+            <>
+              <Button 
+                variant="ghost" 
+                className="p-2 h-auto rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" 
+                onClick={() => setActiveView('info')}
+              >
+                <Info size={17} />
+              </Button>
+              <div className="w-px h-4 bg-white/[0.03] mx-0.5 hidden lg:block" />
+              <Button
+                variant="ghost"
+                className="p-2 h-auto hidden lg:flex rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all"
+                onClick={toggleRightPanel}
+              >
+                <PanelRight size={17} />
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -296,7 +321,12 @@ export const ChatArea: React.FC = () => {
                       })}
                     </AnimatePresence>
                     <div ref={messagesEndRef} />
-                    <TypingIndicator />
+                    {isPending && (
+                      <TypingIndicator 
+                        name={meta.name} 
+                        avatar={meta.online[0]?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${meta.name}`} 
+                      />
+                    )}
                   </div>
                 </>
               )}
@@ -305,18 +335,59 @@ export const ChatArea: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* ─── Input Area ─────────────────────────────────────────────────── */}
+      {/* ─── Input Area or Pending Request Bar ─────────────────────────────────────────── */}
       {activeConversationId && (!activeGroupId || (activeGroup && activeGroup.joined)) && (
-        <div className="relative bg-background border-t border-white/[0.05] transition-all duration-500">
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary/20 opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-700" />
-          <MessageInput 
-            channelName={meta?.name ?? ''} 
-            onSend={(text, attachments) => {
-              if (activeConversationId) {
-                addMessage(activeConversationId, text, attachments);
-              }
-            }}
-          />
+        <div className="relative border-t border-white/[0.05] bg-bg-deep/50 backdrop-blur-xl">
+          {isPending ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-6 p-8 relative overflow-hidden"
+            >
+              {/* Subtle Radiance */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+              
+              <div className="flex flex-col items-center gap-2 text-center max-w-md">
+                <h4 className="text-[14px] font-black uppercase tracking-widest text-foreground/80">
+                  New Message Request
+                </h4>
+                <p className="text-[12px] font-medium text-foreground/25 leading-relaxed italic">
+                  "Would you like to start a conversation? They won't know you've read this until you accept."
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={() => acceptRequest(activeConversationId)}
+                  className="h-11 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[11px] shadow-glow-sm hover:scale-105 active:scale-95 transition-all"
+                >
+                  Accept Request
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={() => {
+                    deleteRequest(activeConversationId);
+                    setActiveConversation(null);
+                  }}
+                  className="h-11 px-6 rounded-xl border border-white/5 text-foreground/30 hover:text-rose-500 hover:bg-rose-500/5 hover:border-rose-500/10 font-black uppercase tracking-widest text-[11px] transition-all"
+                >
+                  Ignore & Delete
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
+            <>
+              <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary/20 opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-700" />
+              <MessageInput 
+                channelName={meta?.name ?? ''} 
+                onSend={(text, attachments) => {
+                  if (activeConversationId) {
+                    addMessage(activeConversationId, text, attachments);
+                  }
+                }}
+              />
+            </>
+          )}
         </div>
       )}
     </div>
@@ -417,6 +488,7 @@ const MessageBubble: React.FC<{
   const [showActions, setShowActions] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [showAllReactions, setShowAllReactions] = useState(false);
   const [userReaction, setUserReaction] = useState<string | null>(null);
   
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
@@ -467,8 +539,6 @@ const MessageBubble: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.25 }}
       className={clsx('group relative flex gap-3 px-2 pt-1.5 pb-2 rounded-xl border-none transition-all duration-200 hover:z-[110] overflow-visible', isOwn ? 'flex-row-reverse' : 'flex-row')}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
     >
       <Avatar 
         src={user.avatar} 
@@ -485,7 +555,11 @@ const MessageBubble: React.FC<{
           toggleProfilePanel(id);
         }}
       />
-      <div className={clsx('relative flex flex-col max-w-[75%] min-w-0', isOwn ? 'items-end' : 'items-start')}>
+      <div 
+        className={clsx('relative flex flex-col max-w-[75%] min-w-0', isOwn ? 'items-end' : 'items-start')}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+      >
         <div className="flex items-center gap-2 mb-1 px-1">
           <span 
             className="text-[12px] font-black tracking-tight text-foreground/50 cursor-pointer hover:text-foreground transition-colors"
@@ -577,18 +651,55 @@ const MessageBubble: React.FC<{
                 isOwn ? 'right-0' : 'left-0'
               )}
             >
-              {quickReactions.slice(0, 4).map((emoji) => (
-                <button 
-                  key={emoji} 
-                  onClick={() => addReaction(emoji)} 
-                  className={clsx(
-                    "p-1.5 rounded-lg text-[13px] transition-all hover:scale-110 active:scale-95",
-                    userReaction === emoji ? "bg-primary/20 text-primary" : "hover:bg-white/[0.06]"
+              <div className="flex items-center">
+                {/* First 5 emojis always visible */}
+                {quickReactions.slice(0, 5).map((emoji) => (
+                  <button 
+                    key={emoji} 
+                    onClick={() => addReaction(emoji)} 
+                    className={clsx(
+                      "p-1.5 rounded-lg text-[13px] transition-all hover:scale-110 active:scale-95",
+                      userReaction === emoji ? "bg-primary/20 text-primary" : "hover:bg-white/[0.06]"
+                    )}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+
+                {/* Expanded emojis */}
+                <AnimatePresence>
+                  {showAllReactions && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="flex items-center overflow-hidden"
+                    >
+                      {quickReactions.slice(5).map((emoji) => (
+                        <button 
+                          key={emoji} 
+                          onClick={() => addReaction(emoji)} 
+                          className={clsx(
+                            "p-1.5 rounded-lg text-[13px] transition-all hover:scale-110 active:scale-95",
+                            userReaction === emoji ? "bg-primary/20 text-primary" : "hover:bg-white/[0.06]"
+                          )}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </motion.div>
                   )}
+                </AnimatePresence>
+
+                {/* Expand / Collapse toggle */}
+                <button
+                  onClick={() => setShowAllReactions(p => !p)}
+                  className="p-1.5 rounded-lg text-[10px] font-black text-foreground/30 hover:text-primary hover:bg-white/[0.06] transition-all tracking-tighter"
+                  title={showAllReactions ? 'Show less' : 'More emojis'}
                 >
-                  {emoji}
+                  {showAllReactions ? '↩' : '+7'}
                 </button>
-              ))}
+              </div>
               <div className="w-px h-3 bg-white/10 mx-0.5" />
               <button onClick={() => setActiveThread(id)} className="p-1.5 rounded-lg text-foreground/30 hover:text-primary hover:bg-primary/10 transition-all"><Reply size={15} /></button>
               <button onClick={onPin} className={clsx("p-1.5 rounded-lg transition-all", isPinned ? "text-amber-400 bg-amber-400/10" : "text-foreground/30 hover:text-amber-400 hover:bg-amber-400/10")}>
@@ -699,10 +810,14 @@ const MessageBubble: React.FC<{
   );
 };
 
-const TypingIndicator: React.FC = () => {
+const TypingIndicator: React.FC<{ name: string; avatar: string }> = ({ name, avatar }) => {
   return (
-    <div className="flex items-center gap-3 px-2 py-1 mt-1">
-      <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Alex Rivera" size="sm" className="h-8 w-8 opacity-60" />
+    <motion.div 
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-3 px-2 py-1 mt-1"
+    >
+      <Avatar src={avatar} alt={name} size="sm" className="h-8 w-8 opacity-60" />
       <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white/[0.04] rounded-2xl rounded-tl-sm border border-white/[0.04]">
         {[0, 1, 2].map((i) => (
           <motion.span
@@ -712,7 +827,7 @@ const TypingIndicator: React.FC = () => {
           />
         ))}
       </div>
-      <span className="text-[11px] text-foreground/20 font-black uppercase tracking-widest">Alex is typing…</span>
-    </div>
+      <span className="text-[11px] text-foreground/20 font-black uppercase tracking-widest">{name} is typing…</span>
+    </motion.div>
   );
 };

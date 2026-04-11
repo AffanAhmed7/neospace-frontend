@@ -13,6 +13,7 @@ import { CommandPalette } from './CommandPalette';
 import { NotificationPanel } from './NotificationPanel';
 import { UserProfileModal } from '../settings/UserProfileModal';
 import { HomeDashboard } from './HomeDashboard';
+import { MessageRequests } from '../social/MessageRequests';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AppShell: React.FC = () => {
@@ -24,11 +25,9 @@ export const AppShell: React.FC = () => {
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
 
-  const activeGroupId = useAppStore((state) => state.activeGroupId);
   const activeConversationId = useAppStore((state) => state.activeConversationId);
   const conversationMeta = useAppStore((state) => state.conversationMeta);
-  const activeGroup = activeConversationId && activeGroupId ? conversationMeta[activeConversationId]?.groups?.find(g => g.id === activeGroupId) : null;
-  const isUnjoinedGroup = activeView === 'chat' && activeGroupId && activeGroup && !activeGroup.joined;
+
 
   return (
     <div className="flex h-screen w-full bg-transparent overflow-hidden relative">
@@ -149,16 +148,28 @@ export const AppShell: React.FC = () => {
                   <CreateGroup />
                 </motion.div>
               )}
+              {activeView === 'message-requests' && (
+                <motion.div
+                  key="message-requests"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-full"
+                >
+                  <MessageRequests />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
       </main>
 
       {/* Right Panels Container */}
-      <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
+      <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group' || activeView === 'message-requests') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
         <AnimatePresence mode="popLayout">
           {/* Right Panel */}
-          {rightPanelOpen && activeView === 'chat' && (
+          {rightPanelOpen && activeView === 'chat' && activeConversationId && !conversationMeta[activeConversationId]?.isDM && (
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}

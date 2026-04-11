@@ -6,6 +6,7 @@ import { ProfileForm } from '../../components/settings/ProfileForm';
 import { FormRow } from '../../components/settings/FormRow';
 import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useAppStore } from '../../store/useAppStore';
 import { ShieldCheck, X } from 'lucide-react';
@@ -18,10 +19,46 @@ export const Settings: React.FC = () => {
   const { theme, setTheme } = useAppStore();
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') navigate('/app');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   const handleLogout = () => {
     logout();
     addToast('Logged out successfully!', 'info');
     navigate('/');
+  };
+
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    next: '',
+    confirm: ''
+  });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const handlePasswordUpdate = async () => {
+    if (passwordData.next !== passwordData.confirm) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
+    if (passwordData.next.length < 8) {
+      addToast('Password must be at least 8 characters', 'error');
+      return;
+    }
+    
+    setIsUpdatingPassword(true);
+    const success = await useSettingsStore.getState().updatePassword(passwordData.current, passwordData.next);
+    if (success) {
+      addToast('Password updated successfully', 'success');
+      setPasswordData({ current: '', next: '', confirm: '' });
+    } else {
+      addToast('Failed to update password', 'error');
+    }
+    setIsUpdatingPassword(false);
   };
 
   const renderContent = () => {
@@ -174,6 +211,52 @@ export const Settings: React.FC = () => {
             description="Manage your account security and data."
           >
             <div className="space-y-6">
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-3xl p-6 space-y-6">
+                 <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-4 px-2">Security & Password</h4>
+                 
+                 <FormRow label="Current Password" description="Verify your identity.">
+                    <Input 
+                      type="password"
+                      placeholder="••••••••"
+                      value={passwordData.current}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPasswordData({...passwordData, current: e.target.value})}
+                      className="h-10 bg-white/[0.02] border-white/[0.05] focus:border-primary/20 text-[13px]"
+                    />
+                 </FormRow>
+
+                 <FormRow label="New Password" description="Min. 8 characters.">
+                    <Input 
+                      type="password"
+                      placeholder="••••••••"
+                      value={passwordData.next}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPasswordData({...passwordData, next: e.target.value})}
+                      className="h-10 bg-white/[0.02] border-white/[0.05] focus:border-primary/20 text-[13px]"
+                    />
+                 </FormRow>
+
+                 <FormRow label="Confirm Password" description="Must match new password.">
+                    <Input 
+                      type="password"
+                      placeholder="••••••••"
+                      value={passwordData.confirm}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPasswordData({...passwordData, confirm: e.target.value})}
+                      className="h-10 bg-white/[0.02] border-white/[0.05] focus:border-primary/20 text-[13px]"
+                    />
+                 </FormRow>
+
+                 <div className="pt-4 flex justify-end">
+                    <Button 
+                      variant="primary" 
+                      onClick={handlePasswordUpdate}
+                      isLoading={isUpdatingPassword}
+                      disabled={!passwordData.current || !passwordData.next || !passwordData.confirm}
+                      className="h-10 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-glow-sm"
+                    >
+                      Update Password
+                    </Button>
+                 </div>
+              </div>
+
               <div className="bg-rose-500/[0.02] border border-rose-500/10 rounded-3xl p-8 space-y-4">
                 <div className="flex flex-col gap-1.5">
                    <h4 className="text-rose-500 text-base font-bold flex items-center gap-2">
@@ -222,18 +305,13 @@ export const Settings: React.FC = () => {
         </main>
       </div>
       
-      {/* Premium Back Button */}
+      {/* Simple Close Button */}
       <button 
         onClick={() => navigate('/app')}
-        className="fixed top-6 right-6 z-50 p-1.5 rounded-xl bg-white/[0.03] hover:bg-primary/5 transition-all duration-300 group flex items-center gap-2.5 pr-4 border border-white/[0.03]"
+        className="fixed top-8 right-8 z-50 h-10 w-10 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-500 transition-all duration-300 group flex items-center justify-center shadow-2xl"
+        title="Close (ESC)"
       >
-        <div className="h-8 w-8 rounded-lg bg-white/[0.03] flex items-center justify-center text-foreground/20 group-hover:text-primary transition-colors">
-          <X size={18} />
-        </div>
-        <div className="flex flex-col items-start leading-none">
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/20 group-hover:text-primary/50 transition-colors">Close</span>
-          <span className="text-[12px] font-bold text-foreground">Overview</span>
-        </div>
+        <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
       </button>
     </div>
   );

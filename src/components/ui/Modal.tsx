@@ -15,9 +15,17 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  showCloseButton?: boolean;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, className }) => {
+export const Modal: React.FC<ModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  className,
+  showCloseButton = true
+}) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -58,12 +66,14 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           )}
         >
           {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 z-[60] rounded-full p-2 transition-all duration-200 hover:bg-white/10 text-white/30 hover:text-white active:scale-90"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="absolute top-5 right-5 z-[60] rounded-full p-2 transition-all duration-200 hover:bg-white/10 text-white/30 hover:text-white active:scale-90"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
 
           {/* Optional Title */}
           {title && (

@@ -35,7 +35,7 @@ export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 'md', isOnline,
     : '??';
 
   return (
-    <div className={cn('relative inline-block', className)} {...props}>
+    <div className={cn('relative inline-block rounded-2xl', className)} {...props}>
       <div
         className={cn(
           'flex items-center justify-center rounded-2xl overflow-hidden bg-primary text-white font-semibold',
