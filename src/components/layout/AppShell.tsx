@@ -6,11 +6,12 @@ import { ChatArea } from './ChatArea';
 import { ChannelInfo } from './ChannelInfo';
 import { ExploreChannels } from '../discovery/ExploreChannels';
 import { CreateChannel } from '../discovery/CreateChannel';
+import { CreateGroup } from '../discovery/CreateGroup'
 import { FriendsPage } from '../social/FriendsPage';
 import { RightPanel } from './RightPanel';
 import { CommandPalette } from './CommandPalette';
 import { NotificationPanel } from './NotificationPanel';
-import { UserProfilePanel } from '../settings/UserProfilePanel';
+import { UserProfileModal } from '../settings/UserProfileModal';
 import { HomeDashboard } from './HomeDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,9 +19,16 @@ export const AppShell: React.FC = () => {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
   const rightPanelOpen = useAppStore((state) => state.rightPanelOpen);
   const profilePanelOpen = useAppStore((state) => state.profilePanelOpen);
+  const profileUserId = useAppStore((state) => state.profileUserId);
   const activeView = useAppStore((state) => state.activeView);
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
+
+  const activeGroupId = useAppStore((state) => state.activeGroupId);
+  const activeConversationId = useAppStore((state) => state.activeConversationId);
+  const conversationMeta = useAppStore((state) => state.conversationMeta);
+  const activeGroup = activeConversationId && activeGroupId ? conversationMeta[activeConversationId]?.groups?.find(g => g.id === activeGroupId) : null;
+  const isUnjoinedGroup = activeView === 'chat' && activeGroupId && activeGroup && !activeGroup.joined;
 
   return (
     <div className="flex h-screen w-full bg-transparent overflow-hidden relative">
@@ -37,7 +45,7 @@ export const AppShell: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-bg-deep/80 backdrop-blur-md lg:hidden"
+            className="fixed inset-0 z-40 bg-bg-deep/90 lg:hidden"
             onClick={toggleSidebar}
           />
         )}
@@ -46,7 +54,7 @@ export const AppShell: React.FC = () => {
       {/* Sidebar - Elevated Glass */}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 border-r border-white/[0.03] glass-2 shadow-2xl shadow-black/50",
+          "fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 border-r border-white/[0.03] bg-bg-deep/90 shadow-2xl shadow-black/50",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -54,9 +62,9 @@ export const AppShell: React.FC = () => {
       </aside>
 
       {/* Main Content - Broader Overview */}
-      <main className="flex flex-col flex-grow min-w-0 bg-transparent relative z-10 overflow-hidden">
-        <div className="flex-grow flex flex-col min-w-0 p-2 md:p-3 overflow-hidden">
-          <div className="flex-grow flex flex-col min-w-0 rounded-xl overflow-hidden glass-1 shadow-inner border border-white/[0.02]">
+      <main className="flex flex-col flex-grow min-w-0 min-h-0 bg-transparent relative z-10 overflow-hidden">
+        <div className="flex-grow flex flex-col min-w-0 min-h-0 overflow-hidden">
+          <div className="flex-grow flex flex-col min-w-0 min-h-0 bg-bg-deep/90">
             <AnimatePresence mode="wait">
               {activeView === 'home' && (
                 <motion.div
@@ -129,39 +137,36 @@ export const AppShell: React.FC = () => {
                   <CreateChannel />
                 </motion.div>
               )}
+              {activeView === 'create-group' && (
+                <motion.div
+                  key="create-group"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-full"
+                >
+                  <CreateGroup />
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>
       </main>
 
       {/* Right Panels Container */}
-      <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
+      <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
         <AnimatePresence mode="popLayout">
           {/* Right Panel */}
-          {rightPanelOpen && !profilePanelOpen && activeView === 'chat' && (
+          {rightPanelOpen && activeView === 'chat' && (
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="w-72 border-l border-white/[0.03] glass-2 shadow-2xl shadow-black/50"
+              className="w-72 border-l border-white/[0.03] bg-bg-deep/90 shadow-2xl shadow-black/50"
             >
               <RightPanel />
-            </motion.aside>
-          )}
-
-          {/* Profile Panel */}
-          {profilePanelOpen && (
-            <motion.aside
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="w-80 border-l border-white/[0.03] glass-3 shadow-2xl shadow-black/50"
-            >
-              <UserProfilePanel 
-                onClose={toggleProfilePanel} 
-              />
             </motion.aside>
           )}
         </AnimatePresence>
@@ -170,6 +175,17 @@ export const AppShell: React.FC = () => {
       {/* Overlays */}
       <CommandPalette />
       <NotificationPanel />
+
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {profilePanelOpen && (
+          <UserProfileModal
+            key={profileUserId || 'me'}
+            onClose={() => toggleProfilePanel()}
+          />
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

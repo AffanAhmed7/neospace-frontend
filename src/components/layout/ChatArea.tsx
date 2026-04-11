@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Hash, PanelRight, Send, Paperclip, Smile, Bell, AtSign,
-  MoreHorizontal, Reply, Edit3, Flame, Info
+  Hash, PanelRight, File as FileIcon, Copy,
+  Reply, Flame, Info, Pin, Check, Trash2, UserMinus, Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
@@ -9,35 +9,10 @@ import { useSettingsStore } from '../../store/useSettingsStore';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
+import { MessageInput } from './MessageInput';
 
-// ─── Sample Data ──────────────────────────────────────────────────────────────
-
-const sampleMessages = [
-  {
-    id: 'm1',
-    user: { name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
-    content: 'Has anyone seen the latest design specs for the dashboard? They look incredible 🔥',
-    time: '10:24 AM',
-    reactions: [{ emoji: '🔥', count: 3 }, { emoji: '👀', count: 2 }],
-    isOwn: false,
-  },
-  {
-    id: 'm2',
-    user: { name: 'Jordan Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
-    content: 'Just uploaded them to the #engineering channel. The new glassmorphism treatment is 🤌',
-    time: '10:26 AM',
-    reactions: [{ emoji: '🤌', count: 5 }],
-    isOwn: false,
-  },
-  {
-    id: 'm3',
-    user: { name: 'Jane Doe', avatar: '' }, // Handled by store
-    content: 'The ambient glow on the sidebar is such a good touch. Sarah crushed it.',
-    time: '10:28 AM',
-    reactions: [],
-    isOwn: true,
-  },
-];
+// ─── Sample Data & Helpers ──────────────────────────────────────────────────
+// Moved to useAppStore.ts for global accessibility
 
 // ─── Emoji Quick Reactions ─────────────────────────────────────────────────────
 
@@ -51,14 +26,25 @@ export const ChatArea: React.FC = () => {
   const setActiveConversation = useAppStore((state) => state.setActiveConversation);
   const setActiveView = useAppStore((state) => state.setActiveView);
   const toggleRightPanel = useAppStore((state) => state.toggleRightPanel);
-  const toggleNotificationPanel = useAppStore((state) => state.toggleNotificationPanel);
   const { user } = useSettingsStore();
   const conversationMeta = useAppStore((state) => state.conversationMeta);
+  const messages = useAppStore((state) => state.messages);
+  const pinnedMessageIds = useAppStore((state) => state.pinnedMessageIds);
+  const togglePinMessage = useAppStore((state) => state.togglePinMessage);
+  
+  const addMessage = useAppStore(state => state.addMessage);
+  
   const meta = activeConversationId ? conversationMeta[activeConversationId] : null;
   const activeGroup = (meta?.groups && activeGroupId) ? meta.groups.find(g => g.id === activeGroupId) : null;
-  const rightPanelOpen = useAppStore((state) => state.rightPanelOpen);
+  const channelMessages = activeConversationId ? messages[activeConversationId] || [] : [];
+  const currentPinnedIds = activeConversationId ? pinnedMessageIds[activeConversationId] || [] : [];
+  const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Early return if in a conversation but meta is not loaded yet
+  // This simplifies nested checks later
+  if (activeConversationId && !meta) return null;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -71,7 +57,7 @@ export const ChatArea: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent relative selection:bg-primary/20">
       {/* ─── Header ─────────────────────────────────────────────────────────── */}
-      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 glass-2 z-50 sticky top-0">
+      <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-2xl backdrop-blur-md">
         <div className="flex items-center gap-3">
           <AnimatePresence mode="wait">
             {meta ? (
@@ -82,20 +68,20 @@ export const ChatArea: React.FC = () => {
                 exit={{ opacity: 0, x: 8 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => setActiveView('info')}
-                className="flex items-center gap-3.5 cursor-pointer group/header-title"
+                className="flex items-center gap-4 cursor-pointer group/header-title"
               >
-                <div className="h-9 w-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary ring-1 ring-primary/10 group-hover/header-title:bg-primary group-hover/header-title:text-white transition-all duration-300 shadow-lg shadow-primary/5">
-                  <Hash size={18} />
-                </div>
-                <div className="flex flex-col text-left">
-                  <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/15 leading-none mb-1.5">
-                    <span>{meta.name}</span>
-                    <span className="opacity-40">/</span>
-                    <span className="text-primary/40 group-hover/header-title:text-primary/60 transition-colors">{activeGroup?.name || 'general'}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
+                  <div className="flex flex-col text-left">
+                    <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase">
+                      #{activeGroup?.name || meta.name}
+                    </h2>
+                    <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/20 leading-none">
+                      <span className="group-hover/header-title:text-foreground/40 transition-colors">{meta.name}</span>
+                      <span className="opacity-20">/</span>
+                      <span className="text-primary/40 group-hover/header-title:text-primary/60 transition-colors font-black">{activeGroup?.name || 'Main Hub'}</span>
+                    </div>
                   </div>
-                  <h2 className="font-bold text-foreground text-[16px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300">
-                    #{activeGroup?.name || 'general'}
-                  </h2>
                 </div>
               </motion.div>
             ) : (
@@ -108,7 +94,7 @@ export const ChatArea: React.FC = () => {
                 <div className="h-8 w-8 bg-white/[0.02] rounded-xl flex items-center justify-center ring-1 ring-white/[0.03]">
                   <Hash size={16} className="text-foreground/10" />
                 </div>
-                <h2 className="font-bold text-foreground/15 text-[14px] tracking-tight">No channel selected</h2>
+                <h2 className="font-bold text-foreground/15 text-[14px] tracking-tight">Select a workspace</h2>
               </motion.div>
             )}
           </AnimatePresence>
@@ -128,7 +114,15 @@ export const ChatArea: React.FC = () => {
                       src={onlineUser.avatar}
                       alt={onlineUser.name}
                       size="sm"
-                      className="h-6 w-6 transition-all !rounded-full"
+                      className="h-6 w-6 transition-all !rounded-full cursor-pointer hover:ring-2 hover:ring-primary/50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const id = (onlineUser as any).id || 
+                          (onlineUser.name.includes('Alex') ? '1' : 
+                          onlineUser.name.includes('Jordan') ? '2' : 
+                          onlineUser.name.includes('Sarah') ? '3' : 'me');
+                        toggleProfilePanel(id);
+                      }}
                     />
                   </div>
                 ))}
@@ -151,9 +145,6 @@ export const ChatArea: React.FC = () => {
             </div>
           )}
 
-          <Button variant="ghost" className="p-2 h-auto rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" onClick={toggleNotificationPanel}>
-            <Bell size={17} />
-          </Button>
           <Button 
             variant="ghost" 
             className="p-2 h-auto rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" 
@@ -173,7 +164,7 @@ export const ChatArea: React.FC = () => {
       </header>
 
       {/* ─── Body ───────────────────────────────────────────────────────────── */}
-      <div className="flex-grow overflow-y-auto relative flex flex-col custom-scrollbar-compact">
+      <div className="flex-grow overflow-y-auto relative flex flex-col min-h-0 custom-scrollbar-compact">
         <AnimatePresence mode="wait">
           {!activeConversationId ? (
             <EmptyState key="empty" onSelect={setActiveConversation} />
@@ -184,81 +175,125 @@ export const ChatArea: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex-grow flex flex-col max-w-4xl mx-auto w-full px-4 py-6"
+              className={clsx(
+                activeGroupId && activeGroup && !activeGroup.joined 
+                  ? "max-w-none px-0 pt-0 pb-0 flex-1" 
+                  : "max-w-none w-full px-8 pt-0 pb-0 flex-1 flex flex-col"
+              )}
             >
               {activeGroupId && activeGroup && !activeGroup.joined ? (
-                /* Join Group Overlay */
-                <div className="flex-grow flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in duration-300">
-                  <div className="max-w-md w-full bg-white/[0.02] border border-white/[0.05] rounded-3xl p-10 backdrop-blur-3xl shadow-2xl shadow-black/50 text-center relative overflow-hidden">
-                    {/* Background glow */}
-                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
-                    <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-secondary/20 rounded-full blur-[100px] pointer-events-none" />
-                    
-                    <div className="relative z-10">
-                      <div className="mx-auto h-16 w-16 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-center mb-6 shadow-inner relative">
-                        <div className="absolute inset-0 bg-white/5 blur-xl rounded-full" />
-                        <Hash size={28} className="text-foreground/80 relative z-10" />
+                /* Elegant Borderless Group Gateway */
+                <div className="w-full flex-1 flex flex-col items-center justify-start pt-4 lg:pt-8 p-6 lg:p-12 animate-in fade-in duration-700 relative bg-transparent select-none">
+                  {/* Radiance Removed */}
+
+                  <div className="relative z-10 w-full max-w-2xl flex flex-col items-center">
+                    {/* Refined Iconography Removed as requested */}
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.7 }}
+                      className="flex flex-col items-center w-full"
+                    >
+                      {/* Classy Metadata Headers */}
+                      <div className="flex items-center gap-6 mb-8">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/20 mb-1">Category</span>
+                          <span className="text-[11px] font-bold text-primary/60 uppercase tracking-widest">{meta!.category || 'General'}</span>
+                        </div>
+                        <div className="w-px h-6 bg-white/5" />
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/20 mb-1">Established</span>
+                          <span className="text-[11px] font-bold text-foreground/40 uppercase tracking-widest">June 2023</span>
+                        </div>
                       </div>
                       
-                      <h3 className="text-2xl font-black text-foreground tracking-tighter mb-3 uppercase">Join {activeGroup.name}</h3>
-                      <p className="text-[13px] text-foreground/50 leading-relaxed font-medium mb-10">
-                        {activeGroup.description || `This group is currently locked. Join to view history, participate in voice nodes, and collaborate with members.`}
-                      </p>
+                      <h3 className="text-2xl lg:text-3xl font-black text-foreground tracking-tighter uppercase mb-6 text-center">
+                        {activeGroup.name}
+                      </h3>
                       
-                      <div className="flex flex-col gap-3">
+                      <div className="w-full max-w-md text-center mb-10">
+                        <p className="text-[14px] lg:text-[15px] text-foreground/30 leading-relaxed font-medium">
+                          {activeGroup.description || `This space is currently restricted. Join to synchronize with the message history and collaborate with the existing members of this node.`}
+                        </p>
+                      </div>
+
+                      {/* Admin Attribution */}
+                      <div className="flex items-center gap-3 mb-12 px-5 py-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+                        <div className="h-5 w-5 rounded-full bg-gradient-to-br from-primary/40 to-secondary/20 border border-white/10" />
+                        <span className="text-[11px] font-bold text-foreground/40">
+                          Curated by <span className="text-foreground/70">Alex Rivera</span>
+                        </span>
+                      </div>
+
+                      {/* Quiet Stats */}
+                      <div className="flex items-center gap-10 mb-16">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
+                          <span className="text-[11px] font-bold text-foreground/40 uppercase tracking-widest">{meta!.memberCount || 12} Members</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40" />
+                          <span className="text-[11px] font-bold text-foreground/40 uppercase tracking-widest">{meta!.online.length || 3} Online</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-5 w-full max-w-[280px]">
                         <Button 
-                          className="w-full h-12 rounded-xl font-bold uppercase tracking-widest bg-white text-black hover:bg-white/90 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:scale-[1.02] active:scale-[0.98]"
+                          className="w-full h-12 rounded-xl font-black uppercase tracking-[0.2em] text-[11px] bg-white text-black hover:bg-white/90 transition-all shadow-[0_4px_30px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98]"
                           onClick={() => useAppStore.getState().toggleGroupMembership(activeConversationId!, activeGroupId)}
                         >
                           Join Group
                         </Button>
                         <button 
                           onClick={() => useAppStore.getState().setActiveGroup(null)}
-                          className="h-12 w-full rounded-xl font-bold text-[11px] uppercase tracking-widest text-foreground/30 hover:text-foreground/70 hover:bg-white/[0.02] transition-colors"
+                          className="h-12 w-full rounded-xl font-bold text-[11px] uppercase tracking-[0.2em] text-foreground/60 border border-white/5 hover:border-primary/30 hover:bg-white/[0.02] hover:text-white transition-all flex items-center justify-center gap-2"
                         >
-                          Cancel
+                          <Reply size={14} className="rotate-180 text-primary/60" />
+                          Back to Channel
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
+
+                  {/* Minimalist Accents */}
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
                 </div>
               ) : (
                 <>
+                  <div className="flex-1" /> {/* Push messages to the bottom */}
                   {/* Channel Start Intro (only in general/root) */}
                   {!activeGroupId && (
                     <div className="flex flex-col items-start text-left mb-6 px-4">
                       <div className="h-12 w-12 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-2xl flex items-center justify-center mb-3 ring-1 ring-white/[0.05] shadow-[0_4px_20px_rgba(99,102,241,0.08)]">
                         <Hash size={24} className="text-primary/60" />
                       </div>
-                      <h4 className="text-xl font-black text-foreground tracking-tighter mb-1.5 uppercase tracking-wide">Welcome to #{meta?.name}</h4>
+                      <h4 className="text-xl font-black text-foreground tracking-tighter mb-1.5 uppercase tracking-wide">Welcome to #{meta!.name}</h4>
                       <p className="text-[13px] text-foreground/40 font-medium max-w-xl leading-relaxed">
-                        {meta?.description || "This is the very beginning of the history for this channel."}
+                        {meta!.description || "This is the very beginning of the history for this channel."}
                       </p>
-                      <div className="mt-4 flex items-center gap-2">
-                        <button 
-                          onClick={() => { if (!rightPanelOpen) toggleRightPanel(); }}
-                          className="flex items-center gap-1.5 py-1 px-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary/40 hover:text-primary hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20"
-                        >
-                          <Edit3 size={11} />
-                          Edit Description
-                        </button>
-                      </div>
                       <div className="h-px w-full bg-gradient-to-r from-white/[0.05] to-transparent mt-8 mb-4" />
                     </div>
                   )}
 
                   {/* Message Container */}
-                  <div className="flex-1 space-y-2 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-primary)_0%,_transparent_70%)] opacity-[0.02] pointer-events-none" />
+                  <div className="space-y-2 relative overflow-visible">
+                    {/* Accent Removed */}
                     <AnimatePresence initial={false}>
-                      {sampleMessages.map((msg, i) => (
-                        <MessageBubble 
-                          key={msg.id} 
-                          {...msg}
-                          user={msg.isOwn ? { ...msg.user, name: user.username, avatar: user.avatar } : msg.user}
-                          delay={i * 0.05} 
-                        />
-                      ))}
+                      {channelMessages.map((msg, i) => {
+                        const messageUser = msg.isOwn ? { ...msg.user, name: user.username, avatar: user.avatar, id: 'me' } : msg.user;
+                        return (
+                          <MessageBubble 
+                            key={msg.id} 
+                            {...msg}
+                            user={messageUser as any}
+                            isPinned={currentPinnedIds.includes(msg.id)}
+                            onPin={() => activeConversationId && togglePinMessage(activeConversationId, msg.id)}
+                            delay={i * 0.05} 
+                          />
+                        );
+                      })}
                     </AnimatePresence>
                     <div ref={messagesEndRef} />
                     <TypingIndicator />
@@ -271,11 +306,17 @@ export const ChatArea: React.FC = () => {
       </div>
 
       {/* ─── Input Area ─────────────────────────────────────────────────── */}
-      {activeConversationId && (
-        <div className="z-30 relative bg-transparent transition-all duration-300">
-          <div className="max-w-5xl mx-auto px-6 py-4 pb-8">
-            <MessageInput channelName={meta?.name ?? ''} />
-          </div>
+      {activeConversationId && (!activeGroupId || (activeGroup && activeGroup.joined)) && (
+        <div className="relative bg-background border-t border-white/[0.05] transition-all duration-500">
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-primary/20 opacity-0 group-focus-within/input:opacity-100 transition-opacity duration-700" />
+          <MessageInput 
+            channelName={meta?.name ?? ''} 
+            onSend={(text, attachments) => {
+              if (activeConversationId) {
+                addMessage(activeConversationId, text, attachments);
+              }
+            }}
+          />
         </div>
       )}
     </div>
@@ -286,9 +327,9 @@ export const ChatArea: React.FC = () => {
 
 const EmptyState: React.FC<{ onSelect: (id: string) => void }> = ({ onSelect }) => {
   const channels = [
-    { id: '1', icon: '💬', name: '#general', desc: 'Team-wide chat' },
-    { id: '2', icon: '🌐', name: '#global-chat', desc: 'The heartbeat of NeoPlane' },
-    { id: '3', icon: '⚙️', name: '#engineering', desc: 'Tech & builds' },
+    { id: '1', icon: '💬', name: '#Casuals', desc: 'The pulse of the space' },
+    { id: '2', icon: '🌐', name: '#global-chat', desc: 'The wider world' },
+    { id: '3', icon: '⚙️', name: '#engineering', desc: 'Code & builds' },
   ];
 
   return (
@@ -341,7 +382,7 @@ const EmptyState: React.FC<{ onSelect: (id: string) => void }> = ({ onSelect }) 
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + i * 0.08 }}
               onClick={() => onSelect(ch.id)}
-              className="group flex items-center gap-3.5 p-3.5 rounded-xl glass-2 border border-white/[0.03] hover:border-primary/20 hover:bg-primary/[0.03] transition-all duration-300"
+              className="group flex items-center gap-3.5 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.03] hover:border-primary/20 hover:bg-primary/[0.03] transition-all duration-300"
             >
               <span className="text-xl">{ch.icon}</span>
               <div className="flex flex-col text-left">
@@ -359,76 +400,64 @@ const EmptyState: React.FC<{ onSelect: (id: string) => void }> = ({ onSelect }) 
   );
 };
 
-// ─── Message Input ────────────────────────────────────────────────────────────
-
-const MessageInput: React.FC<{ channelName: string }> = ({ channelName }) => {
-  const [text, setText] = useState('');
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const handleInput = () => {
-    if (ref.current) {
-      ref.current.style.height = 'auto';
-      ref.current.style.height = `${ref.current.scrollHeight}px`;
-    }
-  };
-  return (
-    <div className="relative group/input">
-      <div className="relative glass-1 bg-white/[0.01] border border-white/[0.05] focus-within:border-primary/20 rounded-xl transition-all duration-300 group-focus-within/input:bg-white/[0.03] overflow-hidden">
-        <div className="flex items-center gap-1 px-3 pt-2.5 pb-1 border-b border-white/[0.03]">
-          {['Bold', 'Italic', 'Strike'].map((label) => (
-            <button key={label} className="px-2 py-0.5 rounded-md text-[11px] font-mono text-foreground/20 hover:text-foreground/50 hover:bg-white/[0.04] transition-all">
-              {label[0]}
-            </button>
-          ))}
-          <div className="h-3 w-px bg-white/[0.05] mx-1" />
-          <button className="p-1.5 rounded-md text-foreground/20 hover:text-foreground/50 hover:bg-white/[0.04] transition-all">
-            <AtSign size={13} />
-          </button>
-        </div>
-        <div className="flex items-end gap-2 px-2 py-1.5">
-          <button className="p-2 shrink-0 text-foreground/20 hover:text-primary rounded-xl hover:bg-white/5 transition-all"><Paperclip size={16} /></button>
-          <textarea
-            ref={ref} rows={1} value={text} onChange={(e) => setText(e.target.value)} onInput={handleInput}
-            placeholder={`Message #${channelName}`}
-            className="flex-grow bg-transparent border-0 focus:ring-0 text-[14px] py-2 px-1 resize-none text-foreground placeholder:text-foreground/15 min-h-[36px] max-h-[180px] font-bold leading-relaxed outline-none"
-          />
-          <div className="flex items-center gap-1.5 shrink-0 pb-1">
-            <button className="p-2 text-foreground/20 hover:text-amber-400 rounded-xl hover:bg-white/5 transition-all"><Smile size={16} /></button>
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              className={clsx('h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-300', text.trim() ? 'bg-primary shadow-[0_0_15px_rgba(99,102,241,0.35)] text-white hover:scale-105' : 'bg-white/[0.04] text-foreground/15 cursor-not-allowed')}
-            >
-              <Send size={15} />
-            </motion.button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ─── Message Bubble ──────────────────────────────────────────────────────────
 
 const MessageBubble: React.FC<{
   id: string;
-  user: { name: string; avatar: string };
+  user: { id?: string; name: string; avatar: string };
   content: string;
   time: string;
   isOwn?: boolean;
+  isPinned?: boolean;
+  onPin?: () => void;
+  attachments?: { name: string; type: string; url: string }[];
   reactions?: { emoji: string; count: number }[];
   delay?: number;
-}> = ({ id, user, content, time, isOwn, reactions = [], delay = 0 }) => {
+}> = ({ id, user, content, time, isOwn, isPinned, onPin, attachments = [], reactions = [], delay = 0 }) => {
   const [showActions, setShowActions] = useState(false);
-  const [localReactions, setLocalReactions] = useState(reactions);
+  const [isCopied, setIsCopied] = useState(false);
+  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [userReaction, setUserReaction] = useState<string | null>(null);
+  
+  const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
   const setActiveThread = useAppStore((state) => state.setActiveThread);
+  const deleteMessage = useAppStore((state) => state.deleteMessage);
   const activeConversationId = useAppStore((state) => state.activeConversationId);
   const conversationMeta = useAppStore((state) => state.conversationMeta);
+  
+  const [localReactions, setLocalReactions] = useState(reactions);
+
   const threadMeta = activeConversationId ? conversationMeta[activeConversationId]?.threads?.[id] : null;
 
   const addReaction = (emoji: string) => {
     setLocalReactions((prev) => {
-      const existing = prev.find((r) => r.emoji === emoji);
-      if (existing) return prev.map((r) => r.emoji === emoji ? { ...r, count: r.count + 1 } : r);
-      return [...prev, { emoji, count: 1 }];
+      let next = [...prev];
+
+      // If already has a reaction, remove it first
+      if (userReaction) {
+        next = next.map(react => 
+          react.emoji === userReaction 
+            ? { ...react, count: Math.max(0, react.count - 1) } 
+            : react
+        ).filter(react => react.count > 0);
+
+        // If toggling the same emoji, just return the cleared list
+        if (userReaction === emoji) {
+          setUserReaction(null);
+          return next;
+        }
+      }
+
+      // Add the new reaction
+      const existing = next.find(r => r.emoji === emoji);
+      if (existing) {
+        next = next.map(r => r.emoji === emoji ? { ...r, count: r.count + 1 } : r);
+      } else {
+        next = [...next, { emoji, count: 1 }];
+      }
+      
+      setUserReaction(emoji);
+      return next;
     });
   };
 
@@ -437,60 +466,244 @@ const MessageBubble: React.FC<{
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.25 }}
-      className={clsx('group relative flex gap-3 px-2 py-1.5 rounded-xl hover:bg-white/[0.02] transition-all', isOwn ? 'flex-row-reverse' : 'flex-row')}
+      className={clsx('group relative flex gap-3 px-2 pt-1.5 pb-2 rounded-xl border-none transition-all duration-200 hover:z-[110] overflow-visible', isOwn ? 'flex-row-reverse' : 'flex-row')}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
-      <Avatar src={user.avatar} size="sm" alt={user.name} className="mt-0.5 shrink-0 h-8 w-8 ring-1 ring-white/[0.04]" />
-      <div className={clsx('flex flex-col max-w-[75%] min-w-0', isOwn ? 'items-end' : 'items-start')}>
+      <Avatar 
+        src={user.avatar} 
+        size="sm" 
+        alt={user.name} 
+        className="mt-0.5 shrink-0 h-8 w-8 ring-1 ring-white/[0.04] cursor-pointer hover:ring-primary/50 transition-all" 
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          const id = user.id || 
+            (user.name.includes('Alex') ? '1' : 
+            user.name.includes('Jordan') ? '2' : 
+            user.name.includes('Sarah') ? '3' : 
+            user.name.includes('Jane') ? 'me' : null);
+          toggleProfilePanel(id);
+        }}
+      />
+      <div className={clsx('relative flex flex-col max-w-[75%] min-w-0', isOwn ? 'items-end' : 'items-start')}>
         <div className="flex items-center gap-2 mb-1 px-1">
-          <span className="text-[12px] font-black tracking-tight text-foreground/50">{user.name}</span>
+          <span 
+            className="text-[12px] font-black tracking-tight text-foreground/50 cursor-pointer hover:text-foreground transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              const id = user.id || 
+                (user.name.includes('Alex') ? '1' : 
+                user.name.includes('Jordan') ? '2' : 
+                user.name.includes('Sarah') ? '3' : 
+                user.name.includes('Jane') ? 'me' : null);
+              toggleProfilePanel(id);
+            }}
+          >
+            {user.name}
+          </span>
           <span className="text-[10px] text-foreground/15 font-black uppercase tracking-widest">{time}</span>
         </div>
-        <div className={clsx('relative px-4 py-2.5 rounded-2xl text-[14px] font-bold leading-relaxed shadow-md border transition-all duration-200', isOwn ? 'bg-primary text-white rounded-tr-sm border-primary/20 shadow-[0_2px_20px_rgba(99,102,241,0.2)]' : 'glass-2 text-foreground rounded-tl-sm border-white/[0.04] hover:border-white/[0.1]')}>
+        <div className={clsx(
+          'relative px-4 py-2.5 rounded-2xl text-[14px] font-bold leading-relaxed shadow-md border transition-all duration-200', 
+          isOwn 
+            ? 'bg-primary text-white rounded-tr-sm border-primary/20 shadow-[0_2px_20px_rgba(99,102,241,0.2)]' 
+            : 'bg-white/[0.04] text-foreground rounded-tl-sm border-transparent'
+        )}>
           {content}
+          
+          {attachments && attachments.length > 0 && (
+            <div className="mt-3 grid grid-cols-1 gap-2 max-w-[300px]">
+              {attachments.map((file, i) => (
+                <div key={i} className="group/file relative rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                  {file.type.startsWith('image/') ? (
+                    <img src={file.url} alt={file.name} className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="p-3 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center">
+                        <FileIcon size={20} className="text-primary" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[12px] font-bold truncate text-foreground">{file.name}</span>
+                        <span className="text-[10px] text-foreground/30 uppercase font-black tracking-widest">{file.type.split('/')[1] || 'File'}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {isPinned && (
+            <div className={clsx(
+              "absolute -top-2 px-1.5 py-0.5 rounded-md bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg z-10",
+              isOwn ? "-left-8" : "-right-8"
+            )}>
+              <Pin size={8} fill="currentColor" />
+              Pinned
+            </div>
+          )}
         </div>
         {localReactions.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5 px-1">
             {localReactions.map((r) => (
-              <button key={r.emoji} onClick={() => addReaction(r.emoji)} className="flex items-center gap-1 px-2 py-0.5 rounded-full glass-2 border border-white/[0.05] hover:border-primary/20 text-[12px] transition-all">
+              <button 
+                key={r.emoji} 
+                onClick={() => addReaction(r.emoji)} 
+                className={clsx(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full border text-[12px] transition-all",
+                  userReaction === r.emoji 
+                    ? "bg-primary/20 border-primary/40 text-primary shadow-[0_0_8px_rgba(99,102,241,0.2)]" 
+                    : "bg-white/[0.04] border-white/[0.05] hover:border-primary/20"
+                )}
+              >
                 <span>{r.emoji}</span>
-                <span className="text-[11px] text-foreground/40 font-black">{r.count}</span>
+                <span className={clsx("text-[11px] font-black", userReaction === r.emoji ? "text-primary" : "text-foreground/40")}>{r.count}</span>
               </button>
             ))}
           </div>
         )}
         {threadMeta && (
-          <button onClick={() => setActiveThread(id)} className="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-xl glass-2 border border-white/[0.04] hover:border-primary/20 hover:bg-primary/5 transition-all">
+          <button onClick={() => setActiveThread(id)} className="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.04] hover:border-primary/20 hover:bg-primary/5 transition-all">
             <span className="text-[11px] font-black text-primary uppercase tracking-widest">{threadMeta.replies} Replies</span>
           </button>
         )}
+        <AnimatePresence>
+          {showActions && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: isOwn ? 10 : -10 }} 
+              animate={{ opacity: 1, scale: 1, x: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, x: isOwn ? 10 : -10 }}
+              className={clsx(
+                'absolute top-full mt-1 flex items-center gap-0.5 p-1 rounded-xl bg-[#0A0A0C] border border-white/[0.1] shadow-2xl z-[100]', 
+                isOwn ? 'right-0' : 'left-0'
+              )}
+            >
+              {quickReactions.slice(0, 4).map((emoji) => (
+                <button 
+                  key={emoji} 
+                  onClick={() => addReaction(emoji)} 
+                  className={clsx(
+                    "p-1.5 rounded-lg text-[13px] transition-all hover:scale-110 active:scale-95",
+                    userReaction === emoji ? "bg-primary/20 text-primary" : "hover:bg-white/[0.06]"
+                  )}
+                >
+                  {emoji}
+                </button>
+              ))}
+              <div className="w-px h-3 bg-white/10 mx-0.5" />
+              <button onClick={() => setActiveThread(id)} className="p-1.5 rounded-lg text-foreground/30 hover:text-primary hover:bg-primary/10 transition-all"><Reply size={15} /></button>
+              <button onClick={onPin} className={clsx("p-1.5 rounded-lg transition-all", isPinned ? "text-amber-400 bg-amber-400/10" : "text-foreground/30 hover:text-amber-400 hover:bg-amber-400/10")}>
+                <Pin size={13} fill={isPinned ? "currentColor" : "none"} />
+              </button>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(content);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }} 
+                className={clsx(
+                  "relative p-1.5 rounded-lg transition-all",
+                  isCopied ? "text-emerald-400 bg-emerald-400/10" : "text-foreground/30 hover:text-primary hover:bg-white/[0.06]"
+                )}
+                title="Copy Message"
+              >
+                <AnimatePresence mode="wait">
+                  {isCopied ? (
+                    <motion.div
+                      key="check"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      className="flex items-center gap-1.5 px-0.5"
+                    >
+                      <Check size={13} strokeWidth={3} />
+                      <span className="text-[9px] font-black uppercase tracking-tighter">Copied!</span>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="copy" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
+                      <Copy size={13} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+
+              <div className="relative">
+                <button 
+                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                  className={clsx(
+                    "p-1.5 rounded-lg transition-all",
+                    showDeleteMenu ? "text-rose-500 bg-rose-500/10" : "text-foreground/30 hover:text-rose-500 hover:bg-rose-500/10"
+                  )}
+                  title="Delete Options"
+                >
+                  <Trash2 size={13} />
+                </button>
+
+                <AnimatePresence>
+                  {showDeleteMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      className="absolute bottom-full right-0 mb-2 w-56 bg-[#0F0F12] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden z-[200]"
+                    >
+                      <div className="p-2 border-b border-white/[0.03] bg-white/[0.02]">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 px-2">
+                          {isOwn ? "Delete Message" : "Confirm Removal"}
+                        </span>
+                      </div>
+                      <div className="p-1.5 flex flex-col gap-1">
+                        {!isOwn && (
+                          <div className="px-3 py-2 mb-1 bg-rose-500/5 rounded-lg border border-rose-500/10">
+                            <p className="text-[10px] text-rose-300 font-bold leading-tight">
+                              This will remove the message from your view only. This action cannot be undone.
+                            </p>
+                          </div>
+                        )}
+                        
+                        <button 
+                          onClick={() => {
+                            if (activeConversationId) deleteMessage(activeConversationId, id);
+                          }}
+                          className={clsx(
+                            "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-[12px] font-bold transition-all",
+                            isOwn 
+                              ? "text-foreground/60 hover:text-foreground hover:bg-white/[0.04]" 
+                              : "text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                          )}
+                        >
+                          <UserMinus size={14} className={isOwn ? "text-foreground/30" : "text-rose-400"} />
+                          <span>Delete for me</span>
+                        </button>
+                        
+                        {isOwn && (
+                          <button 
+                            onClick={() => {
+                              if (activeConversationId) deleteMessage(activeConversationId, id);
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-[12px] font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all"
+                          >
+                            <Users size={14} />
+                            <span>Delete for everyone</span>
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      <AnimatePresence>
-        {showActions && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: -4 }}
-            className={clsx('absolute -top-9 flex items-center gap-0.5 p-1 rounded-xl glass-3 border border-white/[0.08] shadow-2xl z-[100]', isOwn ? 'right-0' : 'left-10')}
-          >
-            {quickReactions.slice(0, 4).map((emoji) => (
-              <button key={emoji} onClick={() => addReaction(emoji)} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-[13px] transition-all hover:scale-110 active:scale-95">{emoji}</button>
-            ))}
-            <div className="w-px h-3 bg-white/10 mx-0.5" />
-            <button onClick={() => setActiveThread(id)} className="p-1.5 rounded-lg text-foreground/30 hover:text-primary hover:bg-primary/10 transition-all"><Reply size={15} /></button>
-            <button className="p-1.5 rounded-lg hover:bg-white/[0.06] text-foreground/30 hover:text-foreground/60 transition-all"><Edit3 size={13} /></button>
-            <button className="p-1.5 rounded-lg hover:bg-white/[0.06] text-foreground/30 hover:text-foreground/60 transition-all"><MoreHorizontal size={13} /></button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
 
 const TypingIndicator: React.FC = () => {
   return (
-    <div className="flex items-center gap-3 px-2 py-2 mt-2">
+    <div className="flex items-center gap-3 px-2 py-1 mt-1">
       <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Alex Rivera" size="sm" className="h-8 w-8 opacity-60" />
-      <div className="flex items-center gap-1.5 px-3.5 py-2.5 glass-2 rounded-2xl rounded-tl-sm border border-white/[0.04]">
+      <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white/[0.04] rounded-2xl rounded-tl-sm border border-white/[0.04]">
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i} className="h-1.5 w-1.5 rounded-full bg-foreground/30"

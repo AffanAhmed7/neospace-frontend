@@ -57,7 +57,7 @@ export const FriendsPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
       {/* ─── Header ─────────────────────────────────────────────────── */}
-      <header className="flex h-[64px] items-center gap-0 border-b border-white/[0.03] px-5 shrink-0 glass-2 z-10 sticky top-0">
+      <header className="flex h-[64px] items-center gap-0 border-b border-white/[0.03] px-5 shrink-0 bg-bg-deep/90 z-10 sticky top-0">
         {/* Icon + Label */}
         <div className="flex items-center gap-2.5 pr-4 border-r border-white/[0.06]">
           <Users size={17} className="text-foreground/40" />
@@ -93,8 +93,8 @@ export const FriendsPage: React.FC = () => {
           className={clsx(
             'ml-auto flex items-center gap-2 px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all',
             addFriendMode
-              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-              : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300'
+              ? 'bg-primary/15 text-primary border border-primary/30'
+              : 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-white'
           )}
         >
           <UserPlus size={14} />
@@ -124,12 +124,12 @@ export const FriendsPage: React.FC = () => {
                     placeholder="Enter a username, e.g. cosmic#1234"
                     value={addInput}
                     onChange={(e) => setAddInput(e.target.value)}
-                    className="w-full h-10 px-4 bg-white/[0.03] border border-white/[0.07] focus:border-emerald-500/30 rounded-xl text-[13px] font-medium text-foreground placeholder:text-foreground/20 outline-none transition-all"
+                    className="w-full h-10 px-4 bg-white/[0.03] border border-white/[0.07] focus:border-primary/40 rounded-xl text-[13px] font-medium text-foreground placeholder:text-foreground/20 outline-none transition-all"
                   />
                 </div>
                 <button
                   disabled={!addInput.trim()}
-                  className="h-10 px-5 rounded-xl bg-emerald-500 text-white text-[12px] font-black disabled:opacity-30 hover:bg-emerald-400 transition-all"
+                  className="h-10 px-5 rounded-xl bg-primary text-white text-[12px] font-black disabled:opacity-30 hover:bg-primary/90 transition-all shadow-glow-sm"
                 >
                   Send Request
                 </button>
@@ -159,7 +159,7 @@ export const FriendsPage: React.FC = () => {
               className="flex flex-col"
             >
               {/* Search */}
-              <div className="px-4 pt-4 pb-2">
+              <div className="px-4 pt-10 pb-2">
                 <div className="relative group">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" />
                   <input
@@ -187,7 +187,10 @@ export const FriendsPage: React.FC = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="group flex items-center px-3 py-2 mx-2 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer border border-transparent hover:border-white/[0.02]"
-                    onClick={() => toggleProfilePanel(friend.id)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      toggleProfilePanel(friend.id);
+                    }}
                   >
                     {/* Avatar */}
                     <div className="relative mr-3 shrink-0">
@@ -250,9 +253,17 @@ export const FriendsPage: React.FC = () => {
                   key={req.id}
                   className="group flex items-center px-3 py-2.5 rounded-xl hover:bg-white/[0.04] border border-transparent hover:border-white/[0.02] transition-all"
                 >
-                  <Avatar src={req.avatar} alt={req.name} size="md" className="h-9 w-9 mr-3 ring-1 ring-white/[0.05]" />
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-[13px] font-bold text-foreground/75">{req.name}</span>
+                  <div 
+                    className="relative mr-3 shrink-0 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); toggleProfilePanel(req.id); }}
+                  >
+                    <Avatar src={req.avatar} alt={req.name} size="md" className="h-9 w-9 ring-1 ring-white/[0.05]" />
+                  </div>
+                  <div 
+                    className="flex flex-col flex-1 min-w-0 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); toggleProfilePanel(req.id); }}
+                  >
+                    <span className="text-[13px] font-bold text-foreground/75 group-hover:text-foreground transition-colors">{req.name}</span>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <Clock size={10} className="text-foreground/20" />
                       <span className="text-[10px] text-foreground/25 font-medium">Incoming friend request · 3h ago</span>

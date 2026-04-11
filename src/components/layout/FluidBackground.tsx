@@ -58,65 +58,55 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
   };
 
   return (
-    <div className="fixed inset-0 -z-50 overflow-hidden bg-[#010204] pointer-events-none">
-      
-
-      {/* 1. Global Directional Light (Top-Left) */}
-      <motion.div
-        animate={isStatic ? { opacity: 0.25, scale: 1.05 } : {
-          opacity: 0.25,
-          scale: 1,
-        }}
-        transition={isStatic ? { duration: 0.5 } : { duration: 0 }}
-        className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] sm:w-[40vw] sm:h-[40vw] rounded-full blur-[120px]"
-        style={{ 
-          background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.3) 0%, transparent 70%)',
-          mixBlendMode: 'screen',
-          // Interactive light shift with scroll
-          x: !isStatic ? lightX : undefined,
-          y: !isStatic ? lightY : undefined,
-          willChange: !isStatic ? 'transform' : 'auto',
-        }}
-      />
-
-      {/* 2. Liquid Blobs */}
-      <div className="absolute inset-0">
-        {blobs.map((blob, i) => (
+    <div className="fixed inset-0 -z-50 overflow-hidden bg-background pointer-events-none">
+      {/* 
+        Conditionally render effects based on static mode.
+        When isStatic is true (the app area), we skip gradients and blobs.
+      */}
+      {!isStatic && (
+        <>
+          {/* 1. Global Directional Light (Top-Left) */}
           <motion.div
-            key={i}
-            animate={isStatic ? getStaticPos(blob) : {
-              x: blob.staticX,
-              y: blob.staticY,
-              scale: 1,
-            }}
-            transition={isStatic ? { duration: 0.8, ease: "easeOut" } : { duration: 0 }}
-            className="absolute rounded-full"
+            animate={{ opacity: 0.25, scale: 1 }}
+            className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] sm:w-[40vw] sm:h-[40vw] rounded-full blur-[120px]"
             style={{ 
-              backgroundColor: blob.bg,
-              width: blob.w,
-              height: blob.h,
-              top: blob.top,
-              left: blob.left,
-              opacity: isStatic ? 0.6 : 0.75,
-              // Add scroll-driven transforms on top of the base animation
-              translateX: !isStatic ? scrollTransforms[i].x : undefined,
-              translateY: !isStatic ? scrollTransforms[i].y : undefined,
-              rotate: !isStatic ? scrollTransforms[i].rotate : undefined,
-              // Hardware-accelerated CSS blur instead of expensive SVG gooey filter
-              filter: 'blur(40px)',
-              // Force composite layers for buttery smooth 60fps scrolling
-              willChange: !isStatic ? 'transform' : 'auto',
+              background: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.3) 0%, transparent 70%)',
+              mixBlendMode: 'screen',
+              x: lightX,
+              y: lightY,
             }}
           />
-        ))}
-      </div>
 
-      {/* 3. Global Frosted Glass Finish */}
-      <div className="absolute inset-0 backdrop-blur-[25px] bg-[#010204]/45" />
-      
-      {/* 4. Fine Grain Texture */}
-      <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-
+          {/* 2. Liquid Blobs */}
+          <div className="absolute inset-0">
+            {blobs.map((blob, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full"
+                style={{ 
+                  backgroundColor: blob.bg,
+                  width: blob.w,
+                  height: blob.h,
+                  top: blob.top,
+                  left: blob.left,
+                  opacity: 0.75,
+                  translateX: scrollTransforms[i].x,
+                  translateY: scrollTransforms[i].y,
+                  rotate: scrollTransforms[i].rotate,
+                  filter: 'blur(40px)',
+                  willChange: 'transform',
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Global Frosted Glass Finish */}
+          <div className="absolute inset-0 bg-[#010204]/80" />
+          
+          {/* Fine Grain Texture */}
+          <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+        </>
+      )}
     </div>
   );
 };

@@ -42,9 +42,9 @@ export const NotificationPanel: React.FC = () => {
   ];
 
   return (
-    <div className="fixed top-20 right-8 z-50 w-[380px] overflow-hidden glass-plus bg-card/60 border-white/5 rounded-[32px] shadow-premium animate-in fade-in slide-in-from-top-4 duration-500">
+    <div className="fixed top-20 right-8 z-50 w-[380px] overflow-hidden bg-bg-deep/90 border border-white/5 rounded-[32px] shadow-premium animate-in fade-in slide-in-from-top-4 duration-500">
       {/* Header */}
-      <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5 backdrop-blur-3xl">
+      <div className="p-6 border-b border-white/5 flex items-center justify-between bg-bg-deep/50">
         <div className="flex items-center gap-3">
            <div className="h-8 w-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
               <Bell size={18} className="text-glow" />
@@ -114,7 +114,7 @@ export const NotificationPanel: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <button className="w-full py-4 text-[11px] font-black text-primary/60 hover:text-primary hover:bg-primary/5 transition-all border-t border-white/5 uppercase tracking-[0.2em] bg-white/5 backdrop-blur-3xl">
+      <button className="w-full py-4 text-[11px] font-black text-primary/60 hover:text-primary hover:bg-primary/5 transition-all border-t border-white/5 uppercase tracking-[0.2em] bg-bg-deep/80">
          Archive all notifications
       </button>
     </div>

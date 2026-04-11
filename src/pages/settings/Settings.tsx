@@ -109,7 +109,7 @@ export const Settings: React.FC = () => {
             description="Control when and how you want to be notified."
           >
             <div className="space-y-3">
-              <div className="glass-2 bg-white/[0.01] border-white/[0.03] rounded-3xl p-6 space-y-6">
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-3xl p-6 space-y-6">
                  <FormRow label="Mentions" description="Notify me when someone mentions me in a channel.">
                    <ToggleSwitch 
                      checked={notifications.mentions} 
@@ -141,7 +141,7 @@ export const Settings: React.FC = () => {
             description="Manage your visibility and security preferences."
           >
             <div className="space-y-3">
-              <div className="glass-2 bg-white/[0.01] border-white/[0.03] rounded-3xl p-6 space-y-6">
+              <div className="bg-white/[0.02] border border-white/[0.03] rounded-3xl p-6 space-y-6">
                  <FormRow label="Online Status" description="Show when you are active to other users.">
                    <ToggleSwitch 
                      checked={privacy.onlineStatus} 
@@ -155,7 +155,7 @@ export const Settings: React.FC = () => {
                    />
                  </FormRow>
                  <div className="pt-6 border-t border-white/[0.03]">
-                   <Button variant="ghost" className="w-full justify-start h-12 glass-2 text-[12px] font-bold tracking-tight rounded-xl group hover:bg-primary/5 transition-all">
+                   <Button variant="ghost" className="w-full justify-start h-12 bg-white/[0.04] text-[12px] font-bold tracking-tight rounded-xl group hover:bg-primary/5 transition-all">
                      <ShieldCheck className="w-4 h-4 text-primary text-glow mr-3" />
                      Enhanced Privacy Mode
                      <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-[0.1em]">Beta</span>
@@ -204,7 +204,7 @@ export const Settings: React.FC = () => {
   return (
     <div className="flex h-screen w-full bg-transparent overflow-hidden relative">
       {/* Background stays deep and liquid */}
-      <div className="absolute inset-0 z-0 bg-[#010204]/50" />
+      <div className="absolute inset-0 z-0 bg-bg-deep" />
       <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 flex h-full w-full">
@@ -213,7 +213,7 @@ export const Settings: React.FC = () => {
           onTabChange={setActiveTab} 
           onLogout={handleLogout} 
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10 flex justify-center selection:bg-primary/30">
+        <main className="flex-1 overflow-y-auto px-4 pt-16 pb-10 md:px-8 lg:px-10 flex justify-center selection:bg-primary/30">
           <div className="w-full max-w-3xl">
             <AnimatePresence mode="wait">
               {renderContent()}
@@ -225,7 +225,7 @@ export const Settings: React.FC = () => {
       {/* Premium Back Button */}
       <button 
         onClick={() => navigate('/app')}
-        className="fixed top-6 right-6 z-50 p-1.5 rounded-xl glass-3 hover:bg-primary/5 transition-all duration-300 group flex items-center gap-2.5 pr-4 border border-white/[0.03]"
+        className="fixed top-6 right-6 z-50 p-1.5 rounded-xl bg-white/[0.03] hover:bg-primary/5 transition-all duration-300 group flex items-center gap-2.5 pr-4 border border-white/[0.03]"
       >
         <div className="h-8 w-8 rounded-lg bg-white/[0.03] flex items-center justify-center text-foreground/20 group-hover:text-primary transition-colors">
           <X size={18} />

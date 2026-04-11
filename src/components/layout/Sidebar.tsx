@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Plus, Hash, Moon, Sun, 
+  Plus, Hash, Moon, Sun, Pin,
   Hexagon, ChevronDown, ChevronRight, 
-  Search as SearchIcon, Settings, Telescope, Users
+  Search as SearchIcon, Settings, Telescope, Users, Mail
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -58,6 +58,8 @@ export const Sidebar: React.FC = () => {
   const activeGroupId = useAppStore((state) => state.activeGroupId);
   const setActiveGroup = useAppStore((state) => state.setActiveGroup);
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
+  const pinnedChannelIds = useAppStore((state) => state.pinnedChannelIds);
+  const togglePinChannel = useAppStore((state) => state.togglePinChannel);
   const { user } = useSettingsStore();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -162,7 +164,7 @@ export const Sidebar: React.FC = () => {
             </div>
             <div className="relative z-10 flex items-center translate-y-[0.5px]">
               <span className={clsx("text-[13px] font-semibold tracking-wide transition-colors", activeView === 'explore' ? "text-foreground" : "text-foreground/50 group-hover:text-foreground/80")}>
-                Explore Channels
+                Browse Channels
               </span>
             </div>
           </motion.button>
@@ -172,16 +174,105 @@ export const Sidebar: React.FC = () => {
 
       {/* Navigation */}
       <div className="flex-grow overflow-y-auto px-2 pb-2 space-y-6 custom-scrollbar-compact">
-        {/* Main Channels */}
+        {/* Pinned Channels */}
+        {pinnedChannelIds.length > 0 && (
+          <div className="space-y-0.5 mb-6">
+            <div className="px-3 mb-2 flex items-center gap-2.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/40 shadow-[0_0_8px_rgba(99,102,241,0.3)] shrink-0" />
+              <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.12em]">Pinned Hub</span>
+            </div>
+            {pinnedChannelIds.map((id) => {
+              const channel = conversationMeta[id];
+              if (!channel) return null;
+              const isActive = activeConversationId === id;
+              return (
+                <motion.div key={`pinned-chan-${id}`} className="group/item relative">
+                  <motion.button
+                    onClick={() => setActiveConversation(id)}
+                    className={clsx(
+                      'group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-[14px] font-medium transition-all duration-200 outline-none',
+                      isActive
+                        ? 'bg-primary/10 text-primary shadow-[0_4px_12px_rgba(99,102,241,0.05)]'
+                        : 'text-foreground/40 hover:bg-white/[0.03] hover:text-foreground/70'
+                    )}
+                  >
+                    <Hash size={16} className={clsx('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-foreground/15 group-hover:text-foreground/40')} />
+                    <span className={clsx('flex-grow text-left truncate', isActive && 'font-bold tracking-tight')}>{channel.name}</span>
+                    
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePinChannel(id); }}
+                      className={clsx(
+                        "p-1 rounded-md transition-all hover:bg-white/10",
+                        isActive ? "text-primary/40 hover:text-primary" : "text-foreground/10 hover:text-foreground/40"
+                      )}
+                    >
+                      <Pin size={12} className="rotate-45" />
+                    </button>
+                  </motion.button>
+                </motion.div>
+              );
+            })}
+
+            {/* Pinned Groups */}
+            {useAppStore.getState().pinnedGroupIds.map((key) => {
+              const [cId, gId] = key.split(':');
+              const channel = conversationMeta[cId];
+              const group = channel?.groups?.find(g => g.id === gId);
+              if (!group) return null;
+              
+              const isGroupActive = activeConversationId === cId && activeGroupId === gId;
+              
+              return (
+                <motion.div key={`pinned-group-${key}`} className="group/item relative">
+                  <motion.button
+                    onClick={() => {
+                      setActiveConversation(cId);
+                      setActiveGroup(gId);
+                    }}
+                    className={clsx(
+                      'group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-[14px] font-medium transition-all duration-200 outline-none',
+                      isGroupActive
+                        ? 'bg-primary/10 text-primary shadow-[0_4px_12px_rgba(99,102,241,0.05)]'
+                        : 'text-foreground/40 hover:bg-white/[0.03] hover:text-foreground/70'
+                    )}
+                  >
+                    <div className="flex flex-col items-start flex-grow truncate">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-foreground/20 group-hover:text-foreground/40 transition-colors">
+                        {channel.name} 
+                      </span>
+                      <span className={clsx('text-left truncate w-full', isGroupActive && 'font-bold tracking-tight')}>
+                        {group.name}
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={(e) => { e.stopPropagation(); useAppStore.getState().togglePinGroup(cId, gId); }}
+                      className={clsx(
+                        "p-1 rounded-md transition-all hover:bg-white/10 shrink-0",
+                        isGroupActive ? "text-primary/40 hover:text-primary" : "text-foreground/10 hover:text-foreground/40"
+                      )}
+                    >
+                      <Pin size={12} className="rotate-45" />
+                    </button>
+                  </motion.button>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="space-y-0.5">
-          <div className="px-2.5 mb-2 overflow-hidden flex items-center justify-between group/header">
-            <span className="text-[10px] font-black text-foreground/15 uppercase tracking-[0.2em] whitespace-nowrap">Channels</span>
+          <div className="px-3 mb-2 flex items-center justify-between group/header">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1 h-[10px] bg-foreground/10 rounded-full shrink-0" />
+              <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.12em]">Channels</span>
+            </div>
             <button 
               onClick={() => setActiveView('create-channel')}
-              className="p-0.5 rounded-md text-foreground/20 hover:bg-white/10 hover:text-foreground/80 opacity-0 group-hover/header:opacity-100 transition-all focus:opacity-100"
+              className="p-1 rounded-md text-foreground/20 hover:bg-white/10 hover:text-foreground/80 opacity-0 group-hover/header:opacity-100 transition-all focus:opacity-100"
               title="Create Channel"
             >
-              <Plus size={13} strokeWidth={2.5} />
+              <Plus size={14} strokeWidth={2.5} />
             </button>
           </div>
           {mainChannelIds.map((id) => {
@@ -190,6 +281,7 @@ export const Sidebar: React.FC = () => {
             const isActive = activeConversationId === id;
             const hasGroups = channel.groups && channel.groups.length > 0;
             const isExpanded = expandedChannels[id];
+            const isPinned = pinnedChannelIds.includes(id);
 
             return (
               <div key={id} className="space-y-0.5">
@@ -204,14 +296,28 @@ export const Sidebar: React.FC = () => {
                 >
                   <Hash size={16} className={clsx('shrink-0 transition-colors', isActive ? 'text-primary' : 'text-foreground/15 group-hover:text-foreground/40')} />
                   <span className={clsx('flex-grow text-left truncate', isActive && 'font-bold tracking-tight')}>{channel.name}</span>
-                  {hasGroups && (
-                    <div 
-                      onClick={(e) => { e.stopPropagation(); toggleChannelGroups(id); }}
-                      className="p-1 rounded-md hover:bg-white/10 text-foreground/20 hover:text-foreground/50 transition-all ml-1"
+                  
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); togglePinChannel(id); }}
+                      className={clsx(
+                        "p-1 rounded-md transition-all hover:bg-white/10 opacity-0 group-hover:opacity-100",
+                        isPinned ? "text-primary opacity-100" : "text-foreground/20"
+                      )}
+                      title={isPinned ? "Unpin Channel" : "Pin Channel"}
                     >
-                      {isExpanded ? <ChevronDown size={14} strokeWidth={2.5} /> : <ChevronRight size={14} strokeWidth={2.5} />}
-                    </div>
-                  )}
+                      <Pin size={12} className={clsx(isPinned ? "fill-primary/20" : "rotate-45")} />
+                    </button>
+
+                    {hasGroups && (
+                      <div 
+                        onClick={(e) => { e.stopPropagation(); toggleChannelGroups(id); }}
+                        className="p-1 rounded-md hover:bg-white/10 text-foreground/20 hover:text-foreground/50 transition-all"
+                      >
+                        {isExpanded ? <ChevronDown size={14} strokeWidth={2.5} /> : <ChevronRight size={14} strokeWidth={2.5} />}
+                      </div>
+                    )}
+                  </div>
                 </motion.button>
 
                 {/* Nested Groups & General */}
@@ -239,6 +345,7 @@ export const Sidebar: React.FC = () => {
 
                       {hasGroups && channel.groups?.map((group) => {
                         const isGroupActive = isActive && activeGroupId === group.id;
+                        const isGroupPinned = useAppStore.getState().pinnedGroupIds.includes(`${id}:${group.id}`);
                         return (
                           <div key={group.id} className={clsx(
                             "flex items-center group/group-item rounded-lg transition-all",
@@ -257,25 +364,34 @@ export const Sidebar: React.FC = () => {
                               <div className={clsx("w-1 h-1 rounded-full", isGroupActive ? "bg-primary" : "bg-foreground/10")} />
                               <span className="truncate">{group.name}</span>
                             </button>
-                            <button
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
-                                if (!group.joined) {
-                                  if (!isActive) setActiveConversation(id);
-                                  setActiveGroup(group.id);
-                                } else {
-                                  toggleGroupMembership(id, group.id);
-                                }
-                              }}
-                              className={clsx(
-                                "text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded transition-all mr-1.5 opacity-0 group-hover/group-item:opacity-100",
-                                group.joined 
-                                  ? "text-emerald-500/60" 
-                                  : "bg-white/[0.05] text-foreground/20 hover:text-foreground/40"
+                            
+                            <div className="flex items-center gap-1 pr-1.5">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); useAppStore.getState().togglePinGroup(id, group.id); }}
+                                className={clsx(
+                                  "p-1 rounded-md transition-all hover:bg-white/10",
+                                  isGroupPinned ? "text-primary opacity-100" : "text-foreground/10 hover:text-foreground/40 opacity-0 group-hover/group-item:opacity-100"
+                                )}
+                                title={isGroupPinned ? "Unpin Group" : "Pin Group"}
+                              >
+                                <Pin size={10} className={clsx(isGroupPinned ? "fill-primary/20" : "rotate-45")} />
+                              </button>
+
+                              {!group.joined && (
+                                <button
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    toggleGroupMembership(id, group.id);
+                                  }}
+                                  className={clsx(
+                                    "text-[8px] font-black uppercase tracking-tighter px-2 py-1 rounded transition-all",
+                                    "bg-white/[0.05] text-foreground/20 hover:text-foreground/40 opacity-0 group-hover/group-item:opacity-100"
+                                  )}
+                                >
+                                  Join
+                                </button>
                               )}
-                            >
-                              {group.joined ? 'Joined' : 'Join'}
-                            </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -289,12 +405,30 @@ export const Sidebar: React.FC = () => {
 
         {/* Direct Messages */}
         <div>
-          <div className="flex items-center justify-between px-2.5 mb-1">
-            <span className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.18em]">Direct Messages</span>
-            <button className="p-1 rounded-md hover:bg-white/[0.05] text-foreground/20 hover:text-primary transition-all">
-              <Plus size={13} />
+          <div className="px-3 mb-2 flex items-center justify-between group/dm-header">
+            <div className="flex items-center gap-2.5">
+              <div className="w-1 h-[10px] bg-foreground/10 rounded-full shrink-0" />
+              <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.12em]">Direct Messages</span>
+            </div>
+            <button className="p-1 rounded-md text-foreground/20 hover:bg-white/10 hover:text-primary opacity-0 group-hover/dm-header:opacity-100 transition-all">
+              <Plus size={14} />
             </button>
           </div>
+          
+          {/* Message Requests Button */}
+          <div className="px-2 mb-2">
+            <button 
+              onClick={() => { /* Handle message requests view */ }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest text-foreground/20 hover:text-primary hover:bg-primary/5 transition-all group/req"
+            >
+              <div className="flex items-center justify-center w-5 h-5 rounded-lg bg-white/[0.03] group-hover/req:bg-primary/10 transition-colors">
+                <Mail size={12} className="group-hover/req:text-primary transition-colors" />
+              </div>
+              <span>Message Requests</span>
+              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(99,102,241,0.6)] animate-pulse" />
+            </button>
+          </div>
+
           <div className="space-y-0.5">
             {dms.map((dm) => {
               const isActive = activeConversationId === dm.id;
@@ -319,7 +453,13 @@ export const Sidebar: React.FC = () => {
                     />
                   )}
                   {/* Avatar with inline status */}
-                  <div className="relative shrink-0">
+                  <div 
+                    className="relative shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleProfilePanel(dm.id);
+                    }}
+                  >
                     <Avatar src={dm.avatar} alt={dm.name} size="sm" className="h-7 w-7 ring-1 ring-white/[0.06]" />
                     <span className={clsx(
                       'absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-bg-deep',

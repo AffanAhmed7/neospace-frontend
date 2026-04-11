@@ -18,10 +18,7 @@ const threads = [
   { id: 'm2', title: 'Design System update', lastMsg: 'Colors updated in Figma.', user: 'Jordan Lee', time: '5h ago', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
 ];
 
-const pinnedMessages = [
-  { id: 'p1', content: 'Brand guidelines for 2026', user: 'Maria Garcia', time: 'Mar 12', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria' },
-  { id: 'p2', content: 'Onboarding docs for newcomers', user: 'Alex Rivera', time: 'Mar 10', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
-];
+// Moved to store for dynamic behavior
 
 const threadReplies = [
   { id: 'r1', user: 'Alex Rivera', content: 'We definitely need more focus on the dark mode transitions.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', time: '12:45 PM' },
@@ -39,11 +36,18 @@ export const RightPanel: React.FC = () => {
   const setRightPanelTab = useAppStore((state) => state.setRightPanelTab);
   const setActiveView = useAppStore((state) => state.setActiveView);
   const updateChannelDescription = useAppStore((state) => state.updateChannelDescription);
+  const messages = useAppStore((state) => state.messages);
+  const pinnedMessageIds = useAppStore((state) => state.pinnedMessageIds);
+  const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
   
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
 
   const meta = activeConversationId ? conversationMeta[activeConversationId] : null;
+  const channelMessages = activeConversationId ? messages[activeConversationId] || [] : [];
+  const currentPinnedIds = activeConversationId ? pinnedMessageIds[activeConversationId] || [] : [];
+  
+  const displayPinnedMessages = channelMessages.filter(msg => currentPinnedIds.includes(msg.id));
 
   const handleEdit = () => {
     if (meta) {
@@ -66,14 +70,14 @@ export const RightPanel: React.FC = () => {
   const tabs = [
     { id: 'members', icon: Users, label: 'Members', count: meta?.memberCount || 0 },
     { id: 'threads', icon: MessageSquare, label: 'Threads', count: threads.length },
-    { id: 'pinned',  icon: Pin,           label: 'Pinned',  count: pinnedMessages.length },
+    { id: 'pinned',  icon: Pin,           label: 'Pinned',  count: displayPinnedMessages.length },
   ] as const;
 
   // Render Thread Detail View
   if (activeThreadId) {
     return (
-      <div className="flex flex-col h-full bg-card/40 border-l border-white/[0.03] w-full max-w-[320px] shrink-0 overflow-hidden glass-1">
-        <div className="flex items-center gap-3 px-6 h-[64px] bg-white/[0.02] border-b border-white/[0.03] shrink-0">
+      <div className="flex flex-col h-full bg-bg-deep/90 border-l border-border w-full max-w-[320px] shrink-0 overflow-hidden">
+        <div className="flex items-center gap-3 px-6 h-[64px] bg-bg-deep/90 border-b border-white/[0.03] shrink-0">
           <button 
             onClick={() => setActiveThread(null)}
             className="p-1.5 -ml-1.5 rounded-lg hover:bg-white/5 text-foreground/30 hover:text-primary transition-all shrink-0"
@@ -93,9 +97,13 @@ export const RightPanel: React.FC = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar-compact p-4 space-y-6">
           {/* Original Message */}
           <div className="relative p-4 rounded-2xl bg-primary/5 border border-primary/10">
-            <div className="flex items-center gap-2 mb-2">
-              <Avatar src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" size="sm" className="h-4 w-4" />
-              <span className="text-[10px] font-bold text-primary uppercase tracking-tighter">Alex Rivera</span>
+            <div className="flex items-center gap-2 mb-2.5">
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
+                alt="Alex Rivera"
+                className="h-5 w-5 rounded-full shrink-0 object-cover ring-1 ring-white/[0.06]"
+              />
+              <span className="text-[11px] font-bold text-primary">Alex Rivera</span>
             </div>
             <p className="text-[13px] text-foreground/80 leading-relaxed font-medium">
               Should we rethink the sidebar structure? It feels a bit cluttered.
@@ -108,13 +116,17 @@ export const RightPanel: React.FC = () => {
           <div className="space-y-4">
             {threadReplies.map((reply) => (
               <div key={reply.id} className="flex gap-3 px-1">
-                <Avatar src={reply.avatar} size="sm" className="h-6 w-6 mt-0.5" />
-                <div className="flex flex-col overflow-hidden">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-foreground/40">{reply.user}</span>
-                    <span className="text-[9px] font-medium text-foreground/15">{reply.time}</span>
+                <img
+                  src={reply.avatar}
+                  alt={reply.user}
+                  className="h-6 w-6 rounded-full shrink-0 object-cover ring-1 ring-white/[0.05] mt-0.5"
+                />
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-[11px] font-bold text-foreground/50">{reply.user}</span>
+                    <span className="text-[10px] font-medium text-foreground/20">{reply.time}</span>
                   </div>
-                  <p className="text-[12px] text-foreground/60 leading-relaxed font-medium">
+                  <p className="text-[12px] text-foreground/65 leading-relaxed font-medium">
                     {reply.content}
                   </p>
                 </div>
@@ -150,10 +162,10 @@ export const RightPanel: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-card/40 border-l border-white/[0.03] w-full max-w-[320px] shrink-0 overflow-hidden glass-1">
+    <div className="flex flex-col h-full bg-bg-deep/90 border-l border-border w-full max-w-[320px] shrink-0 overflow-hidden">
       
       {/* Tabs Header */}
-      <div className="flex px-3 h-[64px] bg-white/[0.02] border-b border-white/[0.03] gap-1 shrink-0 items-center">
+      <div className="flex px-3 h-[64px] bg-bg-deep/90 border-b border-white/[0.03] gap-1 shrink-0 items-center">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -245,48 +257,6 @@ export const RightPanel: React.FC = () => {
                 <p className="text-[13px] text-foreground/50 leading-relaxed font-medium">
                   {meta.description || 'No description set for this channel.'}
                 </p>
-
-                {meta.groups && meta.groups.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-white/[0.03]">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/20">Active Groups</span>
-                    <div className="flex flex-col gap-2">
-                      {meta.groups.map(g => (
-                        <button 
-                          key={g.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!g.joined) {
-                              useAppStore.getState().setActiveGroup(g.id);
-                            } else {
-                              useAppStore.getState().toggleGroupMembership(activeConversationId!, g.id);
-                            }
-                          }}
-                          className={clsx(
-                            "group/group-item flex flex-col items-start p-2.5 rounded-xl border transition-all text-left",
-                            g.joined 
-                              ? "bg-primary/5 border-primary/20 hover:bg-primary/10" 
-                              : "bg-white/[0.02] border-transparent hover:border-white/[0.08] hover:bg-white/[0.04]"
-                          )}
-                        >
-                          <div className="flex items-center justify-between w-full mb-1">
-                            <span className={clsx(
-                              "text-[11px] font-black uppercase tracking-widest transition-colors",
-                              g.joined ? "text-primary" : "text-foreground/40 group-hover/group-item:text-foreground/60"
-                            )}>{g.name}</span>
-                            {g.joined && (
-                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Joined</span>
-                            )}
-                          </div>
-                          {g.description && (
-                            <p className="text-[10px] font-medium text-foreground/25 leading-tight group-hover/group-item:text-foreground/40 transition-colors">
-                              {g.description}
-                            </p>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -313,6 +283,15 @@ export const RightPanel: React.FC = () => {
               {meta?.online?.map((p, idx) => (
                 <button
                   key={idx}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    const id = (p as any).id || 
+                      (p.name.includes('Alex') ? '1' : 
+                      p.name.includes('Jordan') ? '2' : 
+                      p.name.includes('Sarah') ? '3' : 
+                      p.name.includes('Jane') ? 'me' : null);
+                    toggleProfilePanel(id);
+                  }}
                   className="w-full group flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.03] transition-all duration-200 border border-transparent hover:border-white/[0.02]"
                 >
                   <div className="relative shrink-0">
@@ -342,17 +321,31 @@ export const RightPanel: React.FC = () => {
               className="space-y-2 p-2"
             >
               {threads.map((t) => (
-                <div 
-                  key={t.id} 
+                <div
+                  key={t.id}
                   onClick={() => setActiveThread(t.id)}
-                  className="group p-3 rounded-2xl glass-2 border border-white/[0.03] hover:border-primary/20 transition-all cursor-pointer"
+                  className="group p-3 rounded-2xl bg-white/[0.04] border border-white/[0.03] hover:border-primary/20 transition-all cursor-pointer space-y-2.5"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Avatar src={t.avatar} size="sm" alt={t.user} className="h-4 w-4" />
-                    <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-tighter">{t.user} · {t.time}</span>
+                  {/* Header: avatar + name + time */}
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={t.avatar}
+                      alt={t.user}
+                      className="h-5 w-5 rounded-full shrink-0 object-cover ring-1 ring-white/[0.06]"
+                    />
+                    <span className="text-[11px] font-semibold text-foreground/50">{t.user}</span>
+                    <span className="text-[10px] text-foreground/20 font-medium ml-auto shrink-0">{t.time}</span>
                   </div>
-                  <h4 className="text-[13px] font-bold text-foreground/80 mb-1 group-hover:text-primary transition-colors">{t.title}</h4>
-                  <p className="text-[11px] text-foreground/30 line-clamp-2 leading-relaxed font-medium">{t.lastMsg}</p>
+
+                  {/* Thread title */}
+                  <h4 className="text-[13px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-snug">
+                    {t.title}
+                  </h4>
+
+                  {/* Last message — full text, no clamp */}
+                  <p className="text-[11px] text-foreground/35 leading-relaxed font-medium border-l-2 border-white/[0.06] pl-2.5">
+                    {t.lastMsg}
+                  </p>
                 </div>
               ))}
               <Button variant="ghost" className="w-full mt-4 py-6 border border-dashed border-white/10 text-foreground/20 hover:text-primary hover:border-primary/30 transition-all gap-2 text-[11px] font-black uppercase tracking-widest">
@@ -370,23 +363,33 @@ export const RightPanel: React.FC = () => {
               exit={{ opacity: 0, x: -10 }}
               className="space-y-3 p-2"
             >
-              {pinnedMessages.map((p) => (
-                <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.03] hover:border-white/[0.08] transition-all group cursor-pointer relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <Pin size={12} className="rotate-45" />
-                  </div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar src={p.avatar} alt={p.user} size="sm" className="h-8 w-8" />
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-foreground/70">{p.user}</span>
-                      <span className="text-[9px] font-medium text-foreground/20">{p.time}</span>
+              {displayPinnedMessages.length > 0 ? (
+                displayPinnedMessages.map((p) => (
+                  <div key={p.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.03] hover:border-white/[0.08] transition-all group cursor-pointer relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                      <Pin size={12} className="rotate-45" />
                     </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar src={p.user.avatar} alt={p.user.name} size="sm" className="h-8 w-8" />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-foreground/70">{p.user.name}</span>
+                        <span className="text-[9px] font-medium text-foreground/20">{p.time}</span>
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-foreground/50 leading-relaxed font-medium italic border-l-2 border-primary/20 pl-3">
+                      "{p.content}"
+                    </p>
                   </div>
-                  <p className="text-[12px] text-foreground/50 leading-relaxed font-medium italic border-l-2 border-primary/20 pl-3">
-                    "{p.content}"
-                  </p>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.02] flex items-center justify-center mb-4 ring-1 ring-white/[0.05]">
+                    <Pin size={20} className="text-foreground/10" />
+                  </div>
+                  <h4 className="text-[13px] font-bold text-foreground/40 mb-1">No pinned messages</h4>
+                  <p className="text-[11px] text-foreground/20 font-medium">Messages you pin will appear here for everyone to see.</p>
                 </div>
-              ))}
+              )}
             </motion.div>
           )}
         </AnimatePresence>

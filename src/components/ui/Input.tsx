@@ -33,7 +33,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             className={cn(
-              'flex h-10 w-full rounded-xl border border-white/[0.05] bg-white/[0.01] glass-2 px-3.5 py-2 text-[13px] font-medium placeholder:text-foreground/10 focus-visible:outline-none focus-visible:border-primary/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300',
+              'flex h-10 w-full rounded-xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2 text-[13px] font-medium placeholder:text-foreground/10 focus-visible:outline-none focus-visible:border-primary/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300',
               error && 'border-rose-500/50 focus-visible:border-rose-500',
               icon && 'pl-9',
               className

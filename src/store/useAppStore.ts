@@ -16,7 +16,7 @@ interface AppState {
   profileUserId: string | null;
   activeThreadId: string | null;
   activeGroupId: string | null;
-  activeView: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel';
+  activeView: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group';
   rightPanelTab: 'members' | 'threads' | 'pinned';
   conversationMeta: Record<string, { 
     name: string; 
@@ -24,9 +24,28 @@ interface AppState {
     category?: string;
     memberCount: number; 
     online: { name: string; avatar: string }[];
+    heroImage?: string;
     groups?: { id: string; name: string; description?: string; joined: boolean; }[];
     threads?: Record<string, { replies: number; lastReply: string }>;
   }>;
+  pinnedChannelIds: string[];
+  pinnedMessageIds: Record<string, string[]>; // channelId -> messageIds
+  messages: Record<string, {
+    id: string;
+    user: { name: string; avatar: string };
+    content: string;
+    time: string;
+    reactions: { emoji: string; count: number }[];
+    isOwn: boolean;
+    attachments?: { name: string; type: string; url: string }[];
+  }[]>; // channelId -> messages
+  addMessage: (channelId: string, content: string, fileAttachments?: File[]) => void;
+  deleteMessage: (channelId: string, messageId: string) => void;
+  pinnedGroupIds: string[]; // Format: "channelId:groupId"
+  friendIds: string[];
+  mutedChannelIds: string[];
+  mutedGroupIds: string[]; // Format: "channelId:groupId"
+  mutedUserIds: string[];
 
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
@@ -34,7 +53,7 @@ interface AppState {
   setActiveConversation: (id: string | null) => void;
   setActiveGroup: (id: string | null) => void;
   setActiveThread: (id: string | null) => void;
-  setActiveView: (view: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel') => void;
+  setActiveView: (view: 'home' | 'chat' | 'info' | 'explore' | 'friends' | 'create-channel' | 'create-group') => void;
   setRightPanelTab: (tab: 'members' | 'threads' | 'pinned') => void;
   toggleCommandPalette: () => void;
   toggleNotificationPanel: () => void;
@@ -42,7 +61,16 @@ interface AppState {
   setAuthModal: (open: boolean, mode?: 'login' | 'signup') => void;
   updateChannelDescription: (id: string, description: string) => void;
   toggleGroupMembership: (channelId: string, groupId: string) => void;
-  createChannel: (name: string, description: string, category: string, isPrivate: boolean) => void;
+  updateChannelHero: (id: string, heroImage: string) => void;
+  createChannel: (name: string, description: string, category: string, isPrivate: boolean, heroImage?: string) => void;
+  createGroup: (channelId: string, name: string, description: string, isPrivate: boolean) => void;
+  togglePinChannel: (id: string) => void;
+  togglePinGroup: (channelId: string, groupId: string) => void;
+  togglePinMessage: (channelId: string, messageId: string) => void;
+  leaveChannel: (id: string) => void;
+  toggleMuteChannel: (id: string) => void;
+  toggleMuteGroup: (channelId: string, groupId: string) => void;
+  toggleMuteUser: (userId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -62,10 +90,16 @@ export const useAppStore = create<AppState>()(
       activeGroupId: null,
       activeView: 'home',
       rightPanelTab: 'members',
+      pinnedChannelIds: [],
+      pinnedGroupIds: [],
+      friendIds: ['1', '2', '3'], // Alex, Jordan, Sarah
+      mutedChannelIds: [],
+      mutedGroupIds: [],
+      mutedUserIds: [],
       conversationMeta: {
         '1': { 
-          name: 'general', 
-          description: 'Team-wide updates and good vibes', 
+          name: 'Casuals', 
+          description: 'The heartbeat of NeoPlane — a space for everything and nothing.', 
           memberCount: 24, 
           online: [
             { name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
@@ -107,6 +141,35 @@ export const useAppStore = create<AppState>()(
           ]
         },
       },
+      pinnedMessageIds: {},
+      messages: {
+        '1': [
+          {
+            id: 'm1',
+            user: { name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
+            content: 'Has anyone seen the latest design specs for the dashboard? They look incredible 🔥',
+            time: '10:24 AM',
+            reactions: [{ emoji: '🔥', count: 3 }, { emoji: '👀', count: 2 }],
+            isOwn: false,
+          },
+          {
+            id: 'm2',
+            user: { name: 'Jordan Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
+            content: 'Just uploaded them to the #engineering channel. The new glassmorphism treatment is 🤌',
+            time: '10:26 AM',
+            reactions: [{ emoji: '🤌', count: 5 }],
+            isOwn: false,
+          },
+          {
+            id: 'm3',
+            user: { name: 'Jane Doe', avatar: '' }, // Handled by settings store in UI
+            content: 'The ambient glow on the sidebar is such a good touch. Sarah crushed it.',
+            time: '10:28 AM',
+            reactions: [],
+            isOwn: true,
+          },
+        ]
+      },
 
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -117,7 +180,8 @@ export const useAppStore = create<AppState>()(
             activeConversationId: null,
             activeGroupId: null,
             activeView: 'home',
-            rightPanelOpen: false
+            rightPanelOpen: false,
+            profilePanelOpen: false
           };
         }
         return { 
@@ -133,22 +197,36 @@ export const useAppStore = create<AppState>()(
         rightPanelOpen: id !== null ? true : state.rightPanelOpen,
         rightPanelTab: id !== null ? 'threads' : state.rightPanelTab
       })),
-      setActiveView: (view) => set({ activeView: view }),
+      setActiveView: (view) => set((state) => ({ 
+        activeView: view,
+        // Close side panels when switching to full-page views or back to home
+        profilePanelOpen: (view === 'home' || view === 'create-channel' || view === 'create-group' || view === 'explore') ? false : state.profilePanelOpen,
+        rightPanelOpen: (view === 'home' || view === 'create-channel' || view === 'create-group' || view === 'explore') ? false : state.rightPanelOpen
+      })),
       setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
       toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
       toggleNotificationPanel: () => set((state) => ({ notificationPanelOpen: !state.notificationPanelOpen })),
-      toggleProfilePanel: (userId?: string | null) => set((state) => {
-        // If opening, set userId (or null for current user). If closing, keep the current userId until it animates out.
-        if (!state.profilePanelOpen) {
-          return { profilePanelOpen: true, rightPanelOpen: false, profileUserId: userId ?? null };
-        } else {
-          // If already open, but clicking a different user, just update the user.
-          if (userId !== undefined && userId !== state.profileUserId) {
-             return { profileUserId: userId ?? null };
-          }
-          // Otherwise toggle off
+      toggleProfilePanel: (userId?: string | null | any) => set((state) => {
+        // Sanitize input: If userId is an event object (common when passed directly to onClick),
+        // or if it's undefined, treat it as a "close" command.
+        const isEvent = userId && typeof userId === 'object' && ('nativeEvent' in userId || 'target' in userId);
+        
+        if (userId === undefined || isEvent) {
+          console.log('[toggleProfilePanel] Closing modal (input sanitized)');
           return { profilePanelOpen: false };
         }
+        
+        console.log('[toggleProfilePanel] Called with userId:', userId);
+        
+        // Same user clicked while already open = close (toggle off)
+        if (state.profilePanelOpen && userId === state.profileUserId) {
+          console.log('[toggleProfilePanel] Toggling OFF for same user:', userId);
+          return { profilePanelOpen: false };
+        }
+        
+        // Any other case: open the modal with the given user
+        console.log('[toggleProfilePanel] Opening for user:', userId);
+        return { profilePanelOpen: true, profileUserId: userId };
       }),
       setAuthModal: (open, mode) => set((state) => ({ 
         authModalOpen: open, 
@@ -158,6 +236,12 @@ export const useAppStore = create<AppState>()(
         conversationMeta: {
           ...state.conversationMeta,
           [id]: { ...state.conversationMeta[id], description }
+        }
+      })),
+      updateChannelHero: (id, heroImage) => set((state) => ({
+        conversationMeta: {
+          ...state.conversationMeta,
+          [id]: { ...state.conversationMeta[id], heroImage }
         }
       })),
       toggleGroupMembership: (channelId, groupId) =>
@@ -184,7 +268,7 @@ export const useAppStore = create<AppState>()(
             }
           };
         }),
-      createChannel: (name, description, category, _isPrivate) =>
+      createChannel: (name, description, category, _isPrivate, heroImage) =>
         set((state) => {
           const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
           if (state.conversationMeta[newId]) return state; // Don't duplicate
@@ -196,6 +280,7 @@ export const useAppStore = create<AppState>()(
                 name,
                 description,
                 category,
+                heroImage: heroImage || '',
                 memberCount: 1, // Only the creator initially
                 online: [],
                 groups: []
@@ -205,6 +290,126 @@ export const useAppStore = create<AppState>()(
             activeView: 'chat'
           };
         }),
+      createGroup: (channelId, name, description, _isPrivate) =>
+        set((state) => {
+          const meta = state.conversationMeta[channelId];
+          if (!meta) return state;
+          
+          const newGroupId = 'g-' + Math.random().toString(36).substring(2, 9);
+          const newGroups = [
+            ...(meta.groups || []),
+            { 
+              id: newGroupId, 
+              name, 
+              description, 
+              joined: true 
+            }
+          ];
+
+          return {
+            conversationMeta: {
+              ...state.conversationMeta,
+              [channelId]: {
+                ...meta,
+                groups: newGroups
+              }
+            },
+            activeGroupId: newGroupId,
+            activeView: 'chat'
+          };
+        }),
+      togglePinChannel: (id) =>
+        set((state) => ({
+          pinnedChannelIds: state.pinnedChannelIds.includes(id)
+            ? state.pinnedChannelIds.filter((pid) => pid !== id)
+            : [...state.pinnedChannelIds, id]
+        })),
+      togglePinGroup: (channelId, groupId) =>
+        set((state) => {
+          const key = `${channelId}:${groupId}`;
+          return {
+            pinnedGroupIds: state.pinnedGroupIds.includes(key)
+              ? state.pinnedGroupIds.filter((gid) => gid !== key)
+              : [...state.pinnedGroupIds, key]
+          };
+        }),
+      leaveChannel: (id) =>
+        set((state) => {
+          const newMeta = { ...state.conversationMeta };
+          delete newMeta[id];
+          return {
+            conversationMeta: newMeta,
+            activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+            activeView: state.activeConversationId === id ? 'home' : state.activeView,
+            pinnedChannelIds: state.pinnedChannelIds.filter(pid => pid !== id),
+            pinnedGroupIds: state.pinnedGroupIds.filter(gid => !gid.startsWith(`${id}:`))
+          };
+        }),
+      togglePinMessage: (channelId, messageId) =>
+        set((state) => {
+          const currentPinned = state.pinnedMessageIds[channelId] || [];
+          const isPinned = currentPinned.includes(messageId);
+          return {
+            pinnedMessageIds: {
+              ...state.pinnedMessageIds,
+              [channelId]: isPinned
+                ? currentPinned.filter(id => id !== messageId)
+                : [...currentPinned, messageId]
+            }
+          };
+        }),
+      toggleMuteChannel: (id) =>
+        set((state) => ({
+          mutedChannelIds: state.mutedChannelIds.includes(id)
+            ? state.mutedChannelIds.filter((mid) => mid !== id)
+            : [...state.mutedChannelIds, id]
+        })),
+      toggleMuteGroup: (channelId, groupId) =>
+        set((state) => {
+          const key = `${channelId}:${groupId}`;
+          return {
+            mutedGroupIds: state.mutedGroupIds.includes(key)
+              ? state.mutedGroupIds.filter((mid) => mid !== key)
+              : [...state.mutedGroupIds, key]
+          };
+        }),
+      toggleMuteUser: (userId) =>
+        set((state) => ({
+          mutedUserIds: state.mutedUserIds.includes(userId)
+            ? state.mutedUserIds.filter((mid) => mid !== userId)
+            : [...state.mutedUserIds, userId]
+        })),
+      addMessage: (channelId: string, content: string, fileAttachments?: File[]) =>
+        set((state) => {
+          const currentMessages = state.messages[channelId] || [];
+          const newMessage = {
+            id: 'm-' + Math.random().toString(36).substring(2, 9),
+            user: { name: 'Jane Doe', avatar: '' }, // Handled by settings in UI
+            content,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            reactions: [],
+            isOwn: true,
+            attachments: fileAttachments?.map(file => ({
+              name: file.name,
+              type: file.type,
+              url: URL.createObjectURL(file)
+            }))
+          };
+
+          return {
+            messages: {
+              ...state.messages,
+              [channelId]: [...currentMessages, newMessage]
+            }
+          };
+        }),
+      deleteMessage: (channelId: string, messageId: string) =>
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [channelId]: (state.messages[channelId] || []).filter(m => m.id !== messageId)
+          }
+        })),
     }),
     {
       name: 'neoplane-storage',

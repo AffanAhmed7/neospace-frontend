@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  Hash, Zap, TrendingUp, Clock, Users,
-  ArrowRight, Sparkles, MessageSquare, Star
+  Hash, Users,
+  ArrowRight, MessageSquare, Star
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { Avatar } from '../ui/Avatar';
@@ -18,6 +18,7 @@ const recentChannels = [
 const activity = [
   {
     id: 'a1',
+    userId: '1',
     user: 'Alex Rivera',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
     action: 'sent a message in',
@@ -28,6 +29,7 @@ const activity = [
   },
   {
     id: 'a2',
+    userId: '2',
     user: 'Jordan Lee',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan',
     action: 'started a thread in',
@@ -38,6 +40,7 @@ const activity = [
   },
   {
     id: 'a3',
+    userId: '3',
     user: 'Sarah Chen',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
     action: 'pinned a message in',
@@ -48,6 +51,7 @@ const activity = [
   },
   {
     id: 'a4',
+    userId: '4', // Marcus Wright
     user: 'Marcus Wright',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus',
     action: 'reacted to your message in',
@@ -69,13 +73,13 @@ const stats = [
   { label: 'Channels', value: '3', icon: Hash, color: 'text-primary' },
   { label: 'Online Now', value: '6', icon: Users, color: 'text-emerald-400' },
   { label: 'Unread', value: '4', icon: MessageSquare, color: 'text-amber-400' },
-  { label: 'Trending', value: '#engineering', icon: TrendingUp, color: 'text-secondary' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const HomeDashboard: React.FC = () => {
   const setActiveConversation = useAppStore((s) => s.setActiveConversation);
+  const toggleProfilePanel = useAppStore((s) => s.toggleProfilePanel);
 
   const container = {
     hidden: { opacity: 0 },
@@ -88,23 +92,17 @@ export const HomeDashboard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-y-auto custom-scrollbar">
-      {/* ─── Top Header Bar ──────────────────────────────────────────── */}
-      <header className="flex h-[64px] items-center gap-3 border-b border-white/[0.03] px-6 shrink-0 glass-2 sticky top-0 z-10">
-        <Sparkles size={16} className="text-primary/60" />
-        <span className="text-[13px] font-bold text-foreground/60 tracking-tight">Home</span>
-      </header>
-
       {/* ─── Body ───────────────────────────────────────────────────── */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="flex-1 p-6 space-y-6 max-w-3xl w-full mx-auto"
+        className="flex-1 p-6 pt-12 space-y-6 max-w-3xl w-full mx-auto"
       >
         {/* Greeting */}
         <motion.div variants={item} className="pt-2">
-          <h1 className="text-2xl font-black text-foreground tracking-tighter">
-            Good morning, <span className="text-primary">Jane</span> 👋
+          <h1 className="text-3xl font-light text-foreground tracking-tight">
+            Good morning, <span className="text-primary font-medium">Jane</span>
           </h1>
           <p className="text-[13px] text-foreground/30 font-medium mt-1">
             Here's what's been happening while you were away.
@@ -112,7 +110,7 @@ export const HomeDashboard: React.FC = () => {
         </motion.div>
 
         {/* Stats Row */}
-        <motion.div variants={item} className="grid grid-cols-4 gap-3">
+        <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {stats.map((s) => (
             <div
               key={s.label}
@@ -129,9 +127,9 @@ export const HomeDashboard: React.FC = () => {
 
         {/* Jump back in */}
         <motion.div variants={item}>
-          <div className="flex items-center gap-2 mb-3">
-            <Clock size={13} className="text-foreground/20" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">Jump Back In</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/30">Continue Discovery</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {recentChannels.map((ch) => (
@@ -169,9 +167,9 @@ export const HomeDashboard: React.FC = () => {
 
         {/* Activity Feed */}
         <motion.div variants={item}>
-          <div className="flex items-center gap-2 mb-3">
-            <Zap size={13} className="text-foreground/20" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">Recent Activity</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/30">Latest Activity</span>
           </div>
 
           <div className="space-y-1">
@@ -181,15 +179,21 @@ export const HomeDashboard: React.FC = () => {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.06 }}
+                onClick={() => toggleProfilePanel(a.userId)}
                 className="group flex items-start gap-3 p-3.5 rounded-xl hover:bg-white/[0.03] transition-all cursor-pointer"
               >
-                <div className="relative shrink-0 mt-0.5">
+                <div className="relative shrink-0 mt-0.5" onClick={(e) => { e.stopPropagation(); toggleProfilePanel(a.userId); }}>
                   <Avatar src={a.avatar} alt={a.user} size="sm" className="h-8 w-8 ring-1 ring-white/[0.05]" />
                   <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-[#0D0D0D] ${statusColor[a.status]}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-[12px] font-bold text-foreground/70 group-hover:text-foreground transition-colors">{a.user}</span>
+                    <span 
+                      className="text-[12px] font-bold text-foreground/70 group-hover:text-foreground transition-colors" 
+                      onClick={(e) => { e.stopPropagation(); toggleProfilePanel(a.userId); }}
+                    >
+                      {a.user}
+                    </span>
                     <span className="text-[11px] text-foreground/25 font-medium">{a.action}</span>
                     <span className="text-[11px] font-bold text-primary/60">{a.target}</span>
                   </div>
@@ -205,9 +209,9 @@ export const HomeDashboard: React.FC = () => {
 
         {/* Pinned / Starred */}
         <motion.div variants={item} className="pb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Star size={13} className="text-foreground/20" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">Pinned for You</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary/40 shadow-[0_0_8px_rgba(99,102,241,0.3)] shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/30">Pinned for You</span>
           </div>
           <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-400/10 shrink-0">

@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, Hash, Users, Zap, 
-  Globe, TrendingUp, Sparkles,
+  Search, Hash, Users,
+  Globe,
   Filter, CheckCircle2
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { clsx } from 'clsx';
-import { Button } from '../ui/Button';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const categories = ['All', 'Trending', 'Engineering', 'Design', 'Marketing', 'Support'];
+const categories = ['All', 'Engineering', 'Design', 'Marketing', 'Gaming', 'Casual', 'Support', 'Other'];
 
 const suggestedChannels = [
-  { id: '1', name: 'general', description: 'The town square for all NeoPlane users. Announcements, general discussion, and watercooler chat.', members: 1240, online: 156, category: 'Trending', isJoined: true },
+  { id: '1', name: 'general', description: 'The town square for all NeoPlane users. Announcements, general discussion, and watercooler chat.', members: 1240, online: 156, category: 'Casual', isJoined: true },
   { id: '2', name: 'global-chat', description: 'Real-time conversation with the entire world network. High volume.', members: 890, online: 42, category: 'All', isJoined: true },
   { id: '3', name: 'engineering', description: 'Deep dives into code, architecture, and deployment pipelines. Core PR discussions happen here.', members: 450, online: 28, category: 'Engineering', isJoined: true },
   { id: '4', name: 'design-system', description: 'Polishing pixels and defining the visual future. Feedback on UI/UX components.', members: 320, online: 15, category: 'Design', isJoined: false },
@@ -55,15 +54,15 @@ export const ExploreChannels: React.FC = () => {
       <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
 
       {/* ─── Standardized Header ────────────────────────────────────────────── */}
-      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 glass-2 z-50 sticky top-0">
+      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 bg-bg-deep/90 z-50 sticky top-0">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 pr-4 border-r border-white/[0.05]">
             <Globe size={18} className="text-foreground/30" />
-            <h2 className="font-bold text-foreground text-[14px] tracking-tight uppercase">Discover</h2>
+            <h2 className="font-bold text-foreground text-[14px] tracking-tight uppercase">Browse</h2>
           </div>
           
           <nav className="flex items-center gap-1.5 hidden md:flex">
-            {categories.slice(0, 4).map(cat => (
+            {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -91,36 +90,35 @@ export const ExploreChannels: React.FC = () => {
               className="w-full h-8 pl-9 pr-4 bg-white/[0.02] border border-white/[0.05] rounded-lg text-[13px] font-medium focus:outline-none focus:border-primary/30 transition-all outline-none"
             />
           </div>
-          <Button variant="ghost" size="sm" className="h-8 px-2 text-foreground/40 hover:text-primary">
+          <button className="h-8 px-2 rounded-lg text-foreground/40 hover:text-primary hover:bg-white/[0.04] transition-all">
             <Filter size={16} />
-          </Button>
+          </button>
         </div>
       </header>
 
       {/* ─── Main Content Area (Dense List) ──────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="max-w-5xl mx-auto w-full px-6 py-8">
+        <div className="max-w-5xl mx-auto w-full px-6 pt-16 pb-8">
           
           {/* Sub Header for context */}
           <div className="mb-6 flex items-center justify-between">
             <div className="flex flex-col">
-              <h3 className="text-2xl font-black text-foreground tracking-tight uppercase">Channel Browser</h3>
-              <p className="text-[12px] text-foreground/40 font-medium mt-1">Find and join communities across the network.</p>
+              <h3 className="text-2xl font-black text-foreground tracking-tight uppercase">Browse Channels</h3>
+              <p className="text-[12px] text-foreground/40 font-medium mt-1">Find and join communities across the workspace.</p>
             </div>
-            <Button 
-              size="sm" 
-              className="h-9 px-4 rounded-xl text-[11px] font-black uppercase tracking-widest bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+            <button
               onClick={() => setActiveView('create-channel')}
+              className="h-9 px-5 rounded-full border border-white/[0.08] text-[11px] font-semibold tracking-widest text-foreground/50 hover:text-foreground hover:border-white/[0.18] hover:bg-white/[0.04] transition-all duration-200"
             >
-              <Zap size={14} className="mr-1.5" /> Start Channel
-            </Button>
+              Create Channel
+            </button>
           </div>
 
           {/* Tabular List Headers */}
           <div className="grid grid-cols-[1fr_200px_120px] gap-4 px-4 py-2 border-b border-white/[0.05] mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
-            <div>Channel Details</div>
+            <div>Channel</div>
             <div className="text-right">Activity</div>
-            <div className="text-right">Action</div>
+            <div className="text-right"></div>
           </div>
 
           {/* List Content */}
@@ -149,11 +147,6 @@ export const ExploreChannels: React.FC = () => {
                         <h4 className="text-[15px] font-bold text-foreground/90 group-hover:text-foreground transition-colors truncate">
                           {channel.name}
                         </h4>
-                        {channel.category === 'Trending' && (
-                          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase">
-                            <TrendingUp size={10} /> Hot
-                          </div>
-                        )}
                       </div>
                       <p className="text-[12px] text-foreground/30 font-medium truncate mt-0.5">
                         {channel.description}

@@ -71,10 +71,10 @@ export const CommandPalette: React.FC = () => {
           {results.map((result) => (
             <button
               key={result.id}
-              className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-surface transition-all group group-focus:bg-surface group-focus:outline-none"
+              className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-white/[0.04] transition-all group group-focus:bg-white/[0.04] group-focus:outline-none"
             >
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 bg-surface rounded-2xl flex items-center justify-center text-foreground/40 group-hover:text-primary transition-colors">
+                <div className="h-9 w-9 bg-white/[0.03] rounded-2xl flex items-center justify-center text-foreground/40 group-hover:text-primary transition-colors">
                   {result.icon}
                 </div>
                 <div className="flex flex-col items-start">
@@ -88,7 +88,7 @@ export const CommandPalette: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
+      <div className="p-4 border-t border-border bg-bg-deep/50 flex items-center justify-between">
         <div className="flex items-center gap-4 text-[10px] text-foreground/40 font-bold uppercase tracking-tight">
           <div className="flex items-center gap-1.5">
             <span className="bg-foreground/5 rounded px-1.5 py-0.5 border border-border">↑↓</span>
