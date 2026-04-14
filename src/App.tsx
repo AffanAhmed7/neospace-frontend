@@ -2,11 +2,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChatPage } from './pages/ChatPage';
 import { Landing } from './pages/Landing';
-import { Onboarding } from './pages/onboarding/Onboarding';
 import { Settings } from './pages/settings/Settings';
 import { useTheme } from './hooks/useTheme';
 import { FluidBackground } from './components/layout/FluidBackground';
 import { ToastProvider } from './components/ui/Toast';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { useAuthStore } from './store/useAuthStore';
+import { useEffect } from 'react';
 
 const queryClient = new QueryClient();
 
@@ -14,9 +16,14 @@ import { useLocation } from 'react-router-dom';
 
 function AppContent() {
   const location = useLocation();
+  const checkAuth = useAuthStore(state => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   const isApp = location.pathname.startsWith('/app') || 
-                location.pathname.startsWith('/settings') || 
-                location.pathname.startsWith('/onboarding');
+                location.pathname.startsWith('/settings');
   
   const isSettings = location.pathname.startsWith('/settings');
 
@@ -27,9 +34,16 @@ function AppContent() {
       <div className="relative z-0">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/app" element={<ChatPage />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/app" element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, MessageSquare, Pin, Search, Filter, 
+  Users, MessageSquare, Pin, Search, 
   ChevronRight, UserPlus, MoreVertical, Hash,
   ArrowLeft, Send, Paperclip, Smile
 } from 'lucide-react';

@@ -102,13 +102,6 @@ export const Hero: React.FC = () => {
                Get Started
                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button 
-              variant="ghost" 
-              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-              className="border border-white/5 hover:bg-white/10 text-white/70 hover:text-white px-6 py-2.5 text-sm font-medium rounded-xl hidden sm:flex transition-all backdrop-blur-md"
-            >
-               About Us
-            </Button>
           </div>
         </motion.div>
 

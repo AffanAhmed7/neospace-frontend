@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { 
   Plus, Hash, Pin,
   Hexagon, ChevronDown, ChevronRight, 
-  Search as SearchIcon, Settings, Telescope, Users, Mail
+  Search as SearchIcon, Settings, Telescope, Users, Mail, LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
+import { LogoutModal } from '../auth/LogoutModal';
 import { clsx } from 'clsx';
 
 const mainChannelIds = ['c2', 'c1', 'c3'];
@@ -60,8 +62,11 @@ export const Sidebar: React.FC = () => {
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
   const pinnedChannelIds = useAppStore((state) => state.pinnedChannelIds);
   const togglePinChannel = useAppStore((state) => state.togglePinChannel);
+  
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const { user } = useSettingsStore();
+  const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
   const [expandedChannels, setExpandedChannels] = useState<Record<string, boolean>>({
     'c1': true,
@@ -511,11 +516,28 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => navigate('/settings')}
             className="p-2 rounded-xl hover:bg-white/[0.05] text-foreground/25 hover:text-primary transition-all duration-300 shrink-0"
+            title="Settings"
           >
             <Settings size={16} />
           </button>
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="p-2 rounded-xl hover:bg-rose-500/10 text-foreground/25 hover:text-rose-500 transition-all duration-300 shrink-0"
+            title="Log Out"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
+
+      <LogoutModal 
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          logout();
+          navigate('/');
+        }}
+      />
     </div>
   );
 };

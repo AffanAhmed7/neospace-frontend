@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../../lib/firebase';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
@@ -29,6 +33,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const addToast = useSettingsStore(state => state.addToast);
+  const updateProfile = useSettingsStore(state => state.updateProfile);
+  const setAuth = useAuthStore(state => state.setAuth);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,13 +45,85 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }, [isOpen, initialMode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, username: email.split('@')[0] }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        const { user, accessToken, refreshToken } = data.data;
+        
+        // Handle both login and register as immediate login
+        setAuth(user, accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        updateProfile({ 
+          username: user.username,
+          avatar: user.avatar || '',
+        } as any);
+
+        const welcomeMsg = mode === 'login' 
+          ? 'Welcome back to NeoPlane!' 
+          : 'Account created! Welcome to NeoPlane.';
+        
+        addToast(welcomeMsg, 'success');
+        onClose();
+        window.location.href = '/app';
+      } else {
+        setError(data.message || `${mode === 'login' ? 'Login' : 'Signup'} failed`);
+        addToast(data.message || 'Authentication failed', 'error');
+      }
+    } catch (err: any) {
+      setError('Connection to server failed. Please try again.');
+      addToast('Connection error', 'error');
+    } finally {
       setIsLoading(false);
-      onClose();
-    }, 1200);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        setAuth(data.data.user, data.data.accessToken);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+        updateProfile({ 
+          username: data.data.user.username,
+          avatar: data.data.user.avatar || '',
+        } as any);
+        addToast(`Welcome, ${data.data.user.username}!`, 'success');
+        onClose();
+        window.location.href = '/app';
+      } else {
+        throw new Error(data.message || 'Google Login failed');
+      }
+    } catch (err: any) {
+      console.error('Google Login Error:', err);
+      setError(err.message || 'Google authentication failed');
+      addToast(err.message || 'Google authentication failed', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,6 +157,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   : 'Get started with the home for elite teams'}
               </p>
             </div>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-400 text-[12px]"
+              >
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </motion.div>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
               <Input
@@ -134,10 +225,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <Button 
             variant="ghost" 
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
             className="w-full bg-white/[0.02] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 h-10.5 rounded-xl flex items-center justify-center gap-3 transition-all scale-100 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
           >
             <GoogleIcon />
-            <span className="text-[13px] font-semibold text-white/90">Continue with Google</span>
+            <span className="text-[13px] font-semibold text-white/90">
+              {isLoading && !email ? 'Authenticating...' : 'Continue with Google'}
+            </span>
           </Button>
         </motion.div>
 

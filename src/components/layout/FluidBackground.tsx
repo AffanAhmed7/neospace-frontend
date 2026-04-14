@@ -5,7 +5,7 @@ interface FluidBackgroundProps {
   variant?: 'default' | 'settings';
 }
 
-export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = false, variant = 'default' }) => {
+export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = false }) => {
   // Track scroll position for the interactive parallax effect
   const { scrollYProgress } = useScroll();
   
@@ -25,8 +25,6 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
     { bg: '#38BDF8', duration: 18, delay: 4, w: '40vw', h: '40vh', top: '60%', left: '70%', staticX: '20vw', staticY: '20vh', scrollFactorX: 600, scrollFactorY: 300 },
   ];
 
-  type BlobData = typeof blobs[0];
-
   // Call hooks unconditionally to satisfy ESLint
   const lightX = useTransform(smoothProgress, [0, 1], [0, 100]);
   const lightY = useTransform(smoothProgress, [0, 1], [0, -50]);
@@ -40,22 +38,6 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
     { x: useTransform(smoothProgress, [0, 1], [0, blobs[4].scrollFactorX]), y: useTransform(smoothProgress, [0, 1], [0, blobs[4].scrollFactorY]), rotate: useTransform(smoothProgress, [0, 1], [0, 45]) },
   ];
 
-  const getStaticPos = (blob: BlobData) => {
-    if (variant === 'settings') {
-      return {
-        x: `calc(${blob.staticX} + 10vw)`,
-        y: `calc(${blob.staticY} - 10vh)`,
-        scale: 1.1,
-        rotate: 15
-      };
-    }
-    return {
-      x: blob.staticX,
-      y: blob.staticY,
-      scale: 1,
-      rotate: 0
-    };
-  };
 
   return (
     <div className="fixed inset-0 -z-50 overflow-hidden bg-background pointer-events-none">
