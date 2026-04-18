@@ -33,6 +33,7 @@ interface FriendsState {
   sendRequest: (username: string) => Promise<boolean>;
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
+  cancelRequest: (requestId: string) => Promise<void>;
   removeFriend: (userId: string) => Promise<void>;
   updateFriendStatus: (userId: string, status: User['status']) => void;
   startDM: (userId: string) => Promise<string | null>;
@@ -103,6 +104,10 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     } catch (err) {
       console.error('[FriendsStore] declineRequest error:', err);
     }
+  },
+
+  cancelRequest: async (requestId) => {
+    return get().declineRequest(requestId);
   },
 
   removeFriend: async (userId) => {

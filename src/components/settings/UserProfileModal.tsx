@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { MessageSquare, X, Calendar, MoreHorizontal, UserPlus, MessageCircle } from 'lucide-react';
+import { MessageSquare, X, Calendar, MoreHorizontal, UserPlus, MessageCircle, UserMinus, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -31,7 +31,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const navigate = useNavigate();
   const profileUserId = useAppStore(state => state.profileUserId);
   const { user: currentUser } = useAuthStore();
-  const { friends, sendRequest, removeFriend, startDM } = useFriendsStore();
+  const { 
+    friends, 
+    pendingOutgoing, 
+    pendingIncoming, 
+    sendRequest, 
+    removeFriend, 
+    startDM,
+    acceptRequest,
+    declineRequest,
+    cancelRequest,
+    fetchRequests
+  } = useFriendsStore();
   const openConfirm = useAppStore((state) => state.openConfirm);
   
   const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -42,6 +53,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.id;
   const friendEntry = friends.find(f => f.id === profileUserId);
   const isFriend = !!friendEntry;
+
+  const outgoingRequest = pendingOutgoing.find(r => r.receiverId === profileUserId);
+  const incomingRequest = pendingIncoming.find(r => r.senderId === profileUserId);
+  const isPendingOutgoing = !!outgoingRequest;
+  const isPendingIncoming = !!incomingRequest;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -67,7 +83,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     };
 
     fetchProfile();
-  }, [profileUserId, isOwnProfile, currentUser]);
+    fetchRequests();
+  }, [profileUserId, isOwnProfile, currentUser, fetchRequests]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -170,6 +187,33 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <MessageSquare size={14} />
                     Message
                   </Button>
+                ) : isPendingOutgoing ? (
+                  <Button 
+                    onClick={() => outgoingRequest && cancelRequest(outgoingRequest.id)} 
+                    className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-white/[0.05] hover:bg-rose-500/10 hover:text-rose-500 text-white rounded-xl flex items-center gap-2 border border-white/[0.05] hover:border-rose-500/20 transition-all"
+                    variant="ghost"
+                  >
+                    <UserMinus size={14} />
+                    Cancel Request
+                  </Button>
+                ) : isPendingIncoming ? (
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => incomingRequest && acceptRequest(incomingRequest.id)} 
+                      className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white rounded-xl flex items-center gap-2 shadow-glow-sm"
+                    >
+                      <Check size={14} />
+                      Accept
+                    </Button>
+                    <Button 
+                      onClick={() => incomingRequest && declineRequest(incomingRequest.id)} 
+                      className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-xl flex items-center gap-2"
+                      variant="ghost"
+                    >
+                      <X size={14} />
+                      Decline
+                    </Button>
+                  </div>
                 ) : (
                   <>
                     <Button 

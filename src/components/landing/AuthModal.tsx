@@ -72,13 +72,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (data.status === 'success') {
         const { user, accessToken, refreshToken } = data.data;
         
-        // Handle both login and register as immediate login
-        setAuth(user, accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        updateProfile({ 
-          username: user.username,
-          avatar: user.avatar || '',
-        });
+        // Handle both login and register — pass refreshToken to setAuth
+        setAuth(user, accessToken, refreshToken);
 
 
         const welcomeMsg = mode === 'login' 
@@ -120,12 +115,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       const data = await response.json();
       if (data.status === 'success') {
-        setAuth(data.data.user, data.data.accessToken);
-        localStorage.setItem('refreshToken', data.data.refreshToken);
-        updateProfile({ 
-          username: data.data.user.username,
-          avatar: data.data.user.avatar || '',
-        });
+        setAuth(data.data.user, data.data.accessToken, data.data.refreshToken);
 
         addToast(`Welcome, ${data.data.user.username}!`, 'success');
         onClose();

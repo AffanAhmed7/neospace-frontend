@@ -21,7 +21,7 @@ export const ToastProvider: React.FC = () => {
 
 const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast, onClose }) => {
   const [progress, setProgress] = useState(100);
-  const duration = 3000; // Match the store's auto-remove timeout
+  const duration = 2000; // Match the store's auto-remove timeout
 
   useEffect(() => {
     const startTime = Date.now();
@@ -43,23 +43,23 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
   const variants = {
     success: {
       icon: <Check className="w-4 h-4 text-emerald-400" />,
-      border: 'border-emerald-500/20',
-      bg: 'bg-emerald-500/5',
-      glow: 'shadow-[0_0_20px_rgba(16,185,129,0.1)]',
+      border: 'border-emerald-500/30',
+      bg: 'bg-emerald-500/10',
+      glow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]',
       progress: 'bg-emerald-400'
     },
     error: {
       icon: <AlertCircle className="w-4 h-4 text-rose-400" />,
-      border: 'border-rose-500/20',
-      bg: 'bg-rose-500/5',
-      glow: 'shadow-[0_0_20px_rgba(244,63,94,0.1)]',
+      border: 'border-rose-500/30',
+      bg: 'bg-rose-500/10',
+      glow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]',
       progress: 'bg-rose-400'
     },
     info: {
       icon: <Info className="w-4 h-4 text-sky-400" />,
-      border: 'border-sky-500/20',
-      bg: 'bg-sky-500/5',
-      glow: 'shadow-[0_0_20px_rgba(14,165,233,0.1)]',
+      border: 'border-sky-500/30',
+      bg: 'bg-sky-500/10',
+      glow: 'shadow-[0_0_20px_rgba(14,165,233,0.15)]',
       progress: 'bg-sky-400'
     }
   };
@@ -73,26 +73,26 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
       animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, x: 40, scale: 0.9, transition: { duration: 0.2 } }}
       className={clsx(
-        "pointer-events-auto relative group min-w-[340px] max-w-md overflow-hidden",
-        "rounded-2xl border backdrop-blur-2xl shadow-2xl transition-all duration-300",
+        "pointer-events-auto relative group min-w-[280px] max-w-sm overflow-hidden",
+        "rounded-2xl border backdrop-blur-3xl shadow-2xl transition-all duration-300",
         style.border, style.bg, style.glow
       )}
     >
-      <div className="p-4 flex items-start gap-4">
+      <div className="p-3.5 flex items-center gap-3.5">
         {/* Status Icon with inner glow */}
         <div className={clsx(
-          "shrink-0 w-8 h-8 rounded-xl flex items-center justify-center border",
-          style.border, "bg-white/[0.03] shadow-inner"
+          "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center border",
+          style.border, "bg-white/[0.05] shadow-inner"
         )}>
           {style.icon}
         </div>
 
         {/* Content */}
-        <div className="flex-1 pt-0.5">
-          <p className="text-[13px] font-bold text-white/90 tracking-tight leading-tight">
-            {toast.type === 'success' ? 'Resolution Success' : toast.type === 'error' ? 'Security Alert' : 'System Information'}
+        <div className="flex-1">
+          <p className="text-[12px] font-black uppercase text-white/90 tracking-[0.05em] leading-none mb-1">
+            {toast.type === 'success' ? 'Confirmed' : toast.type === 'error' ? 'Security' : 'System'}
           </p>
-          <p className="text-[12px] font-medium text-white/40 mt-0.5">
+          <p className="text-[11px] font-bold text-white/50 leading-tight">
             {toast.message}
           </p>
         </div>
@@ -100,24 +100,21 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
         {/* Close button */}
         <button 
           onClick={onClose}
-          className="shrink-0 p-1.5 rounded-lg hover:bg-white/5 text-white/10 hover:text-white/40 transition-all opacity-0 group-hover:opacity-100"
+          className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-white/10 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
         >
-          <X size={14} />
+          <X size={12} />
         </button>
       </div>
 
       {/* Modern Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/[0.03]">
+      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white/[0.05]">
         <motion.div 
-          className={clsx("h-full opacity-40", style.progress)}
+          className={clsx("h-full opacity-60", style.progress)}
           initial={{ width: '100%' }}
           animate={{ width: `${progress}%` }}
           transition={{ ease: "linear" }}
         />
       </div>
-
-      {/* Background highlight flare */}
-      <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.02] blur-2xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
     </motion.div>
   );
 };

@@ -41,10 +41,9 @@ export const ProfileForm: React.FC = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([
-        updateProfile({ username, bio, avatar, banner }),
-        updateStatus(status, customStatus)
-      ]);
+      // Execute sequentially to avoid race conditions in auth store updates
+      await updateProfile({ username, bio, avatar, banner });
+      await updateStatus(status, customStatus);
       addToast('Profile and status updated successfully!', 'success');
     } catch (err: unknown) {
       console.error('[ProfileForm] Save error:', err);

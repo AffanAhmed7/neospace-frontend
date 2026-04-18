@@ -14,6 +14,7 @@ import { NotificationPanel } from './NotificationPanel';
 import { UserProfileModal } from '../settings/UserProfileModal';
 import { HomeDashboard } from './HomeDashboard';
 import { MessageRequests } from '../social/MessageRequests';
+import { ConfirmModal } from '../ui/ConfirmModal';
 import { ToastProvider } from '../ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '../../hooks/useSocket';
@@ -41,6 +42,7 @@ export const AppShell: React.FC = () => {
   React.useEffect(() => {
     if (isAuthenticated) {
       useConversationsStore.getState().fetchConversations();
+      useConversationsStore.getState().fetchPendingInvites();
       useFriendsStore.getState().fetchFriends();
       useFriendsStore.getState().fetchRequests();
       useNotificationsStore.getState().fetchNotifications();
@@ -222,6 +224,7 @@ export const AppShell: React.FC = () => {
 
       {/* Global Notifications */}
       <ToastProvider />
+      <ConfirmModal />
 
     </div>
   );

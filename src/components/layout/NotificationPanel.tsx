@@ -2,6 +2,7 @@ import React from 'react';
 import { Bell, Hash, User, X, Check } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useNotificationsStore } from '../../store/useNotificationsStore';
+import { useConversationsStore } from '../../store/useConversationsStore';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
@@ -11,6 +12,7 @@ export const NotificationPanel: React.FC = () => {
   const notificationPanelOpen = useAppStore((state) => state.notificationPanelOpen);
   const toggleNotificationPanel = useAppStore((state) => state.toggleNotificationPanel);
   const { notifications, markAsRead, clearAll } = useNotificationsStore();
+  const { pendingInvites, acceptInvite, declineInvite } = useConversationsStore();
 
   if (!notificationPanelOpen) return null;
 
@@ -41,6 +43,46 @@ export const NotificationPanel: React.FC = () => {
 
       {/* List */}
       <div className="max-h-[500px] overflow-y-auto custom-scrollbar-minimal py-2">
+        {/* Pending Channel Invites */}
+        {pendingInvites.map((invite) => (
+          <div
+            key={invite.id}
+            className="px-6 py-5 border-b border-white/[0.03] transition-all duration-300 group flex gap-4 relative bg-primary/[0.05]"
+          >
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full blur-[2px]" />
+            
+            <div className="shrink-0 relative mt-1">
+               <Avatar src={invite.inviter?.avatar} alt={invite.inviter?.username} size="sm" className="shadow-md border-none" />
+               <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-lg p-0.5 border-2 border-card shadow-glow">
+                  <Hash size={10} />
+               </div>
+            </div>
+            
+            <div className="flex-grow flex flex-col gap-2 min-w-0">
+               <div className="flex items-start justify-between gap-2">
+                  <span className="text-[13px] font-bold tracking-tight truncate text-foreground group-hover:text-primary transition-colors">
+                    Channel Invite
+                  </span>
+                  <span className="text-[10px] font-bold text-foreground/20 uppercase tracking-tighter shrink-0 pt-0.5">
+                    {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
+                  </span>
+               </div>
+               <p className="text-[12px] font-medium text-foreground/60 leading-relaxed italic pr-2">
+                 <span className="text-white font-bold">{invite.inviter?.username}</span> invited you to join <span className="text-primary font-bold">#{invite.conversation?.name}</span>
+               </p>
+               <div className="flex items-center gap-2 mt-2">
+                 <Button size="sm" className="h-7 text-[12px] px-3 font-bold" onClick={() => acceptInvite(invite.id)}>
+                   Accept
+                 </Button>
+                 <Button size="sm" variant="ghost" className="h-7 text-[12px] px-3 font-bold hover:bg-white/5" onClick={() => declineInvite(invite.id)}>
+                   Decline
+                 </Button>
+               </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Regular Notifications */}
         {notifications.map((notif) => (
           <div
             key={notif.id}
@@ -79,7 +121,7 @@ export const NotificationPanel: React.FC = () => {
             </div>
           </div>
         ))}
-        {notifications.length === 0 && (
+        {notifications.length === 0 && pendingInvites.length === 0 && (
            <div className="py-20 flex flex-col items-center justify-center text-center opacity-20">
               <Bell size={48} className="mb-4" />
               <p className="text-sm font-bold tracking-tighter uppercase">No new activity</p>

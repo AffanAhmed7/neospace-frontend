@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useConversationsStore } from '../../store/useConversationsStore';
+import { useMessagesStore } from '../../store/useMessagesStore';
 import type { Conversation } from '../../store/useConversationsStore';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
@@ -33,15 +34,48 @@ export const Sidebar: React.FC = () => {
 
   
   const { conversations } = useConversationsStore();
+  const { messages, readReceipts } = useMessagesStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const getDMPreview = (dm: Conversation) => {
+    const convMessages = messages[dm.id];
+    if (convMessages && convMessages.length > 0) {
+      const last = convMessages[convMessages.length - 1];
+      if (last.type === 'IMAGE') return 'Sent an image';
+      if (last.type === 'FILE') return 'Sent a file';
+      return last.content || 'New message';
+    }
+    return 'Click to chat';
+  };
 
+  const getUnreadCount = (dm: Conversation) => {
+    const convMessages = messages[dm.id];
+    if (!convMessages || convMessages.length === 0) return 0;
+    
+    if (!user?.id) return 0;
+    
+    const myLastReadId = readReceipts[dm.id]?.[user.id];
+    
+    if (!myLastReadId) {
+      const last = convMessages[convMessages.length - 1];
+      if (last.senderId !== user.id) return 1; 
+      return 0;
+    }
+    
+    const readIdx = convMessages.findIndex(m => m.id === myLastReadId);
+    if (readIdx !== -1) {
+      const unreadIdxs = convMessages.slice(readIdx + 1);
+      return unreadIdxs.filter(m => m.senderId !== user.id).length;
+    }
+    
+    return 0;
+  };
   // Helper to get DM target user
   const getDMInfo = (conv: Conversation) => {
-    const otherParticipant = conv.participants.find(p => p.user.id !== user?.id);
+    const otherParticipant = conv.participants?.find(p => p.user.id !== user?.id);
     return {
       name: otherParticipant?.user.username || 'Unknown User',
       avatar: otherParticipant?.user.avatar,
@@ -253,7 +287,9 @@ export const Sidebar: React.FC = () => {
             {dms.map((dm) => {
               const isActive = activeConversationId === dm.id;
               const dmInfo = getDMInfo(dm);
-              const status = statusConfig[dmInfo.status];
+              const status = statusConfig[dmInfo.status] || statusConfig.OFFLINE;
+              const unreadCount = getUnreadCount(dm);
+              const previewText = getDMPreview(dm);
               return (
                 <motion.button
                   key={dm.id}
@@ -284,9 +320,17 @@ export const Sidebar: React.FC = () => {
                   <div className="flex flex-col text-left overflow-hidden flex-grow min-w-0">
                     <span className={clsx(
                       'text-[12px] font-semibold leading-tight truncate transition-colors',
-                      isActive ? 'text-primary' : 'text-foreground/60 group-hover:text-foreground/80'
+                      isActive ? 'text-primary' : 'text-foreground/60 group-hover:text-foreground/80',
+                      unreadCount > 0 ? '!text-foreground font-bold' : ''
                     )}>
                       {dmInfo.name}
+                    </span>
+                    <span className={clsx(
+                      'text-[10px] leading-tight truncate transition-colors mt-0.5',
+                      unreadCount > 0 ? 'text-primary font-bold opacity-100' : 'text-foreground/40 font-medium opacity-60',
+                      isActive && unreadCount === 0 ? 'text-primary/70' : ''
+                    )}>
+                      {unreadCount > 0 ? `${unreadCount} new message${unreadCount > 1 ? 's' : ''}` : previewText}
                     </span>
                   </div>
                 </motion.button>

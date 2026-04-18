@@ -1,4 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import { reconnectSocket } from './socket';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -23,12 +24,20 @@ let isRefreshing = false;
 let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
-
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
     else resolve(token);
   });
   failedQueue = [];
+};
+
+const forceLogout = () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  // Import lazily to avoid circular dep — only called in error path
+  import('../store/useAuthStore').then(({ useAuthStore }) => {
+    useAuthStore.getState().logout();
+  });
 };
 
 api.interceptors.response.use(
@@ -55,10 +64,8 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       if (!refreshToken) {
-        // No refresh token — force logout
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/';
+        isRefreshing = false;
+        forceLogout();
         return Promise.reject(error);
       }
 
@@ -67,14 +74,16 @@ api.interceptors.response.use(
         const newToken = data.data.accessToken;
 
         localStorage.setItem('accessToken', newToken);
+        
+        // Reconnect socket with fresh token so real-time events keep working
+        reconnectSocket();
+
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/';
+        forceLogout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -86,3 +95,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

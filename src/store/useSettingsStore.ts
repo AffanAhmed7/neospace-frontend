@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import api from '../lib/api';
 import { useAuthStore } from './useAuthStore';
+import { useConversationsStore } from './useConversationsStore';
 
 export interface Toast {
   id: string;
@@ -87,6 +88,13 @@ export const useSettingsStore = create<SettingsState>()(
         const updatedUser = resp.data.data.user;
         // Update auth store user as well
         useAuthStore.setState({ user: updatedUser });
+        // Propagate avatar/username changes across all conversations in real-time
+        if (updatedUser?.id) {
+          useConversationsStore.getState().updateParticipantUser(updatedUser.id, {
+            username: updatedUser.username,
+            avatar: updatedUser.avatar,
+          });
+        }
       },
 
 
@@ -103,12 +111,12 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           toasts: [...state.toasts, { id, message, type }]
         }));
-        // Auto-remove after 3 seconds
+        // Auto-remove after 2 seconds
         setTimeout(() => {
           set((state) => ({
             toasts: state.toasts.filter((t) => t.id !== id)
           }));
-        }, 3000);
+        }, 2000);
       },
 
       removeToast: (id: string) => set((state) => ({
@@ -126,8 +134,11 @@ export const useSettingsStore = create<SettingsState>()(
 
       updateStatus: async (status, customStatus) => {
         try {
-          const { data } = await api.patch('/users/me/status', { status, customStatus });
-          useAuthStore.setState({ user: data.data.user });
+          const resp = await api.patch('/users/me/status', { status, customStatus });
+          const user = resp.data.data?.user;
+          if (user) {
+            useAuthStore.setState({ user });
+          }
         } catch (err) {
           console.error('[SettingsStore] updateStatus error:', err);
         }
@@ -135,12 +146,15 @@ export const useSettingsStore = create<SettingsState>()(
 
       updatePreferences: async (prefs) => {
         try {
-          const { data } = await api.patch('/users/me/preferences', { preferences: prefs });
+          const resp = await api.patch('/users/me/preferences', { preferences: prefs });
           set((state) => ({
             notifications: { ...state.notifications, ...prefs },
             privacy: { ...state.privacy, ...prefs }
           }));
-          useAuthStore.setState({ user: data.data.user });
+          const user = resp.data.data?.user;
+          if (user) {
+            useAuthStore.setState({ user });
+          }
         } catch (err) {
           console.error('[SettingsStore] updatePreferences error:', err);
         }

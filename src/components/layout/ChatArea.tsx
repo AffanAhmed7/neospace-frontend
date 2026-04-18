@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   Hash, PanelRight,
-  Flame, Info, Pin, Trash2, Edit3
+  Flame, Info, Pin, Trash2, Edit3, Download, FileText,
+  Users, Globe, Loader2
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +13,7 @@ import { useMessagesStore } from '../../store/useMessagesStore';
 import type { Message } from '../../store/useMessagesStore';
 import { useFriendsStore } from '../../store/useFriendsStore';
 import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
 import { MessageInput } from './MessageInput';
@@ -45,32 +47,47 @@ export const ChatArea: React.FC = () => {
 
   // Check if there is a pending request for this conversation
   const incomingRequest = useMemo(() => {
-    if (!activeConversationId || conversation?.type !== 'DIRECT') return null;
-    const otherParticipant = conversation.participants.find(p => p.user.id !== user?.id);
+    if (!activeConversationId || !conversation || conversation.type !== 'DIRECT') return null;
+    const otherParticipant = conversation.participants?.find(p => p.user.id !== user?.id);
     if (!otherParticipant) return null;
     return pendingIncoming.find(req => req.senderId === otherParticipant.user.id);
   }, [pendingIncoming, activeConversationId, conversation, user]);
 
-  const { messages: allMessages } = useMessagesStore();
-  const messages = activeConversationId ? allMessages[activeConversationId] || [] : [];
+  const { messages: allMessages, localHiddenIds } = useMessagesStore();
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
+  const [preview, setPreview] = useState<any>(null);
+  const { fetchPreview, joinChannel } = useConversationsStore();
+
+  const messages = useMemo(() => {
+    const msgs = activeConversationId ? allMessages[activeConversationId] || [] : [];
+    return msgs.filter(m => !localHiddenIds.has(m.id));
+  }, [activeConversationId, allMessages, localHiddenIds]);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages when conversation changes
   useEffect(() => {
     if (activeConversationId) {
-      fetchMessages(activeConversationId);
-      joinRoom(activeConversationId);
-      
-      // Mark as read after a short delay
-      const timeout = setTimeout(() => {
-        const msgs = useMessagesStore.getState().messages[activeConversationId] || [];
-        if (msgs.length > 0) {
-          markAsRead(activeConversationId, msgs[msgs.length - 1].id);
-        }
-      }, 1000);
-      return () => clearTimeout(timeout);
+      const conv = getConversationById(activeConversationId);
+      if (conv) {
+        setPreview(null);
+        fetchMessages(activeConversationId);
+        joinRoom(activeConversationId);
+        
+        // Mark as read after a short delay
+        const timeout = setTimeout(() => {
+          const msgs = useMessagesStore.getState().messages[activeConversationId] || [];
+          if (msgs.length > 0) {
+            markAsRead(activeConversationId, msgs[msgs.length - 1].id);
+          }
+        }, 1000);
+        return () => clearTimeout(timeout);
+      } else {
+        // Not a member, fetch preview
+        fetchPreview(activeConversationId).then(setPreview);
+      }
     }
-  }, [activeConversationId, fetchMessages, markAsRead, joinRoom]);
+  }, [activeConversationId, fetchMessages, markAsRead, joinRoom, getConversationById, fetchPreview]);
 
 
   // Auto-scroll to bottom on new messages
@@ -91,6 +108,17 @@ export const ChatArea: React.FC = () => {
   };
 
   if (!activeConversationId) return <EmptyState onSelect={setActiveConversation} />;
+  
+  if (preview) return (
+    <ChannelPreview 
+      channel={preview} 
+      onJoin={async () => {
+        const success = await joinChannel(preview.id);
+        if (success) setPreview(null);
+      }} 
+    />
+  );
+
   if (!conversation) return null;
 
   const onlineParticipants = conversation.participants.filter(p => p.user.status !== 'OFFLINE');
@@ -105,7 +133,15 @@ export const ChatArea: React.FC = () => {
             className="flex items-center gap-4 cursor-pointer group/header-title"
           >
             <div className="flex items-center gap-3">
-              <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
+              {conversation.type === 'DIRECT' ? (
+                <Avatar 
+                  src={conversation.participants.find(p => p.user.id !== user?.id)?.user.avatar} 
+                  size="sm" 
+                  className="h-10 w-10 shadow-lg"
+                />
+              ) : (
+                <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
+              )}
               <div className="flex flex-col text-left">
                 <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase">
                   {conversation.type !== 'DIRECT' && '# '}{conversation.name || conversation.participants.find(p => p.user.id !== user?.id)?.user.username || 'Unknown'}
@@ -121,7 +157,7 @@ export const ChatArea: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1">
-          {onlineParticipants.length > 0 && (
+          {conversation.type !== 'DIRECT' && onlineParticipants.length > 0 && (
             <div className="flex items-center gap-2.5 mr-1 px-1 transition-all cursor-pointer group">
               <div className="flex -space-x-2.5">
                 {onlineParticipants.slice(0, 3).map((p, i) => (
@@ -207,6 +243,7 @@ export const ChatArea: React.FC = () => {
                   message={msg}
                   isOwn={msg.senderId === user?.id}
                   delay={i * 0.02} 
+                  onImageClick={(url, name) => setSelectedImage({ url, name })}
                   readers={conversation.participants
                     .filter(p => p.user.id !== user?.id && readReceipts[activeConversationId]?.[p.user.id] === msg.id)
                     .map(p => p.user)}
@@ -240,9 +277,39 @@ export const ChatArea: React.FC = () => {
           <MessageInput 
             channelName={conversation.name || conversation.participants.find(p => p.user.id !== user?.id)?.user.username || 'this conversation'} 
           />
-
         )}
       </div>
+
+      {/* Image Lightbox */}
+      <Modal 
+        isOpen={!!selectedImage} 
+        onClose={() => setSelectedImage(null)}
+        className="max-w-[90vw] max-h-[90vh] p-0 bg-transparent border-none shadow-none overflow-visible"
+        showCloseButton={true}
+      >
+        {selectedImage && (
+          <div className="relative flex flex-col items-center gap-4">
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              src={selectedImage.url} 
+              alt={selectedImage.name}
+              className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain ring-1 ring-white/10"
+            />
+            <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10">
+               <span className="text-white font-black uppercase tracking-widest text-[11px]">{selectedImage.name}</span>
+               <div className="w-px h-3 bg-white/20" />
+               <a 
+                 href={selectedImage.url} 
+                 download={selectedImage.name}
+                 className="text-primary hover:text-primary/80 transition-colors flex items-center gap-2 text-[11px] font-black uppercase tracking-widest"
+               >
+                 <Download size={14} /> Download
+               </a>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
@@ -263,14 +330,16 @@ const MessageBubble: React.FC<{
   message: Message; 
   isOwn: boolean; 
   delay: number;
+  onImageClick?: (url: string, name: string) => void;
   readers?: Participant[];
-}> = ({ message, isOwn, delay, readers = [] }) => {
+}> = ({ message, isOwn, delay, onImageClick, readers = [] }) => {
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content || '');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
-  const { reactToMessage, deleteMessage, pinMessage, editMessage } = useMessagesStore();
+  const { reactToMessage, deleteMessage, pinMessage, editMessage, hideMessage } = useMessagesStore();
 
   const handleEdit = async () => {
     if (editContent.trim() && editContent !== message.content) {
@@ -315,31 +384,95 @@ const MessageBubble: React.FC<{
           </span>
         </div>
         <div className={clsx(
-          'relative px-4 py-2.5 rounded-2xl text-[14px] font-bold leading-relaxed shadow-md border transition-all duration-200', 
-          isOwn 
-            ? 'bg-primary text-white rounded-tr-sm border-primary/20' 
-            : 'bg-white/[0.04] text-foreground rounded-tl-sm border-transparent'
+          'relative text-[14px] font-bold leading-relaxed shadow-md border transition-all duration-200', 
+          message.type === 'IMAGE' && !message.content 
+            ? 'p-0 bg-transparent border-transparent shadow-none'
+            : clsx(
+                'px-4 py-2.5 rounded-2xl border',
+                isOwn 
+                  ? 'bg-primary text-white rounded-tr-sm border-primary/20' 
+                  : 'bg-white/[0.04] text-foreground rounded-tl-sm border-transparent'
+              )
         )}>
-          {isEditing ? (
-            <textarea
-              autoFocus
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-transparent border-0 outline-none text-white resize-none min-h-[1.5em] p-0"
-              rows={Math.max(1, editContent.split('\n').length)}
-            />
+          {message.isDeleted ? (
+            <span className="italic opacity-30">This message has been deleted</span>
           ) : (
-            <>
-              {message.isDeleted ? (
-                <span className="italic opacity-30">This message has been deleted</span>
-              ) : (
-                message.content
+            <div className="flex flex-col gap-2">
+              {message.type === 'IMAGE' && message.fileUrl && (
+                <div className="relative group/img overflow-hidden rounded-2xl max-w-sm">
+                  <img 
+                    src={message.fileUrl} 
+                    alt={message.fileName || 'Image'} 
+                    className={clsx(
+                      "max-h-[400px] w-auto object-contain cursor-zoom-in transition-all duration-500 group-hover:scale-[1.02] active:scale-[0.98]",
+                      !message.content && "shadow-2xl"
+                    )}
+                    onClick={() => onImageClick?.(message.fileUrl!, message.fileName || 'image.png')}
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-between">
+                    <span className="text-[10px] text-white/80 font-bold truncate max-w-[70%] uppercase tracking-widest">{message.fileName}</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const a = document.createElement('a');
+                        a.href = message.fileUrl!;
+                        a.download = message.fileName || 'image.png';
+                        a.click();
+                      }}
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all pointer-events-auto"
+                    >
+                      <Download size={12} />
+                    </button>
+                  </div>
+                </div>
               )}
-              {message.isEdited && !message.isDeleted && (
-                <span className="ml-2 text-[9px] opacity-30 uppercase font-black">(edited)</span>
+
+              {message.type === 'FILE' && message.fileUrl && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/10 border border-white/5 group/file min-w-[200px] max-w-xs">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-white/5 text-primary group-hover/file:scale-110 transition-transform">
+                    <FileText size={20} />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[13px] font-bold text-foreground/90 truncate uppercase tracking-tight">{message.fileName}</span>
+                    <span className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">
+                      {message.fileSize ? `${(message.fileSize / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
+                    </span>
+                  </div>
+                  <a 
+                    href={message.fileUrl} 
+                    download={message.fileName}
+                    className="ml-auto p-2 rounded-lg hover:bg-white/10 text-foreground/20 hover:text-primary transition-all"
+                  >
+                    <Download size={16} />
+                  </a>
+                </div>
               )}
-            </>
+
+              {message.content && (
+                <div className={clsx(
+                  isEditing ? 'w-full' : '',
+                  'whitespace-pre-wrap'
+                )}>
+                  {isEditing ? (
+                    <textarea
+                      autoFocus
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="w-full bg-transparent border-0 outline-none text-white resize-none min-h-[1.5em] p-0"
+                      rows={Math.max(1, editContent.split('\n').length)}
+                    />
+                  ) : (
+                    <>
+                      {message.content}
+                      {message.isEdited && (
+                        <span className="ml-2 text-[9px] opacity-30 uppercase font-black">(edited)</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {message.isPinned && (
              <div className="absolute -top-2 flex items-center gap-1 bg-amber-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-lg">
@@ -382,27 +515,85 @@ const MessageBubble: React.FC<{
                 <button key={emoji} onClick={() => reactToMessage(message.id, message.conversationId, emoji)} className="p-1.5 rounded-lg hover:bg-white/10 transition-all">{emoji}</button>
               ))}
               <div className="w-px h-3 bg-white/10 mx-1" />
-              <button 
-                onClick={() => {
-                  setIsEditing(true);
-                  setShowActions(false);
-                }} 
-                className="p-1.5 rounded-lg hover:bg-white/10 text-foreground/30 hover:text-primary transition-all"
-              >
-                <Edit3 size={13} />
-              </button>
+              {isOwn && (
+                <button 
+                  onClick={() => {
+                    setIsEditing(true);
+                    setShowActions(false);
+                  }} 
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-foreground/30 hover:text-primary transition-all"
+                >
+                  <Edit3 size={13} />
+                </button>
+              )}
               <button onClick={() => pinMessage(message.id, message.conversationId)} className={clsx("p-1.5 rounded-lg hover:bg-white/10", message.isPinned ? "text-amber-400" : "text-foreground/30")}>
                 <Pin size={13} />
               </button>
-              {isOwn && (
-                <button onClick={() => deleteMessage(message.id, message.conversationId)} className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-500 transition-all">
-                  <Trash2 size={13} />
-                </button>
-              )}
+              <button 
+                onClick={() => setShowDeleteModal(true)} 
+                className={clsx(
+                  "p-1.5 rounded-lg transition-all",
+                  isOwn ? "hover:bg-rose-500/20 text-rose-500" : "hover:bg-white/10 text-foreground/30 hover:text-rose-500"
+                )}
+                title="Delete message"
+              >
+                <Trash2 size={13} />
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} className="bg-[#0F0F12] border border-white/10 max-w-[340px] p-6 rounded-3xl">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 text-rose-500 mb-3">
+            <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center">
+              <Trash2 size={20} />
+            </div>
+            <h3 className="text-[17px] font-black tracking-tight text-white m-0 uppercase">Delete Message</h3>
+          </div>
+          
+          <p className="text-[13px] text-foreground/60 mb-6 leading-relaxed font-medium">
+            {isOwn 
+              ? "Do you want to permanently delete this message for everyone, or just hide it for yourself?"
+              : "Are you sure you want to hide this message? It will be removed from your view but remain visible to others."}
+          </p>
+
+          <div className="flex flex-col gap-2">
+            {isOwn && (
+              <Button 
+                onClick={() => {
+                  deleteMessage(message.id, message.conversationId);
+                  setShowDeleteModal(false);
+                }}
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-11 rounded-xl text-[13px]"
+              >
+                Delete for everyone
+              </Button>
+            )}
+            
+            <Button 
+              variant="ghost"
+              onClick={() => {
+                hideMessage(message.id);
+                setShowDeleteModal(false);
+              }}
+              className="w-full bg-white/5 hover:bg-white/10 text-white font-bold h-11 border border-white/5 rounded-xl text-[13px]"
+            >
+              Delete just for me
+            </Button>
+
+            <Button 
+              variant="ghost"
+              onClick={() => setShowDeleteModal(false)}
+              className="w-full hover:bg-white/5 text-foreground/50 h-10 mt-1 rounded-xl text-[12px] font-bold uppercase tracking-wider"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Read Receipts */}
       {readers.length > 0 && (
@@ -419,5 +610,76 @@ const MessageBubble: React.FC<{
         </div>
       )}
     </motion.div>
+  );
+};
+
+const ChannelPreview: React.FC<{ 
+  channel: any; 
+  onJoin: () => Promise<void>;
+}> = ({ channel, onJoin }) => {
+  const [isJoining, setIsJoining] = useState(false);
+
+  return (
+    <div className="flex-grow flex flex-col items-center justify-center p-8 text-center bg-bg-deep/50 relative overflow-hidden">
+      <div className="absolute inset-0 bg-noise opacity-[0.02]" />
+      <div className="relative z-10 flex flex-col items-center max-w-lg">
+        <div className="h-24 w-24 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-3xl flex items-center justify-center mb-8 shadow-glow-sm ring-1 ring-white/10 overflow-hidden">
+          {channel.heroImage ? (
+            <img src={channel.heroImage} className="w-full h-full object-cover" alt="hero" />
+          ) : (
+            <Hash size={40} className="text-primary/60" />
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2 mb-2">
+          <Hash size={20} className="text-primary/40" />
+          <h3 className="text-3xl font-black text-foreground tracking-tighter uppercase">{channel.name}</h3>
+        </div>
+        
+        <div className="flex items-center gap-3 mb-6 px-3 py-1 bg-white/[0.03] border border-white/[0.05] rounded-full">
+          <div className="flex items-center gap-1.5">
+            <Users size={12} className="text-foreground/30" />
+            <span className="text-[11px] font-black text-foreground/40 uppercase tracking-widest">
+              {channel._count?.participants || 0} Members
+            </span>
+          </div>
+          <div className="w-px h-2.5 bg-white/10" />
+          <div className="flex items-center gap-1.5">
+            <Globe size={12} className="text-primary/40" />
+            <span className="text-[11px] font-black text-primary/60 uppercase tracking-widest">
+              {channel.isPublic ? 'Public' : 'Approval Required'}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-[15px] text-foreground/40 leading-relaxed font-bold mb-10 italic">
+          "{channel.description || 'Welcome to this community. Discover, discuss, and build together.'}"
+        </p>
+
+        <Button 
+          onClick={async () => {
+            setIsJoining(true);
+            try { await onJoin(); } finally { setIsJoining(false); }
+          }}
+          disabled={isJoining}
+          className="h-14 px-12 rounded-2xl bg-primary text-white font-black uppercase tracking-[0.2em] text-[13px] shadow-glow hover:scale-105 transition-all"
+        >
+          {isJoining ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            channel.isPublic ? 'Join Channel' : 'Request to Join'
+          )}
+        </Button>
+
+        <p className="mt-6 text-[10px] font-black text-foreground/15 uppercase tracking-[0.15em] max-w-[280px]">
+          By joining, you agree to follow the community guidelines and channel rules.
+        </p>
+      </div>
+
+      {/* Background Decor */}
+      <div className="absolute -bottom-24 -right-24 h-96 w-96 bg-primary/2 tracking-widest flex items-center justify-center overflow-hidden rotate-12 select-none pointer-events-none">
+        <Hash size={500} className="opacity-[0.03] text-primary" />
+      </div>
+    </div>
   );
 };

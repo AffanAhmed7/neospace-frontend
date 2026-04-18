@@ -33,6 +33,7 @@ interface MessagesState {
   cursors: Record<string, string | null>; // conversationId → cursor
   isLoading: Record<string, boolean>;
   readReceipts: Record<string, Record<string, string>>; // conversationId → { userId → lastReadMessageId }
+  localHiddenIds: Set<string>; // Ids of messages hidden locally by the user
 
   // Fetch
   fetchMessages: (conversationId: string, cursor?: string) => Promise<void>;
@@ -51,6 +52,7 @@ interface MessagesState {
   deleteMessage: (messageId: string, conversationId: string) => Promise<void>;
   reactToMessage: (messageId: string, conversationId: string, emoji: string) => Promise<void>;
   pinMessage: (messageId: string, conversationId: string) => Promise<void>;
+  hideMessage: (messageId: string) => void;
   markAsRead: (conversationId: string, lastReadMessageId: string) => void;
   joinRoom: (conversationId: string) => void;
 
@@ -77,6 +79,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   cursors: {},
   isLoading: {},
   readReceipts: {},
+  localHiddenIds: new Set(),
 
   fetchMessages: async (conversationId, cursor) => {
     set((s) => ({ isLoading: { ...s.isLoading, [conversationId]: true } }));
@@ -154,6 +157,13 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     });
   },
 
+  hideMessage: (messageId) => {
+    set((s) => {
+      const newHidden = new Set(s.localHiddenIds);
+      newHidden.add(messageId);
+      return { localHiddenIds: newHidden };
+    });
+  },
 
   markAsRead: (conversationId, lastReadMessageId) => {
     const socket = getSocket();

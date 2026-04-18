@@ -6,6 +6,7 @@ import { useNotificationsStore } from '../store/useNotificationsStore';
 import { useFriendsStore } from '../store/useFriendsStore';
 import { useConversationsStore } from '../store/useConversationsStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useAppStore } from '../store/useAppStore';
 
 import type { Message } from '../store/useMessagesStore';
 import type { Notification } from '../store/useNotificationsStore';
@@ -33,8 +34,12 @@ export const useSocket = () => {
     // ─── Connection Events ──────────────────────────────────────────────────
     socket.on('connect', () => {
       console.log('[Socket] Connected to server');
-      // We don't necessarily want a toast on initial connect to avoid spam,
-      // but if it was disconnected, we might. Socket.io 'reconnect' is better for that.
+      
+      // Auto re-join the active room so we don't miss messages
+      const activeId = useAppStore.getState().activeConversationId;
+      if (activeId) {
+        socket.emit('room:join', { conversationId: activeId });
+      }
     });
 
     socket.on('disconnect', (reason) => {
@@ -52,6 +57,12 @@ export const useSocket = () => {
     socket.on('reconnect', (attempt) => {
       console.log('[Socket] Reconnected after', attempt, 'attempts');
       addToast('Connection restored. You are back online.', 'success');
+      
+      // Re-join the active conversation room after reconnect
+      const activeId = useAppStore.getState().activeConversationId;
+      if (activeId) {
+        socket.emit('room:join', { conversationId: activeId });
+      }
     });
 
     // ─── Chat Events ──────────────────────────────────────────────────────────
@@ -91,6 +102,7 @@ export const useSocket = () => {
 
     socket.on('user:status_changed', ({ userId, status }: { userId: string, status: string }) => {
       useFriendsStore.getState().updateFriendStatus(userId, status as 'ONLINE' | 'OFFLINE' | 'IDLE' | 'DND');
+      useConversationsStore.getState().updateParticipantUser(userId, { status });
     });
 
     // ─── Social Events ────────────────────────────────────────────────────────
@@ -119,6 +131,18 @@ export const useSocket = () => {
       useConversationsStore.getState().onNewConversation(conversation);
     });
 
+    socket.on('conversation:removed', ({ id }: { id: string }) => {
+      useConversationsStore.getState().onConversationRemoved(id);
+    });
+
+    socket.on('conversation:deleted', ({ id }: { id: string }) => {
+      useConversationsStore.getState().onConversationRemoved(id);
+    });
+
+    socket.on('participant:left', ({ conversationId, userId }: { conversationId: string, userId: string }) => {
+      useConversationsStore.getState().onParticipantRemoved(conversationId, userId);
+    });
+
     // ─── Notification Events ──────────────────────────────────────────────────
     socket.on('notification:new', (notification: Notification) => {
       useNotificationsStore.getState().addNotification(notification);
@@ -132,6 +156,21 @@ export const useSocket = () => {
       useNotificationsStore.getState().markLocallyRead(notificationIds);
     });
 
+
+    // ─── Channel Invites ──────────────────────────────────────────────────────
+    socket.on('channel_invite:received', (invite) => {
+      useConversationsStore.getState().onInviteReceived(invite);
+      addToast(`New invite from ${invite.inviter?.username || 'someone'} to join ${invite.conversation?.name || 'a channel'}!`, 'info');
+    });
+
+    socket.on('channel_invite:accepted', (data) => {
+      // Could re-fetch the conversation or add the user locally
+      // For now we do a simple sync by refetching conversation list or it is handled by 'conversation:new'
+    });
+
+    socket.on('join_request:received', (data) => {
+      useConversationsStore.getState().onJoinRequestReceived(data);
+    });
 
     // ─── Cleanup ──────────────────────────────────────────────────────────────
     return () => {
@@ -150,9 +189,15 @@ export const useSocket = () => {
       socket.off('friend_request:removed');
       socket.off('friend:removed');
       socket.off('conversation:new');
+      socket.off('conversation:removed');
+      socket.off('conversation:deleted');
+      socket.off('participant:left');
       socket.off('notification:new');
       socket.off('notification:count_updated');
       socket.off('notification:read');
+      socket.off('channel_invite:received');
+      socket.off('channel_invite:accepted');
+      socket.off('join_request:received');
     };
   }, [isAuthenticated]);
 };

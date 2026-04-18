@@ -23,7 +23,7 @@ interface AuthState {
   isLoading: boolean;
   
   // Actions
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string, refreshToken?: string) => void;
   logout: () => void;
   checkAuth: () => Promise<void>;
 }
@@ -36,8 +36,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false, // Always start as false, wait for checkAuth
       isLoading: true,
 
-      setAuth: (user, token) => {
+      setAuth: (user, token, refreshToken) => {
         localStorage.setItem('accessToken', token);
+        // Always persist refreshToken if provided
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
         if (user && user.pinnedChannels !== undefined) {
           useAppStore.getState().setPreferences({
             pinnedChannels: user.pinnedChannels,
@@ -56,36 +60,67 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         const token = localStorage.getItem('accessToken');
-        if (!token) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (!token && !refreshToken) {
           set({ isAuthenticated: false, isLoading: false });
           return;
         }
 
-        try {
+        // Helper to fetch user data with a given token
+        const fetchMe = async (t: string) => {
           const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${t}` }
           });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        };
 
-          if (response.ok) {
-            const data = await response.json();
-            const userData = data.data.user;
-            if (userData && userData.pinnedChannels !== undefined) {
-              useAppStore.getState().setPreferences({
-                pinnedChannels: userData.pinnedChannels,
-                mutedChannels: userData.mutedChannels,
-                mutedUsers: userData.mutedUsers
-              });
+        try {
+          // Try with current access token first
+          const currentToken = token || '';
+          let data: any = null;
+
+          try {
+            data = await fetchMe(currentToken);
+          } catch (err: any) {
+            // If it's a 401 and we have a refresh token, try to silently refresh
+            if (err.message.includes('401') && refreshToken) {
+              console.log('[Auth] Access token expired, attempting silent refresh...');
+              const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+              const { default: axios } = await import('axios');
+              const refreshRes = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+              const newToken = refreshRes.data.data.accessToken;
+              localStorage.setItem('accessToken', newToken);
+              data = await fetchMe(newToken);
+            } else {
+              throw err;
             }
-            set({ user: userData, isAuthenticated: true, isLoading: false });
+          }
+
+          const userData = data.data.user;
+          if (userData && userData.pinnedChannels !== undefined) {
+            useAppStore.getState().setPreferences({
+              pinnedChannels: userData.pinnedChannels,
+              mutedChannels: userData.mutedChannels,
+              mutedUsers: userData.mutedUsers
+            });
+          }
+          set({ user: userData, isAuthenticated: true, isLoading: false });
+        } catch (error: any) {
+          // Only force logout if it's truly an auth error (not a network blip or rate limit)
+          const isRateLimitError = error.message && error.message.includes('429');
+          const isServerError = error.message && error.message.includes('50');
+          const isNetworkError = !error.message || error.message === 'Failed to fetch';
+          
+          if (isNetworkError || isRateLimitError || isServerError) {
+            // Keep the user logged in on network/server errors — just mark loading as done
+            console.warn('[Auth] Transient error during checkAuth, keeping session alive.', error.message);
+            set({ isLoading: false });
           } else {
-            // Token might be expired or invalid
+            console.error('[Auth] Session check failed:', error.message);
             get().logout();
           }
-        } catch (error) {
-          console.error('Failed to check auth:', error);
-          get().logout(); // Safe default: logout on network/server error
         }
       }
     }),

@@ -60,6 +60,8 @@ export const RightPanel: React.FC = () => {
     messages.find(m => m.id === activeThreadId)
   , [messages, activeThreadId]);
 
+  if (!conversation) return null;
+
   const handleEdit = () => {
     if (conversation) {
       setEditValue(conversation.description || '');

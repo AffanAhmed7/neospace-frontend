@@ -87,14 +87,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
 
   const uploadFile = async (file: File) => {
     try {
-      // 1. Get presigned URL
-      const { data: { data } } = await api.get('/files/upload-url', {
-        params: { fileName: file.name, contentType: file.type }
-      });
+      // Upload via our backend (backend handles S3 upload, no CORS issues)
+      const formData = new FormData();
+      formData.append('file', file);
 
-      // 2. Upload to S3 directly (without our custom api instance headers)
-      await axios.put(data.uploadUrl, file, {
-        headers: { 'Content-Type': file.type }
+      const { data: { data } } = await api.post('/files/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000, // 2 min timeout for large files
       });
 
       return {
@@ -103,8 +102,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
         type: file.type,
         size: file.size
       };
-    } catch (err) {
+    } catch (err: any) {
       console.error('File upload failed:', err);
+      
+      if (err.response?.status === 400) {
+        addToast(err.response.data?.message || 'File type not supported.', 'error');
+      } else if (err.response?.status === 413) {
+        addToast('File is too large. Max size is 25MB.', 'error');
+      } else {
+        addToast(`Upload failed: ${err.response?.data?.message || err.message || 'Unknown error'}`, 'error');
+      }
       return null;
     }
   };
@@ -121,6 +128,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
 
       // Send messages (currently one per file if multiple, or one message with multiple attachments if backend supports it)
       // Our backend message.service handles one file per message.
+      // Send messages
+      if (attachments.length > 0 && validFiles.length === 0) {
+        addToast('No files were uploaded successfully.', 'error');
+      }
+
       if (validFiles.length > 0) {
         for (const file of validFiles) {
           await sendMessage({
@@ -240,7 +252,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
       </AnimatePresence>
 
       <div className={clsx(
-        "relative bg-transparent transition-all duration-500 overflow-hidden",
+        "relative bg-transparent transition-all duration-500",
         attachments.length > 0 && "pt-2"
       )}>
         {/* Attachment Previews */}
@@ -257,7 +269,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
                   key={i}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="relative group/thumb h-16 w-16 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center overflow-hidden"
+                  className={clsx(
+                    "relative group/thumb rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center gap-3 overflow-hidden transition-all",
+                    file.type.startsWith('image/') ? "h-16 w-16" : "h-12 px-3 min-w-[120px] max-w-[200px]"
+                  )}
                 >
                   {file.type.startsWith('image/') ? (
                     <img 
@@ -266,7 +281,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
                       className="h-full w-full object-cover opacity-60 group-hover/thumb:opacity-90 transition-opacity" 
                     />
                   ) : (
-                    <FileIcon size={20} className="text-foreground/20" />
+                    <>
+                      <FileIcon size={16} className="text-primary/60 shrink-0" />
+                      <span className="text-[11px] font-bold text-foreground/40 truncate pr-4">{file.name}</span>
+                    </>
                   )}
                   <button 
                     onClick={() => removeAttachment(i)}
@@ -314,16 +332,45 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
           />
 
           <div className="flex items-center gap-1.5 shrink-0 pb-1">
-            <button 
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className={clsx(
-                "p-2.5 rounded-xl transition-all duration-300",
-                showEmojiPicker ? "text-amber-400 bg-amber-400/10" : "text-foreground/15 hover:text-amber-400 hover:bg-white/5"
-              )}
-              title="Choose Emoji"
-            >
-              <Smile size={18} />
-            </button>
+            <div className="relative">
+              <AnimatePresence>
+                {showEmojiPicker && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                    className="absolute bottom-full right-0 mb-4 p-2 bg-[#0F0F12]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-[100] w-[240px]"
+                  >
+                    <div className="grid grid-cols-6 gap-1">
+                      {['👍', '❤️', '😂', '🔥', '🤯', '🎉', '👀', '✨', '🫡', '💯', '🚀', '🤔', '👋', '👏', '🙌', '🎈', '⭐', '🌈'].map(emoji => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            setText(prev => prev + emoji);
+                            setShowEmojiPicker(false);
+                            textareaRef.current?.focus();
+                          }}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all text-lg"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              <button 
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className={clsx(
+                  "p-2.5 rounded-xl transition-all duration-300",
+                  showEmojiPicker ? "text-amber-400 bg-amber-400/10" : "text-foreground/40 hover:text-amber-400 hover:bg-white/5"
+                )}
+                title="Choose Emoji"
+              >
+                <Smile size={18} />
+              </button>
+            </div>
 
             <motion.button
               whileTap={{ scale: 0.92 }}

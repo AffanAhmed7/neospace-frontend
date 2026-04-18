@@ -52,7 +52,7 @@ export const HomeDashboard: React.FC = () => {
   ], [conversations, friends, unreadCount]);
 
   const recentConversations = useMemo(() => {
-    return [...conversations].slice(0, 3);
+    return conversations.filter(c => c.type !== 'DIRECT').slice(0, 3);
   }, [conversations]);
 
   const activityFeed = useMemo(() => {
@@ -78,7 +78,7 @@ export const HomeDashboard: React.FC = () => {
           id: `msg-${lastMsg.id}`,
           timestamp: new Date(lastMsg.createdAt),
           icon: <History size={14} className="text-primary" />,
-          title: c.name || c.participants.find(p => p.user.id !== user?.id)?.user.username || 'Unknown',
+          title: c.name || c.participants?.find(p => p.user.id !== user?.id)?.user.username || 'Group',
           description: lastMsg.content || "Sent an attachment",
           type: 'message'
         });
@@ -150,7 +150,7 @@ export const HomeDashboard: React.FC = () => {
                       <Hash size={13} className="text-foreground/30 group-hover:text-primary transition-colors" />
                     </div>
                     <span className="text-[13px] font-bold text-foreground/60 group-hover:text-foreground transition-colors truncate">
-                      {ch.name || ch.participants.find(p => p.user.id !== user?.id)?.user.username}
+                      {ch.name || ch.participants?.find(p => p.user.id !== user?.id)?.user.username || 'Group'}
                     </span>
                   </div>
                 </div>

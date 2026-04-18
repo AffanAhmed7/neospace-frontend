@@ -35,6 +35,10 @@ export const ChannelInfo: React.FC = () => {
   const { messages: allMessages } = useMessagesStore();
   const { friends } = useFriendsStore();
 
+  const conversation = useConversationsStore((state) => 
+    activeConversationId ? state.conversations.find(c => c.id === activeConversationId) : null
+  );
+
   const [activeTab, setActiveTab] = useState<'media' | 'docs' | 'links'>('media');
   const [isEditingHero, setIsEditingHero] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -42,6 +46,10 @@ export const ChannelInfo: React.FC = () => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [customHeroUrl, setCustomHeroUrl] = useState('');
   const [searchFriendQuery, setSearchFriendQuery] = useState('');
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'requests'>('info');
+
+  const { fetchJoinRequests, resolveJoinRequest } = useConversationsStore();
 
   const HERO_PRESETS = [
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000',
@@ -50,10 +58,6 @@ export const ChannelInfo: React.FC = () => {
     'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=1000',
     'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1000',
   ];
-
-  const conversation = useMemo(() => 
-    activeConversationId ? getConversationById(activeConversationId) : null
-  , [activeConversationId, getConversationById]);
 
   const messages = useMemo(() => 
     activeConversationId ? allMessages[activeConversationId] || [] : []
@@ -78,23 +82,23 @@ export const ChannelInfo: React.FC = () => {
     return eligibleFriends.filter(f => f.username.toLowerCase().includes(searchFriendQuery.toLowerCase()));
   }, [eligibleFriends, searchFriendQuery]);
 
+  const isAdmin = useMemo(() => {
+    if (!conversation) return false;
+    return conversation.participants.find(p => p.user.id === user?.id)?.role === 'ADMIN' || conversation.creatorId === user?.id;
+  }, [conversation, user?.id]);
+
+  const loadRequests = async () => {
+    if (activeConversationId && isAdmin) {
+      const reqs = await fetchJoinRequests(activeConversationId);
+      setJoinRequests(reqs);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isAdmin) loadRequests();
+  }, [activeConversationId, isAdmin]);
+
   if (!conversation) return null;
-
-  const isAdmin = conversation.participants.find(p => p.user.id === user?.id)?.role === 'ADMIN' || conversation.creatorId === user?.id;
-
-  const handleUpdateHero = async (url: string) => {
-    if (activeConversationId) {
-      await updateConversation(activeConversationId, { heroImage: url });
-      setIsEditingHero(false);
-    }
-  };
-
-  const handleUpdateDescription = async () => {
-    if (activeConversationId && editedDescription !== conversation?.description) {
-      await updateConversation(activeConversationId, { description: editedDescription });
-      setIsEditingDescription(false);
-    }
-  };
 
   const handleLeaveChannel = async () => {
     if (activeConversationId) {
@@ -116,8 +120,9 @@ export const ChannelInfo: React.FC = () => {
         await addParticipant(activeConversationId, friendId);
         setIsAddingMember(false);
         setSearchFriendQuery('');
-      } catch {
-        alert('Failed to add member to channel');
+        // Add toast from settings store if you wanted, or just standard alert/silent success
+      } catch (err: any) {
+        alert(err?.response?.data?.message || err.message || 'Failed to send invite');
       }
     }
   };
@@ -159,18 +164,43 @@ export const ChannelInfo: React.FC = () => {
   const handleDeleteChannel = async () => {
     if (activeConversationId) {
       openConfirm({
-        title: 'Delete Channel',
-        message: `CRITICAL: Are you sure you want to delete #${conversation.name}? This action is permanent and will remove all messages and data for ALL members.`,
-        confirmLabel: 'Delete Permanently',
+        title: 'Delete Channel Permanently',
+        message: `Are you sure you want to delete #${conversation.name}? This action is irreversible and all data will be lost forever.`,
+        confirmLabel: 'Delete Channel',
         onConfirm: async () => {
-          try {
-            await deleteConversation(activeConversationId);
-            setActiveView('home');
-          } catch {
-            alert('Failed to delete channel');
-          }
+          await deleteConversation(activeConversationId);
+          setActiveView('home');
         }
       });
+    }
+  };
+
+  const handleUpdateHero = async (url: string) => {
+    if (activeConversationId) {
+      await updateConversation(activeConversationId, { heroImage: url });
+      setIsEditingHero(false);
+    }
+  };
+
+  const handleUpdateDescription = async () => {
+    if (activeConversationId && editedDescription !== conversation?.description) {
+      await updateConversation(activeConversationId, { description: editedDescription });
+      setIsEditingDescription(false);
+    }
+  };
+
+  const handleResolveRequest = async (requestId: string, status: 'APPROVED' | 'DECLINED') => {
+    try {
+      await resolveJoinRequest(requestId, status);
+      setJoinRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (err) {
+      alert('Failed to resolve request');
+    }
+  };
+
+  const toggleVisibility = async (key: 'isPublic' | 'isHidden', value: boolean) => {
+    if (activeConversationId) {
+      await updateConversation(activeConversationId, { [key]: value });
     }
   };
 
@@ -361,7 +391,55 @@ export const ChannelInfo: React.FC = () => {
                 </p>
               )}
               
-              <div className="grid grid-cols-3 gap-6 mt-10 pt-8 border-t border-white/[0.03]">
+              {isAdmin && (
+                <div className="mt-10 pt-8 border-t border-white/[0.03] space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
+                    <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/30">Visibility Controls</h3>
+                  </div>
+                  <div className="flex gap-8">
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleVisibility('isPublic', !conversation.isPublic);
+                      }}
+                      className="flex items-center gap-3 cursor-pointer group/toggle"
+                    >
+                      <div className={clsx(
+                        "w-8 h-4 rounded-full relative transition-all duration-300",
+                        conversation.isPublic ? "bg-primary" : "bg-white/10"
+                      )}>
+                        <div className={clsx(
+                          "absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300",
+                          conversation.isPublic ? "left-4.5" : "left-0.5"
+                        )} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-foreground/30 group-hover/toggle:text-foreground/50 transition-colors">Direct Join</span>
+                    </div>
+
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleVisibility('isHidden', !conversation.isHidden);
+                      }}
+                      className="flex items-center gap-3 cursor-pointer group/toggle"
+                    >
+                      <div className={clsx(
+                        "w-8 h-4 rounded-full relative transition-all duration-300",
+                        conversation.isHidden ? "bg-rose-500/60" : "bg-white/10"
+                      )}>
+                        <div className={clsx(
+                          "absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all duration-300",
+                          conversation.isHidden ? "left-4.5" : "left-0.5"
+                        )} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-foreground/30 group-hover/toggle:text-foreground/50 transition-colors">Hidden from Browse</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-6 mt-6 pb-2">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/15">Created On</span>
                   <p className="text-[13px] font-bold text-foreground/60">{format(new Date(conversation.createdAt), 'MMMM d, yyyy')}</p>
@@ -370,12 +448,50 @@ export const ChannelInfo: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/15">Status</span>
                   <div className="flex items-center gap-1.5">
                     <Globe size={12} className="text-primary/60" />
-                    <p className="text-[13px] font-bold text-foreground/60">{conversation.isPrivate ? 'Private' : 'Open Access'}</p>
+                    <p className="text-[13px] font-bold text-foreground/60">{conversation.isPublic ? 'Public' : 'Approval Required'}</p>
                   </div>
                 </div>
               </div>
             </div>
           </motion.section>
+
+          {isAdmin && joinRequests.length > 0 && (
+            <motion.section variants={itemVariants} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.3)] shrink-0" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500/60">Pending Join Requests ({joinRequests.length})</h3>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {joinRequests.map((req) => (
+                  <div key={req.id} className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/[0.03] border border-amber-500/10 group">
+                    <Avatar src={req.user.avatar} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-black text-foreground/70 truncate">{req.user.username}</p>
+                      <p className="text-[9px] font-bold uppercase tracking-tight text-amber-500/40">Requesting Access</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button 
+                        onClick={() => handleResolveRequest(req.id, 'APPROVED')}
+                        className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
+                        title="Approve"
+                       >
+                         <ShieldAlert size={14} />
+                       </button>
+                       <button 
+                        onClick={() => handleResolveRequest(req.id, 'DECLINED')}
+                        className="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                        title="Decline"
+                       >
+                         <Trash2 size={14} />
+                       </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.section>
+          )}
 
           <motion.section variants={itemVariants} className="space-y-6">
             <div className="flex items-center justify-between">

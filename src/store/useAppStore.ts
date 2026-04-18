@@ -117,6 +117,7 @@ export const useAppStore = create<AppState>()(
       })),
       setActiveView: (view) => set((state) => ({ 
         activeView: view,
+        activeConversationId: view === 'home' ? null : state.activeConversationId,
         profilePanelOpen: (view === 'home' || view === 'create-channel' || view === 'create-group' || view === 'explore') ? false : state.profilePanelOpen,
         rightPanelOpen: (view === 'home' || view === 'create-channel' || view === 'create-group' || view === 'explore') ? false : state.rightPanelOpen
       })),
