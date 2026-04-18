@@ -1,25 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Hash, Users,
   Globe,
-  Filter, CheckCircle2
+  Filter, CheckCircle2, Loader2
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationsStore } from '../../store/useConversationsStore';
 import { clsx } from 'clsx';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const categories = ['All', 'Engineering', 'Design', 'Marketing', 'Gaming', 'Casual', 'Support', 'Other'];
 
-const suggestedChannels = [
-  { id: 'c1', name: 'general', description: 'The town square for all NeoPlane users. Announcements, general discussion, and watercooler chat.', members: 1240, online: 156, category: 'Casual', isJoined: true },
-  { id: 'c2', name: 'global-chat', description: 'Real-time conversation with the entire world network. High volume.', members: 890, online: 42, category: 'All', isJoined: true },
-  { id: 'c3', name: 'engineering', description: 'Deep dives into code, architecture, and deployment pipelines. Core PR discussions happen here.', members: 450, online: 28, category: 'Engineering', isJoined: true },
-  { id: 'c4', name: 'design-system', description: 'Polishing pixels and defining the visual future. Feedback on UI/UX components.', members: 320, online: 15, category: 'Design', isJoined: false },
-  { id: 'c5', name: 'marketing-ops', description: 'Planning the next big launch and reviewing campaign metrics.', members: 180, online: 5, category: 'Marketing', isJoined: false },
-  { id: 'c6', name: 'customer-success', description: 'Helping our users get the most out of NeoPlane. Support workflows.', members: 210, online: 12, category: 'Support', isJoined: false },
-];
+// No mock data needed anymore
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -32,18 +26,22 @@ export const ExploreChannels: React.FC = () => {
 
   const setActiveConversation = useAppStore((state) => state.setActiveConversation);
   const setActiveView = useAppStore((state) => state.setActiveView);
+  
+  const { exploreChannels, fetchExploreChannels, joinChannel, isLoading, conversations } = useConversationsStore();
 
-  const sortedChannels = [...suggestedChannels].sort((a, b) => {
-    if (sortBy === 'popularity') return b.members - a.members;
-    return a.name.localeCompare(b.name);
-  });
+  useEffect(() => {
+    fetchExploreChannels({ 
+      category: activeCategory === 'All' ? undefined : activeCategory, 
+      query: searchQuery || undefined, 
+      sortBy: sortBy === 'popularity' ? 'members' : 'name' 
+    });
+  }, [activeCategory, searchQuery, sortBy, fetchExploreChannels]);
 
-  const filteredChannels = sortedChannels.filter(ch => {
-    const matchesSearch = ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          ch.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'All' || ch.category === activeCategory;
-    const matchesJoined = hideJoined ? !ch.isJoined : true;
-    return matchesSearch && matchesCategory && matchesJoined;
+  const filteredChannels = exploreChannels.map(ch => {
+     const isJoined = conversations.some(c => c.id === ch.id);
+     return { ...ch, isJoined };
+  }).filter(ch => {
+     return hideJoined ? !ch.isJoined : true;
   });
 
   const containerVariants = {
@@ -137,7 +135,7 @@ export const ExploreChannels: React.FC = () => {
                           ].map(opt => (
                             <button
                               key={opt.id}
-                              onClick={() => { setSortBy(opt.id as any); setShowFilter(false); }}
+                              onClick={() => { setSortBy(opt.id as 'popularity' | 'name'); setShowFilter(false); }}
                               className={clsx(
                                 "flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all",
                                 sortBy === opt.id ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/[0.03] hover:text-foreground/60"
@@ -242,15 +240,11 @@ export const ExploreChannels: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Middle: Stats */}
+                    {/* Middle: Stats */}
                   <div className="flex flex-col items-end justify-center">
                     <div className="flex items-center gap-1.5 text-foreground/60">
-                      <span className="text-[12px] font-bold">{channel.members.toLocaleString()}</span>
+                      <span className="text-[12px] font-bold">{((channel as any)?._count?.participants || 0).toLocaleString()}</span>
                       <Users size={12} className="opacity-40" />
-                    </div>
-                    <div className="flex items-center gap-1.5 text-emerald-400 mt-0.5">
-                      <span className="text-[11px] font-bold">{channel.online} online</span>
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
                   </div>
 
@@ -262,18 +256,30 @@ export const ExploreChannels: React.FC = () => {
                       </div>
                     ) : (
                       <button 
-                        onClick={(e) => { e.stopPropagation(); setActiveConversation(channel.id); }}
+                        onClick={async (e) => { 
+                          e.stopPropagation(); 
+                          const success = await joinChannel(channel.id);
+                          if (success) {
+                            setActiveConversation(channel.id);
+                          }
+                        }}
                         className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-foreground/70 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-foreground transition-all"
                       >
-                        View
+                        Join
                       </button>
                     )}
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
+            
+            {isLoading && (
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-primary" size={24} />
+              </div>
+            )}
 
-            {filteredChannels.length === 0 && (
+            {!isLoading && filteredChannels.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 opacity-30 select-none">
                 <Search size={48} className="mb-4" strokeWidth={1} />
                 <p className="text-[11px] font-black uppercase tracking-widest text-center">No channels found matching '{searchQuery}'</p>

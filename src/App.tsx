@@ -9,6 +9,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './store/useAuthStore';
 import { useEffect } from 'react';
+import { ConfirmModal } from './components/ui/ConfirmModal';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function AppContent() {
     <div className="min-h-screen relative text-foreground transition-colors duration-300">
       <FluidBackground isStatic={isApp} variant={isSettings ? 'settings' : 'default'} />
       <ToastProvider />
+      <ConfirmModal />
       <div className="relative z-0">
         <Routes>
           <Route path="/" element={<Landing />} />

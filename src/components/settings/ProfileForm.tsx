@@ -1,17 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { useSettingsStore, BANNER_PRESETS, AVATAR_OPTIONS } from '../../store/useSettingsStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, Circle, MinusCircle } from 'lucide-react';
 import { FormRow } from './FormRow';
 import { clsx } from 'clsx';
 
 export const ProfileForm: React.FC = () => {
-  const { user, updateProfile, addToast } = useSettingsStore();
-  const [username, setUsername] = useState(user.username);
-  const [bio, setBio] = useState(user.bio || '');
-  const [avatar, setAvatar] = useState(user.avatar);
-  const [banner, setBanner] = useState(user.banner || 'bg-primary');
+  const { updateProfile, updateStatus, addToast } = useSettingsStore();
+  const { user } = useAuthStore();
+  const [username, setUsername] = useState(user?.username || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [banner, setBanner] = useState(user?.banner || 'bg-primary');
+  const [status, setStatus] = useState<NonNullable<typeof user>['status']>(user?.status || 'ONLINE');
+  const [customStatus, setCustomStatus] = useState(user?.customStatus || '');
   const [isLoading, setIsLoading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
@@ -36,14 +40,35 @@ export const ProfileForm: React.FC = () => {
 
   const handleSave = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    updateProfile({ username, bio, avatar, banner });
-    addToast('Profile updated successfully!', 'success');
-    setIsLoading(false);
+    try {
+      await Promise.all([
+        updateProfile({ username, bio, avatar, banner }),
+        updateStatus(status, customStatus)
+      ]);
+      addToast('Profile and status updated successfully!', 'success');
+    } catch (err: unknown) {
+      console.error('[ProfileForm] Save error:', err);
+      const error = err as { response?: { data?: { message?: string } } };
+      addToast(error.response?.data?.message || 'Failed to update profile identity.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const hasChanges = username !== user.username || bio !== (user.bio || '') || avatar !== user.avatar || banner !== user.banner;
+  const hasChanges = 
+    username !== (user?.username || '') || 
+    bio !== (user?.bio || '') || 
+    avatar !== (user?.avatar || '') || 
+    banner !== (user?.banner || 'bg-primary') ||
+    status !== (user?.status || 'ONLINE') ||
+    customStatus !== (user?.customStatus || '');
+
+  const statusOptions = [
+    { id: 'ONLINE', label: 'Online', icon: <Circle size={12} className="fill-emerald-400 text-emerald-400" />, desc: 'Visible and active' },
+    { id: 'IDLE', label: 'Away', icon: <Circle size={12} className="fill-amber-400 text-amber-400" />, desc: 'Taking a break' },
+    { id: 'DND', label: 'Busy', icon: <MinusCircle size={12} className="fill-rose-500 text-rose-500" />, desc: 'Do not disturb' },
+    { id: 'OFFLINE', label: 'Invis', icon: <Circle size={12} className="text-foreground/20" />, desc: 'Appear offline' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -216,6 +241,46 @@ export const ProfileForm: React.FC = () => {
             placeholder="Type something..."
             value={bio}
             onChange={(e) => setBio(e.target.value)}
+          />
+        </FormRow>
+
+        <FormRow label="Online Status" description="Set your visibility across the workspace.">
+          <div className="grid grid-cols-2 gap-3">
+            {statusOptions.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setStatus(opt.id as NonNullable<typeof user>['status'])}
+                className={clsx(
+                  "flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group",
+                  status === opt.id 
+                    ? "bg-primary/5 border-primary/20 shadow-glow-sm" 
+                    : "bg-white/[0.01] border-white/[0.05] hover:border-white/20"
+                )}
+              >
+                <div className={clsx(
+                  "shrink-0 transition-transform group-hover:scale-110",
+                  status === opt.id ? "opacity-100" : "opacity-40"
+                )}>
+                  {opt.icon}
+                </div>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className={clsx(
+                    "text-[12px] font-bold tracking-tight transition-colors",
+                    status === opt.id ? "text-primary text-glow-sm" : "text-foreground/60"
+                  )}>{opt.label}</span>
+                  <span className="text-[9px] font-black uppercase tracking-tighter text-foreground/20 truncate w-full">{opt.desc}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </FormRow>
+
+        <FormRow label="Status Message" description="What are you currently working on?">
+          <Input
+            placeholder="e.g. Focused on design..."
+            value={customStatus}
+            onChange={(e) => setCustomStatus(e.target.value)}
+            className="h-10 bg-white/[0.02] text-[13px] border-white/[0.05] focus:border-primary/20 font-semibold"
           />
         </FormRow>
       </div>

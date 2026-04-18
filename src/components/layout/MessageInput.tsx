@@ -1,42 +1,71 @@
 import React, { useState, useRef } from 'react';
 import { 
   Paperclip, Send, Smile, AtSign, 
-  X, File as FileIcon
+  X, File as FileIcon, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationsStore } from '../../store/useConversationsStore';
+import { useMessagesStore } from '../../store/useMessagesStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { getSocket } from '../../lib/socket';
+import api from '../../lib/api';
+import axios from 'axios';
+import { Avatar } from '../ui/Avatar';
 
 interface MessageInputProps {
   channelName: string;
-  onSend?: (text: string, attachments: File[]) => void;
 }
 
-const COMMON_EMOJIS = ['👍', '❤️', '😂', '🔥', '🤯', '🎉', '✨', '🚀', '👀', '💯', '🤔', '🙌'];
 
-export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend }) => {
+
+
+export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const activeConversationId = useAppStore(state => state.activeConversationId);
-  const conversationMeta = useAppStore(state => state.conversationMeta);
-  const currentMeta = activeConversationId ? conversationMeta[activeConversationId] : null;
+  const { conversations } = useConversationsStore();
+  const { sendMessage } = useMessagesStore();
+  const addToast = useSettingsStore(s => s.addToast);
   
-  // Potential mentions from online users and friends
-  const onlineUsers = currentMeta?.online || [];
+  const conversation = conversations.find(c => c.id === activeConversationId);
+  const participants = conversation?.participants.map(p => p.user) || [];
+  
   const filteredMentions = mentionQuery !== null 
-    ? onlineUsers.filter(u => u.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+    ? participants.filter(u => u.username.toLowerCase().includes(mentionQuery.toLowerCase()))
     : [];
+
+  // ─── Typing Indicators ──────────────────────────────────────────────────
+  const handleTyping = () => {
+    if (!activeConversationId) return;
+    const socket = getSocket();
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    
+    // Emit start typing
+    socket.emit('typing:start', { conversationId: activeConversationId });
+    
+    // Set timeout to stop typing
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('typing:stop', { conversationId: activeConversationId });
+    }, 3000);
+  };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setText(val);
+    handleTyping();
 
     // Mention detection
     const cursor = e.target.selectionStart;
@@ -56,6 +85,81 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
     }
   };
 
+  const uploadFile = async (file: File) => {
+    try {
+      // 1. Get presigned URL
+      const { data: { data } } = await api.get('/files/upload-url', {
+        params: { fileName: file.name, contentType: file.type }
+      });
+
+      // 2. Upload to S3 directly (without our custom api instance headers)
+      await axios.put(data.uploadUrl, file, {
+        headers: { 'Content-Type': file.type }
+      });
+
+      return {
+        url: data.publicUrl,
+        name: file.name,
+        type: file.type,
+        size: file.size
+      };
+    } catch (err) {
+      console.error('File upload failed:', err);
+      return null;
+    }
+  };
+
+  const handleSend = async () => {
+    if (!text.trim() && attachments.length === 0) return;
+    if (!activeConversationId) return;
+
+    setIsUploading(true);
+    try {
+      // Handle attachments
+      const uploadedFiles = await Promise.all(attachments.map(uploadFile));
+      const validFiles = uploadedFiles.filter(Boolean);
+
+      // Send messages (currently one per file if multiple, or one message with multiple attachments if backend supports it)
+      // Our backend message.service handles one file per message.
+      if (validFiles.length > 0) {
+        for (const file of validFiles) {
+          await sendMessage({
+            conversationId: activeConversationId,
+            content: '',
+            type: file?.type.startsWith('image/') ? 'IMAGE' : 'FILE',
+            fileUrl: file?.url,
+            fileName: file?.name,
+            fileSize: file?.size
+          });
+        }
+      }
+
+      if (text.trim()) {
+        try {
+          await sendMessage({
+            conversationId: activeConversationId,
+            content: text.trim()
+          });
+        } catch (err: unknown) {
+          const error = err as { message: string };
+          addToast(`Failed to send message: ${error.message}`, 'error');
+        }
+      }
+
+      setText('');
+      setAttachments([]);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      
+      // Stop typing immediately
+      const socket = getSocket();
+      socket.emit('typing:stop', { conversationId: activeConversationId });
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -67,11 +171,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const insertEmoji = (emoji: string) => {
-    setText(prev => prev + emoji);
-    setShowEmojiPicker(false);
-    textareaRef.current?.focus();
-  };
+
+
 
   const insertMention = (userName: string) => {
     if (mentionQuery === null) return;
@@ -81,14 +182,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
     setText(textBeforeMention + `@${userName} ` + textAfterMention);
     setMentionQuery(null);
     textareaRef.current?.focus();
-  };
-
-  const handleSend = () => {
-    if (!text.trim() && attachments.length === 0) return;
-    onSend?.(text, attachments);
-    setText('');
-    setAttachments([]);
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -101,7 +194,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
         setMentionIndex(prev => (prev - 1 + filteredMentions.length) % filteredMentions.length);
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        insertMention(filteredMentions[mentionIndex].name);
+        insertMention(filteredMentions[mentionIndex].username);
       } else if (e.key === 'Escape') {
         setMentionQuery(null);
       }
@@ -126,43 +219,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 px-2">Mentions</span>
             </div>
             <div className="max-h-60 overflow-y-auto py-1.5 custom-scrollbar-compact">
-              {filteredMentions.map((user, i) => (
+              {filteredMentions.map((u, i) => (
                 <button
-                  key={user.name}
-                  onClick={() => insertMention(user.name)}
+                  key={u.id}
+                  onClick={() => insertMention(u.username)}
                   onMouseEnter={() => setMentionIndex(i)}
                   className={clsx(
                     "w-full flex items-center gap-3 px-3 py-2 text-left transition-all",
                     i === mentionIndex ? "bg-primary/15 text-primary" : "text-foreground/60 hover:bg-white/[0.03]"
                   )}
                 >
-                  <img src={user.avatar} alt={user.name} className="h-6 w-6 rounded-lg ring-1 ring-white/10" />
-                  <span className="text-[13px] font-bold truncate">{user.name}</span>
+                  <Avatar src={u.avatar} alt={u.username} size="sm" />
+                  <span className="text-[13px] font-bold truncate">{u.username}</span>
                   {i === mentionIndex && <AtSign size={12} className="ml-auto opacity-40" />}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Emoji Picker Popup */}
-      <AnimatePresence>
-        {showEmojiPicker && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute bottom-full right-0 mb-3 p-3 bg-[#0F0F12]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-[100]"
-          >
-            <div className="grid grid-cols-4 gap-1.5">
-              {COMMON_EMOJIS.map(emoji => (
-                <button
-                  key={emoji}
-                  onClick={() => insertEmoji(emoji)}
-                  className="h-10 w-10 flex items-center justify-center text-xl rounded-xl hover:bg-white/5 hover:scale-110 active:scale-90 transition-all"
-                >
-                  {emoji}
                 </button>
               ))}
             </div>
@@ -231,29 +300,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
             >
               <Paperclip size={18} />
             </button>
-            
-            <button 
-              onClick={() => {
-                setText(prev => prev + '@');
-                textareaRef.current?.focus();
-              }}
-              className={clsx(
-                "p-2 shrink-0 rounded-xl transition-all duration-300",
-                mentionQuery !== null ? "text-primary bg-primary/10" : "text-foreground/15 hover:text-primary hover:bg-white/5"
-              )}
-              title="Mention User"
-            >
-              <AtSign size={18} />
-            </button>
           </div>
           
           <textarea
             ref={textareaRef}
             rows={1}
             value={text}
+            disabled={isUploading}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder={`Message #${channelName}`}
+            placeholder={isUploading ? "Uploading..." : `Message #${channelName}`}
             className="flex-grow bg-transparent border-0 focus:ring-0 text-[14px] py-2.5 px-1 resize-none text-foreground placeholder:text-foreground/20 min-h-[40px] max-h-[220px] font-bold leading-relaxed outline-none"
           />
 
@@ -272,15 +328,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName, onSend 
             <motion.button
               whileTap={{ scale: 0.92 }}
               onClick={handleSend}
-              disabled={!text.trim() && attachments.length === 0}
+              disabled={(!text.trim() && attachments.length === 0) || isUploading}
               className={clsx(
                 'h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-500',
-                (text.trim() || attachments.length > 0)
+                (text.trim() || attachments.length > 0) && !isUploading
                   ? 'bg-primary shadow-[0_4px_20px_rgba(99,102,241,0.4)] text-white hover:scale-105'
                   : 'bg-white/[0.04] text-foreground/10 cursor-not-allowed opacity-40'
               )}
             >
-              <Send size={16} strokeWidth={2.5} className={clsx((text.trim() || attachments.length > 0) && "translate-x-0.5 -translate-y-0.5")} />
+              {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} strokeWidth={2.5} className="translate-x-0.5 -translate-y-0.5" />}
             </motion.button>
           </div>
         </div>

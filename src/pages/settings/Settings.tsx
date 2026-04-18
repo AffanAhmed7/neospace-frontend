@@ -8,6 +8,7 @@ import { ToggleSwitch } from '../../components/ui/ToggleSwitch';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useAppStore } from '../../store/useAppStore';
 import { ShieldCheck, X } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -15,7 +16,8 @@ import { useNavigate } from 'react-router-dom';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
-  const { notifications, privacy, updateNotifications, updatePrivacy, logout, addToast } = useSettingsStore();
+  const { notifications, privacy, updateNotifications, updatePrivacy, addToast } = useSettingsStore();
+  const { logout } = useAuthStore();
   const { theme, setTheme } = useAppStore();
   const navigate = useNavigate();
 

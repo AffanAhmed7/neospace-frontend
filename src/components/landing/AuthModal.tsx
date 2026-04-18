@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -34,16 +35,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const addToast = useSettingsStore(state => state.addToast);
   const updateProfile = useSettingsStore(state => state.updateProfile);
   const setAuth = useAuthStore(state => state.setAuth);
 
-  useEffect(() => {
+  // Sync mode with initialMode when modal opens
+  React.useEffect(() => {
     if (isOpen) {
-      const t = setTimeout(() => setMode(initialMode), 0);
-      return () => clearTimeout(t);
+      setMode(initialMode);
+      setError(null);
     }
   }, [isOpen, initialMode]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,10 +56,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const payload = mode === 'login' 
+        ? { email, password } 
+        : { email, password, username: email.split('@')[0] };
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, username: email.split('@')[0] }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -69,7 +78,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         updateProfile({ 
           username: user.username,
           avatar: user.avatar || '',
-        } as any);
+        });
+
 
         const welcomeMsg = mode === 'login' 
           ? 'Welcome back to NeoPlane!' 
@@ -79,11 +89,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onClose();
         window.location.href = '/app';
       } else {
-        setError(data.message || `${mode === 'login' ? 'Login' : 'Signup'} failed`);
-        addToast(data.message || 'Authentication failed', 'error');
+        // Extract specific validation errors if they exist
+        const validationError = (data as any).errors?.[0]?.message;
+        const finalError = validationError || data.message || `${mode === 'login' ? 'Login' : 'Signup'} failed`;
+        
+        setError(finalError);
+        addToast(finalError, 'error');
       }
-    } catch (err: any) {
-      setError('Connection to server failed. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Connection to server failed. Please try again.';
+      setError(errorMessage);
       addToast('Connection error', 'error');
     } finally {
       setIsLoading(false);
@@ -110,18 +125,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         updateProfile({ 
           username: data.data.user.username,
           avatar: data.data.user.avatar || '',
-        } as any);
+        });
+
         addToast(`Welcome, ${data.data.user.username}!`, 'success');
         onClose();
         window.location.href = '/app';
       } else {
         throw new Error(data.message || 'Google Login failed');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Google authentication failed';
       console.error('Google Login Error:', err);
-      setError(err.message || 'Google authentication failed');
-      addToast(err.message || 'Google authentication failed', 'error');
+      setError(errorMessage);
+      addToast(errorMessage, 'error');
     } finally {
+
       setIsLoading(false);
     }
   };

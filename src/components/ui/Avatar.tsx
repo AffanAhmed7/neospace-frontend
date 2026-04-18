@@ -9,18 +9,20 @@ function cn(...inputs: ClassValue[]) {
 interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string;
   alt?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   isOnline?: boolean;
 }
 
 export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 'md', isOnline, className, ...props }) => {
   const sizes = {
+    xs: 'h-6 w-6 text-[10px]',
     sm: 'h-8 w-8 text-xs',
     md: 'h-10 w-10 text-sm',
     lg: 'h-12 w-12 text-base',
   };
 
   const statusSizes = {
+    xs: 'h-1.5 w-1.5 right-0 bottom-0 ring-1 ring-bg-main',
     sm: 'h-2 w-2 right-0 bottom-0 ring-2 ring-bg-main',
     md: 'h-3 w-3 right-0 bottom-0 ring-2 ring-bg-main',
     lg: 'h-3.5 w-3.5 right-0.5 bottom-0.5 ring-2 ring-bg-main',

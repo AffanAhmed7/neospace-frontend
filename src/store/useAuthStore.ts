@@ -1,11 +1,19 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useAppStore } from './useAppStore';
 
 interface User {
   id: string;
   username: string;
   email: string;
   avatar?: string;
+  status?: string;
+  bio?: string;
+  banner?: string;
+  pinnedChannels?: string[];
+  mutedChannels?: string[];
+  mutedUsers?: string[];
+  customStatus?: string;
 }
 
 interface AuthState {
@@ -30,6 +38,13 @@ export const useAuthStore = create<AuthState>()(
 
       setAuth: (user, token) => {
         localStorage.setItem('accessToken', token);
+        if (user && user.pinnedChannels !== undefined) {
+          useAppStore.getState().setPreferences({
+            pinnedChannels: user.pinnedChannels,
+            mutedChannels: user.mutedChannels || [],
+            mutedUsers: user.mutedUsers || []
+          });
+        }
         set({ user, token, isAuthenticated: true, isLoading: false });
       },
 
@@ -55,7 +70,15 @@ export const useAuthStore = create<AuthState>()(
 
           if (response.ok) {
             const data = await response.json();
-            set({ user: data.data.user, isAuthenticated: true, isLoading: false });
+            const userData = data.data.user;
+            if (userData && userData.pinnedChannels !== undefined) {
+              useAppStore.getState().setPreferences({
+                pinnedChannels: userData.pinnedChannels,
+                mutedChannels: userData.mutedChannels,
+                mutedUsers: userData.mutedUsers
+              });
+            }
+            set({ user: userData, isAuthenticated: true, isLoading: false });
           } else {
             // Token might be expired or invalid
             get().logout();

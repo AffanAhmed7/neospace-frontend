@@ -2,25 +2,52 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Hash, Globe, Shield, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useConversationsStore } from '../../store/useConversationsStore';
 import { clsx } from 'clsx';
 
 export const CreateGroup: React.FC = () => {
   const setActiveView = useAppStore((s) => s.setActiveView);
-  const createGroup = useAppStore((s) => s.createGroup);
   const activeConversationId = useAppStore((s) => s.activeConversationId);
-  const conversationMeta = useAppStore((s) => s.conversationMeta);
+  const { user } = useAuthStore();
+  const { createConversation, conversations } = useConversationsStore();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState('');
 
-  const meta = activeConversationId ? conversationMeta[activeConversationId] : null;
+  const meta = activeConversationId ? conversations.find(c => c.id === activeConversationId) : null;
+
+  const isAdmin = React.useMemo(() => {
+    if (!meta || !user) return false;
+    return meta.participants.find(p => p.user.id === user.id)?.role === 'ADMIN' || meta.creatorId === user.id;
+  }, [meta, user]);
 
   if (!activeConversationId || !meta) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <p className="text-foreground/40 font-bold uppercase tracking-widest text-[11px]">Cannot create group: No active workspace channel.</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-bg-deep/90">
+        <div className="h-20 w-20 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-8 border border-rose-500/20">
+          <Shield size={32} className="text-rose-500/60" />
+        </div>
+        <h3 className="text-2xl font-black text-foreground tracking-tighter mb-2 uppercase">Access Denied</h3>
+        <p className="text-[14px] text-foreground/30 leading-relaxed font-medium max-w-sm mb-8">
+          Only administrators can create groups within this channel. Please contact a channel admin to request a new group.
+        </p>
+        <button 
+          onClick={() => setActiveView('info')}
+          className="px-8 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white/[0.03] border border-white/[0.06] text-foreground/40 hover:text-foreground hover:bg-white/[0.08] transition-all"
+        >
+          Return to Channel Info
+        </button>
       </div>
     );
   }
@@ -32,7 +59,20 @@ export const CreateGroup: React.FC = () => {
       return;
     }
 
-    createGroup(activeConversationId, name.trim(), description, isPrivate);
+    createConversation({
+      name: name.trim(),
+      type: 'GROUP',
+      participantIds: [], // Creator is included automatically
+      description,
+      isPrivate,
+      parentId: activeConversationId
+    }).then((conv) => {
+      if (conv) {
+        setActiveView('chat');
+      } else {
+        setError('Failed to create group');
+      }
+    });
   };
 
   return (

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import api from '../lib/api';
+import { useAuthStore } from './useAuthStore';
 
 export interface Toast {
   id: string;
@@ -12,7 +14,7 @@ interface UserProfile {
   bio: string;
   avatar: string;
   banner?: string;
-  status: 'online' | 'offline' | 'busy' | 'away';
+  status: 'ONLINE' | 'OFFLINE' | 'IDLE' | 'DND';
 }
 
 export const AVATAR_OPTIONS = [
@@ -38,9 +40,7 @@ export const BANNER_PRESETS = [
   { id: 'flow', name: 'Energy Flow', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1000' },
 ];
 
-
 interface SettingsState {
-  user: UserProfile;
   notifications: {
     mentions: boolean;
     messages: boolean;
@@ -53,23 +53,17 @@ interface SettingsState {
   toasts: Toast[];
 
   // Actions
-  updateProfile: (data: Partial<UserProfile>) => void;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   updateNotifications: (data: Partial<SettingsState['notifications']>) => void;
   updatePrivacy: (data: Partial<SettingsState['privacy']>) => void;
   addToast: (message: string, type?: Toast['type']) => void;
   removeToast: (id: string) => void;
   updatePassword: (current: string, next: string) => Promise<boolean>;
-  logout: () => void;
+  updateStatus: (status: UserProfile['status'], customStatus?: string) => Promise<void>;
+  updatePreferences: (data: Partial<SettingsState['notifications'] & SettingsState['privacy']>) => Promise<void>;
 }
 
 const initialState = {
-  user: {
-    username: 'Jane Doe',
-    bio: 'Product Designer at NeoPlane. Loves minimalist UIs and dark mode.',
-    avatar: AVATAR_OPTIONS[0],
-    banner: 'bg-primary',
-    status: 'online' as const,
-  },
   notifications: {
     mentions: true,
     messages: true,
@@ -85,11 +79,16 @@ const initialState = {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
+
       ...initialState,
 
-      updateProfile: (data) => set((state) => ({
-        user: { ...state.user, ...data }
-      })),
+      updateProfile: async (data) => {
+        const resp = await api.patch('/users/me', data);
+        const updatedUser = resp.data.data.user;
+        // Update auth store user as well
+        useAuthStore.setState({ user: updatedUser });
+      },
+
 
       updateNotifications: (data) => set((state) => ({
         notifications: { ...state.notifications, ...data }
@@ -99,7 +98,7 @@ export const useSettingsStore = create<SettingsState>()(
         privacy: { ...state.privacy, ...data }
       })),
 
-      addToast: (message, type = 'success') => {
+      addToast: (message: string, type: Toast['type'] = 'success') => {
         const id = Math.random().toString(36).substring(7);
         set((state) => ({
           toasts: [...state.toasts, { id, message, type }]
@@ -112,21 +111,41 @@ export const useSettingsStore = create<SettingsState>()(
         }, 3000);
       },
 
-      removeToast: (id) => set((state) => ({
+      removeToast: (id: string) => set((state) => ({
         toasts: state.toasts.filter((t) => t.id !== id)
       })),
 
-      updatePassword: async (current, next) => {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log('Password updated:', { current, next });
-        return true;
+      updatePassword: async (currentPassword, newPassword) => {
+        try {
+          await api.post('/users/me/password', { currentPassword, newPassword });
+          return true;
+        } catch {
+          return false;
+        }
       },
 
-      logout: () => {
-        // Handle logout logic (clear storage, redirect, etc.)
-        console.log('Logging out...');
+      updateStatus: async (status, customStatus) => {
+        try {
+          const { data } = await api.patch('/users/me/status', { status, customStatus });
+          useAuthStore.setState({ user: data.data.user });
+        } catch (err) {
+          console.error('[SettingsStore] updateStatus error:', err);
+        }
       },
+
+      updatePreferences: async (prefs) => {
+        try {
+          const { data } = await api.patch('/users/me/preferences', { preferences: prefs });
+          set((state) => ({
+            notifications: { ...state.notifications, ...prefs },
+            privacy: { ...state.privacy, ...prefs }
+          }));
+          useAuthStore.setState({ user: data.data.user });
+        } catch (err) {
+          console.error('[SettingsStore] updatePreferences error:', err);
+        }
+      },
+
     }),
     {
       name: 'neoplane-settings-state',

@@ -4,65 +4,70 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { MessageSquare, X, Calendar, MoreHorizontal, UserPlus, MessageCircle } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useSettingsStore } from '../../store/useSettingsStore';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useFriendsStore } from '../../store/useFriendsStore';
 import { useNavigate } from 'react-router-dom';
+import api from '../../lib/api';
 
 interface UserProfileModalProps {
   onClose: () => void;
-  onStartChat?: () => void;
 }
 
-// ─── Mock User Data ─────────────────────────────────────────────────────────
-
-const mockUsersData: Record<string, any> = {
-  '1': { id: '1', username: 'Alex Rivera', status: 'online', bio: 'Designing @ NeoPlane. Bringing pixels to life.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', email: 'alex@neoplane.io', joined: 'Jan 12, 2026', role: 'Designer', bannerColor: 'bg-indigo-500' },
-  '2': { id: '2', username: 'Jordan Lee', status: 'offline', bio: 'Backend Engineer. I make things fast.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan', email: 'jordan@neoplane.io', joined: 'Feb 05, 2026', role: 'Engineer', bannerColor: 'bg-rose-500' },
-  '3': { id: '3', username: 'Sarah Chen', status: 'idle', bio: 'Product Manager. Organizing the chaos.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', email: 'sarah@neoplane.io', joined: 'Mar 20, 2026', role: 'PM', bannerColor: 'bg-amber-500' },
-  '4': { id: '4', username: 'Marcus Wright', status: 'online', bio: 'DevOps wizard. I make sure the lights stay on.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus', email: 'marcus@neoplane.io', joined: 'Nov 12, 2025', role: 'DevOps', bannerColor: 'bg-blue-600' },
-  '5': { id: '5', username: 'Elena Rossi', status: 'dnd', bio: 'Marketing lead & creative strategist.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elena', email: 'elena@neoplane.io', joined: 'Dec 05, 2025', role: 'Marketing', bannerColor: 'bg-rose-600' },
-  'p1': { id: 'p1', username: 'David Kim', status: 'offline', bio: 'New here! Nice to meet everyone.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David', email: 'david@neoplane.io', joined: 'Apr 08, 2026', role: 'Member', bannerColor: 'bg-emerald-500' },
-};
-
-// ─── Component ───────────────────────────────────────────────────────────────
+interface User {
+  id: string;
+  username: string;
+  email?: string;
+  avatar: string;
+  banner?: string;
+  status: 'ONLINE' | 'OFFLINE' | 'IDLE' | 'DND';
+  bio?: string;
+  createdAt?: string;
+}
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({ 
-  onClose, 
-  onStartChat 
+  onClose
 }) => {
-  const { user: currentUser } = useSettingsStore();
-  const profileUserId = useAppStore(state => state.profileUserId);
-  const friendIds = useAppStore(state => state.friendIds);
-  const mutedUserIds = useAppStore(state => state.mutedUserIds);
-  const toggleMuteUser = useAppStore(state => state.toggleMuteUser);
   const navigate = useNavigate();
+  const profileUserId = useAppStore(state => state.profileUserId);
+  const { user: currentUser } = useAuthStore();
+  const { friends, sendRequest, removeFriend, startDM } = useFriendsStore();
+  const openConfirm = useAppStore((state) => state.openConfirm);
+  
+  const [profileUser, setProfileUser] = useState<User | null>(null);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
+  const isOwnProfile = !profileUserId || profileUserId === currentUser?.id;
+  const friendEntry = friends.find(f => f.id === profileUserId);
+  const isFriend = !!friendEntry;
+
   useEffect(() => {
-    console.log('[UserProfileModal] Mounted for profileUserId:', profileUserId);
-    return () => console.log('[UserProfileModal] Unmounted');
-  }, [profileUserId]);
+    const fetchProfile = async () => {
+      if (isOwnProfile && currentUser) {
+        setProfileUser({
+          ...currentUser,
+          status: 'ONLINE',
+          avatar: currentUser.avatar || ''
+        } as User);
+        return;
+      }
+      if (!profileUserId) return;
+      
+      setIsLoading(true);
+      try {
+        const { data } = await api.get(`/users/${profileUserId}`);
+        setProfileUser(data.data.user);
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const isOwnProfile = !profileUserId || profileUserId === "me";
-  const isFriend = profileUserId ? friendIds.includes(profileUserId) : false;
-  const isMuted = profileUserId ? mutedUserIds.includes(profileUserId) : false;
-  
-  // Resolve user data
-  const user = isOwnProfile 
-    ? { 
-        ...currentUser, 
-        email: 'jane@neoplane.io', 
-        joined: 'March 15, 2026', 
-        role: 'Admin',
-      } 
-    : mockUsersData[profileUserId!] || { 
-        username: 'Voyager', status: 'offline', bio: 'Just passing through the NeoPlane.', 
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUserId || 'guest'}`, 
-        email: 'ghost@neoplane.io', joined: 'Ancient', role: 'Visitor', banner: 'bg-white/5'
-      };
-
-  const bannerStyle = user.banner || 'bg-primary';
+    fetchProfile();
+  }, [profileUserId, isOwnProfile, currentUser]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,9 +77,36 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const handleStartChat = async () => {
+    if (!profileUserId) return;
+    const conversationId = await startDM(profileUserId);
+    if (conversationId) {
+      useAppStore.getState().setActiveConversation(conversationId);
+      useAppStore.getState().setActiveView('chat');
+      onClose();
+    }
+  };
+
+  const handleAddFriend = async () => {
+    if (!profileUser?.username) return;
+    await sendRequest(profileUser.username);
+    // Request sent, maybe show a toast
+  };
+
+  if (!profileUser && isLoading) {
+    return (
+       <div className="fixed inset-0 z-[200] flex items-center justify-center">
+         <div className="text-white font-black uppercase tracking-widest text-[10px] animate-pulse">Loading Profile...</div>
+       </div>
+    );
+  }
+
+  if (!profileUser) return null;
+
+  const bannerStyle = profileUser.banner || 'bg-primary';
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -83,17 +115,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
       />
       
-      {/* Modal Content */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="relative w-full max-w-[500px] bg-[#111214] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-white/[0.05]"
       >
-        {/* Banner */}
         <div className={clsx(
-          "h-[100px] w-full relative", 
+          "h-[120px] w-full relative", 
           bannerStyle.startsWith('bg-') ? bannerStyle : ''
         )}>
           {(!bannerStyle.startsWith('bg-')) && (
@@ -107,39 +136,36 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           </button>
         </div>
 
-        {/* Profile Info Area */}
         <div className="px-5 pb-5 relative">
-          {/* Avatar (Overlapping banner) */}
           <div className="absolute -top-12 left-5">
             <div className="relative group rounded-full bg-[#111214] p-1.5 shadow-xl">
-              <div className="h-20 w-20 rounded-full overflow-hidden bg-bg-deep relative">
-                <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-bg-deep relative">
+                <img src={profileUser.avatar} alt={profileUser.username} className="w-full h-full object-cover" />
               </div>
               <div className={clsx(
-                "absolute bottom-2 right-2 w-4 h-4 rounded-full border-4 border-[#111214]",
-                user.status === 'online' ? "bg-emerald-500" : 
-                user.status === 'idle' ? "bg-amber-400" :
-                user.status === 'dnd' ? "bg-rose-500" : "bg-foreground/30"
+                "absolute bottom-2 right-2 w-5 h-5 rounded-full border-4 border-[#111214]",
+                profileUser.status === 'ONLINE' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
+                profileUser.status === 'IDLE' ? "bg-amber-400" :
+                profileUser.status === 'DND' ? "bg-rose-500" : "bg-white/20"
               )} />
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-end pt-3 pb-2 h-14">
             {isOwnProfile ? (
               <Button 
                 onClick={() => { onClose(); navigate('/settings'); }} 
-                className="h-8 px-4 text-[12px] font-bold bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-md"
+                className="h-8 px-4 text-[11px] font-black uppercase tracking-widest bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-lg"
                 variant="ghost"
               >
-                Edit User Profile
+                Settings
               </Button>
             ) : (
               <div className="flex gap-2">
                 {isFriend ? (
                   <Button 
-                    onClick={onStartChat} 
-                    className="h-8 px-4 text-[12px] font-bold bg-primary hover:bg-primary/90 text-white rounded-md flex items-center gap-2"
+                    onClick={handleStartChat} 
+                    className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white rounded-xl flex items-center gap-2 shadow-glow-sm"
                   >
                     <MessageSquare size={14} />
                     Message
@@ -147,26 +173,26 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 ) : (
                   <>
                     <Button 
-                      onClick={() => { /* Add friend logic */ }} 
-                      className="h-8 px-4 text-[12px] font-bold bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-md flex items-center gap-2"
+                      onClick={handleAddFriend} 
+                      className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-xl flex items-center gap-2"
                       variant="ghost"
                     >
                       <UserPlus size={14} />
                       Add Friend
                     </Button>
                     <Button 
-                      onClick={() => { /* Send request logic */ }} 
-                      className="h-8 px-4 text-[12px] font-bold bg-primary hover:bg-primary/90 text-white rounded-md flex items-center gap-2"
+                      onClick={handleStartChat} 
+                      className="h-9 px-4 text-[11px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-white rounded-xl flex items-center gap-2"
                     >
                       <MessageCircle size={14} />
-                      Message Request
+                      Message
                     </Button>
                   </>
                 )}
                 <div className="relative">
                   <Button 
                     variant="ghost" 
-                    className="w-8 h-8 p-0 flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] rounded-md"
+                    className="w-9 h-9 p-0 flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] rounded-xl"
                     onClick={() => setShowMoreMenu(!showMoreMenu)}
                   >
                     <MoreHorizontal size={14} />
@@ -178,20 +204,25 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: 5 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                        className="absolute right-0 top-full mt-1 w-40 bg-[#111214] border border-white/[0.05] rounded-xl shadow-xl overflow-hidden z-50 text-left py-1"
+                        className="absolute right-0 top-full mt-2 w-48 bg-[#1B1C21] border border-white/[0.05] rounded-2xl shadow-2xl overflow-hidden z-50 text-left py-1"
                       >
-                        <button 
-                          onClick={() => { toggleMuteUser(profileUserId!); setShowMoreMenu(false); }}
-                          className="w-full px-3 py-2 text-[12px] font-bold text-foreground/70 hover:bg-white/[0.04] hover:text-foreground text-left transition-colors"
-                        >
-                          {isMuted ? 'Unmute' : 'Mute'} @{user.username}
-                        </button>
                         {isFriend && (
-                          <button className="w-full px-3 py-2 text-[12px] font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 text-left transition-colors">
+                          <button 
+                            onClick={() => { 
+                              openConfirm({
+                                title: 'Remove Friend',
+                                message: `Are you sure you want to remove ${profileUser.username}?`,
+                                confirmLabel: 'Remove Friend',
+                                onConfirm: () => removeFriend(profileUser.id)
+                              });
+                              setShowMoreMenu(false); 
+                            }}
+                            className="w-full px-4 py-3 text-[12px] font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 text-left transition-colors"
+                          >
                             Remove Friend
                           </button>
                         )}
-                        <button className="w-full px-3 py-2 text-[12px] font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 text-left transition-colors">
+                        <button className="w-full px-4 py-3 text-[12px] font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-500 text-left transition-colors">
                           Block User
                         </button>
                       </motion.div>
@@ -200,44 +231,43 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 </div>
               </div>
             )}
-
           </div>
 
-          {/* User Details */}
-          <div className="mt-2 bg-[#1B1C21] rounded-xl p-4 border border-white/[0.03]">
-            <h4 className="text-[20px] font-bold text-white tracking-tight leading-none mb-1">{user.username}</h4>
-            <p className="text-[14px] text-foreground/60 mb-3">{user.email}</p>
+          <div className="mt-4 bg-[#1B1C21] rounded-2xl p-5 border border-white/[0.03]">
+            <div className="flex items-center justify-between mb-1">
+               <h4 className="text-[22px] font-black text-white tracking-tight leading-none">{profileUser.username}</h4>
+            </div>
+            <p className="text-[14px] text-foreground/40 font-medium mb-4">{profileUser.email || 'Email Protected'}</p>
 
-            <div className="w-full h-px bg-white/[0.05] my-3" />
+            <div className="w-full h-px bg-white/[0.03] my-4" />
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <h5 className="text-[11px] font-black text-foreground/40 uppercase tracking-widest">About Me</h5>
-                <p className="text-[14px] text-foreground/80 leading-relaxed font-medium">
-                  {user.bio}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h5 className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.2em]">About</h5>
+                <p className="text-[14px] text-foreground/75 leading-relaxed font-medium italic">
+                  "{profileUser.bio || 'This user is traveling in silence.'}"
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <h5 className="text-[11px] font-black text-foreground/40 uppercase tracking-widest">NeoPlane Member Since</h5>
-                <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-foreground/40" />
-                  <p className="text-[13px] text-foreground/80 font-medium">{user.joined}</p>
+              <div className="space-y-2">
+                <h5 className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.2em]">Member Since</h5>
+                <div className="flex items-center gap-2 text-foreground/50">
+                  <Calendar size={14} />
+                  <p className="text-[13px] font-bold">{new Date(profileUser.createdAt || Date.now()).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <h5 className="text-[11px] font-black text-foreground/40 uppercase tracking-widest">Roles</h5>
+              <div className="space-y-2">
+                <h5 className="text-[10px] font-black text-foreground/20 uppercase tracking-[0.2em]">Badges</h5>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="text-[11px] uppercase tracking-wider font-bold border-white/10 bg-white/[0.03] text-foreground/70">
-                    {user.role}
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-black border-white/5 bg-white/[0.02] text-foreground/40 py-1 px-3">
+                    {profileUser.id === currentUser?.id ? 'Admin' : 'Member'}
                   </Badge>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
       </motion.div>
     </div>
   );

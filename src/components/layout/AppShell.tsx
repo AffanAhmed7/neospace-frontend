@@ -14,7 +14,13 @@ import { NotificationPanel } from './NotificationPanel';
 import { UserProfileModal } from '../settings/UserProfileModal';
 import { HomeDashboard } from './HomeDashboard';
 import { MessageRequests } from '../social/MessageRequests';
+import { ToastProvider } from '../ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSocket } from '../../hooks/useSocket';
+import { useConversationsStore } from '../../store/useConversationsStore';
+import { useFriendsStore } from '../../store/useFriendsStore';
+import { useNotificationsStore } from '../../store/useNotificationsStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const AppShell: React.FC = () => {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
@@ -26,7 +32,24 @@ export const AppShell: React.FC = () => {
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
 
   const activeConversationId = useAppStore((state) => state.activeConversationId);
-  const conversationMeta = useAppStore((state) => state.conversationMeta);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Real-time Socket Connection
+  useSocket();
+
+  // Initial Data Fetching
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      useConversationsStore.getState().fetchConversations();
+      useFriendsStore.getState().fetchFriends();
+      useFriendsStore.getState().fetchRequests();
+      useNotificationsStore.getState().fetchNotifications();
+    }
+  }, [isAuthenticated]);
+
+  const conversation = useConversationsStore((state) => 
+    activeConversationId ? state.getConversationById(activeConversationId) : null
+  );
 
 
   return (
@@ -169,7 +192,7 @@ export const AppShell: React.FC = () => {
       <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group' || activeView === 'message-requests') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
         <AnimatePresence mode="popLayout">
           {/* Right Panel */}
-          {rightPanelOpen && activeView === 'chat' && activeConversationId && !conversationMeta[activeConversationId]?.isDM && (
+          {rightPanelOpen && activeView === 'chat' && conversation && conversation.type !== 'DIRECT' && (
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -196,6 +219,9 @@ export const AppShell: React.FC = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Global Notifications */}
+      <ToastProvider />
 
     </div>
   );

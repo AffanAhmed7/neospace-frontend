@@ -2,18 +2,13 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Hash, Globe, Shield, AlertCircle, ArrowLeft, Link, Copy, Check, Search, Plus, UserPlus, RefreshCw, Upload, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
+import { useConversationsStore } from '../../store/useConversationsStore';
+import { useFriendsStore } from '../../store/useFriendsStore';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
 
 const CATEGORIES = ['Engineering', 'Design', 'Marketing', 'Gaming', 'Casual', 'Support', 'Other'];
 
-const MOCK_FRIENDS = [
-  { id: '1', name: 'Alex Rivera', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', status: 'online' },
-  { id: '2', name: 'Jordan Lee', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan', status: 'offline' },
-  { id: '3', name: 'Sarah Chen', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', status: 'idle' },
-  { id: '4', name: 'Marcus Wright', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus', status: 'online' },
-  { id: '5', name: 'Elena Rossi', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elena', status: 'dnd' },
-];
 
 const HERO_PRESETS = [
   { id: 'mesh', name: 'Abstract Flow', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1000' },
@@ -25,7 +20,8 @@ const HERO_PRESETS = [
 
 export const CreateChannel: React.FC = () => {
   const setActiveView = useAppStore((s) => s.setActiveView);
-  const createChannel = useAppStore((s) => s.createChannel);
+  const createConversation = useConversationsStore((s) => s.createConversation);
+  const friends = useFriendsStore((s) => s.friends);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState('');
@@ -85,7 +81,27 @@ export const CreateChannel: React.FC = () => {
       finalDescription = `${description ? description + '\n\n' : ''}Join link: ${generatedLink}`;
     }
 
-    createChannel(name, finalDescription, category, isPrivate, customHeroUrl || heroImage);
+    setIsUploading(true); // Reusing as a general loading state for simplicity or just for the UI
+    createConversation({
+      name,
+      type: 'CHANNEL',
+      participantIds: selectedFriends,
+      description: finalDescription,
+      category,
+      isPrivate,
+      heroImage: customHeroUrl || heroImage,
+    })
+      .then((conv) => {
+        if (conv) {
+          setActiveView('home');
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Failed to create channel');
+      })
+      .finally(() => {
+        setIsUploading(false);
+      });
   };
 
   const handleCopy = () => {
@@ -101,8 +117,8 @@ export const CreateChannel: React.FC = () => {
     );
   };
 
-  const filteredFriends = MOCK_FRIENDS.filter(f => 
-    f.name.toLowerCase().includes(friendSearch.toLowerCase())
+  const filteredFriends = friends.filter(f => 
+    f.username.toLowerCase().includes(friendSearch.toLowerCase())
   );
 
   return (
@@ -454,15 +470,17 @@ export const CreateChannel: React.FC = () => {
                         )}
                       >
                         <div className="relative shrink-0">
-                          <Avatar src={friend.avatar} alt={friend.name} size="md" className="h-10 w-10 border border-white/[0.05]" />
+                          <Avatar src={friend.avatar} alt={friend.username} size="md" className="h-10 w-10 border border-white/[0.05]" />
                           <div className={clsx(
                             "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0D0D0D]",
-                            friend.status === 'online' ? 'bg-emerald-500' : 'bg-foreground/20'
+                            friend.status === 'ONLINE' ? 'bg-emerald-500' : 
+                            friend.status === 'IDLE' ? 'bg-amber-400' :
+                            friend.status === 'DND' ? 'bg-rose-500' : 'bg-foreground/20'
                           )} />
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <div className="text-[13px] font-bold text-foreground truncate">{friend.name}</div>
-                          <div className="text-[10px] text-foreground/20 font-medium">Recent collaborator</div>
+                          <div className="text-[13px] font-bold text-foreground truncate">{friend.username}</div>
+                          <div className="text-[10px] text-foreground/20 font-medium">Friend</div>
                         </div>
                         <div className={clsx(
                           "w-5 h-5 rounded-full border flex items-center justify-center transition-all",
