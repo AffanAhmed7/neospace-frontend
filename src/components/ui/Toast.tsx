@@ -42,25 +42,25 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
 
   const variants = {
     success: {
-      icon: <Check className="w-4 h-4 text-emerald-400" />,
-      border: 'border-emerald-500/30',
-      bg: 'bg-emerald-500/10',
-      glow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]',
-      progress: 'bg-emerald-400'
+      icon: <Check className="w-3.5 h-3.5 text-sky-400" />,
+      border: 'border-sky-500/20',
+      bg: 'bg-sky-500/10',
+      glow: 'shadow-[0_8px_32px_rgba(14,165,233,0.12)]',
+      progress: 'bg-sky-400'
     },
     error: {
-      icon: <AlertCircle className="w-4 h-4 text-rose-400" />,
-      border: 'border-rose-500/30',
+      icon: <AlertCircle className="w-3.5 h-3.5 text-rose-400" />,
+      border: 'border-rose-500/20',
       bg: 'bg-rose-500/10',
-      glow: 'shadow-[0_0_20px_rgba(244,63,94,0.15)]',
+      glow: 'shadow-[0_8px_32px_rgba(244,63,94,0.12)]',
       progress: 'bg-rose-400'
     },
     info: {
-      icon: <Info className="w-4 h-4 text-sky-400" />,
-      border: 'border-sky-500/30',
-      bg: 'bg-sky-500/10',
-      glow: 'shadow-[0_0_20px_rgba(14,165,233,0.15)]',
-      progress: 'bg-sky-400'
+      icon: <Info className="w-3.5 h-3.5 text-indigo-400" />,
+      border: 'border-indigo-500/20',
+      bg: 'bg-indigo-500/10',
+      glow: 'shadow-[0_8px_32px_rgba(99,102,241,0.12)]',
+      progress: 'bg-indigo-400'
     }
   };
 
@@ -73,15 +73,15 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
       animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, x: 40, scale: 0.9, transition: { duration: 0.2 } }}
       className={clsx(
-        "pointer-events-auto relative group min-w-[280px] max-w-sm overflow-hidden",
-        "rounded-2xl border backdrop-blur-3xl shadow-2xl transition-all duration-300",
+        "pointer-events-auto relative group min-w-[220px] max-w-[320px] overflow-hidden",
+        "rounded-xl border backdrop-blur-2xl shadow-2xl transition-all duration-300",
         style.border, style.bg, style.glow
       )}
     >
-      <div className="p-3.5 flex items-center gap-3.5">
+      <div className="p-2.5 flex items-center gap-3">
         {/* Status Icon with inner glow */}
         <div className={clsx(
-          "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center border",
+          "shrink-0 w-6 h-6 rounded-md flex items-center justify-center border",
           style.border, "bg-white/[0.05] shadow-inner"
         )}>
           {style.icon}
@@ -89,10 +89,10 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
 
         {/* Content */}
         <div className="flex-1">
-          <p className="text-[12px] font-black uppercase text-white/90 tracking-[0.05em] leading-none mb-1">
+          <p className="text-[10px] font-black uppercase text-white/90 tracking-[0.08em] leading-none mb-1">
             {toast.type === 'success' ? 'Confirmed' : toast.type === 'error' ? 'Security' : 'System'}
           </p>
-          <p className="text-[11px] font-bold text-white/50 leading-tight">
+          <p className="text-[11px] font-medium text-white/50 leading-tight">
             {toast.message}
           </p>
         </div>

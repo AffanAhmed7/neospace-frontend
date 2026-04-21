@@ -52,6 +52,7 @@ interface AppState {
   closeConfirm: () => void;
 
   togglePinChannel: (id: string) => void;
+  unpinChannel: (id: string) => void;
   togglePinGroup: (channelId: string, groupId: string) => void;
   toggleMuteChannel: (id: string) => void;
   toggleMuteGroup: (channelId: string, groupId: string) => void;
@@ -150,6 +151,13 @@ export const useAppStore = create<AppState>()(
           const pinnedChannelIds = state.pinnedChannelIds.includes(id)
             ? state.pinnedChannelIds.filter((pid) => pid !== id)
             : [...state.pinnedChannelIds, id];
+          api.patch('/users/me/preferences', { pinnedChannels: pinnedChannelIds }).catch(console.error);
+          return { pinnedChannelIds };
+        }),
+      unpinChannel: (id) =>
+        set((state) => {
+          if (!state.pinnedChannelIds.includes(id)) return state;
+          const pinnedChannelIds = state.pinnedChannelIds.filter((pid) => pid !== id);
           api.patch('/users/me/preferences', { pinnedChannels: pinnedChannelIds }).catch(console.error);
           return { pinnedChannelIds };
         }),

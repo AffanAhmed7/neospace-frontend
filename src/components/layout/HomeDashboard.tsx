@@ -22,13 +22,13 @@ export const HomeDashboard: React.FC = () => {
   const { fetchNotifications, notifications, unreadCount } = useNotificationsStore();
   const setActiveView = useAppStore((s) => s.setActiveView);
 
-  // Initial Data Hydration
+  // Initial Data Hydration - Only fetch if stores are empty to avoid redundant wipes
   useEffect(() => {
-    fetchConversations();
-    fetchFriends();
-    fetchRequests();
+    if (conversations.length === 0) fetchConversations();
+    if (friends.length === 0) fetchFriends();
+    fetchRequests(); // Requests are fine to refresh as they change often
     fetchNotifications();
-  }, [fetchConversations, fetchFriends, fetchRequests, fetchNotifications]);
+  }, [conversations.length, friends.length, fetchConversations, fetchFriends, fetchRequests, fetchNotifications]);
 
   const stats = useMemo(() => [
     { 

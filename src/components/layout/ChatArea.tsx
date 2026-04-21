@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   Hash, PanelRight,
-  Flame, Info, Pin, Trash2, Edit3, Download, FileText,
-  Users, Globe, Loader2
+  Flame, Info, Pin, Trash2, Edit3, Download, FileText, Reply, MessageSquare,
+  Users, Globe, Loader2, UserPlus, AlertTriangle, XCircle
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,9 +27,10 @@ export const ChatArea: React.FC = () => {
 
   const toggleRightPanel = useAppStore((state) => state.toggleRightPanel);
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
+  const setActiveThread = useAppStore((state) => state.setActiveThread);
+  const setRightPanelTab = useAppStore((state) => state.setRightPanelTab);
 
   const { user } = useAuthStore();
-  const { getConversationById } = useConversationsStore();
   const { 
     fetchMessages, 
     isLoading,
@@ -39,21 +40,48 @@ export const ChatArea: React.FC = () => {
     joinRoom
   } = useMessagesStore();
   
-  const { pendingIncoming, acceptRequest, declineRequest } = useFriendsStore();
+  const { 
+    friends, 
+    pendingIncoming, 
+    pendingOutgoing,
+    sendRequest, 
+    acceptRequest, 
+    declineRequest,
+    cancelRequest 
+  } = useFriendsStore();
 
-  const conversation = useMemo(() => 
-    activeConversationId ? getConversationById(activeConversationId) : null
-  , [activeConversationId, getConversationById]);
+  const conversation = useConversationsStore(state => 
+    activeConversationId ? state.conversations.find(c => c.id === activeConversationId) : null
+  );
 
-  // Check if there is a pending request for this conversation
+
+  // Recipient check for DMs
+  const recipient = useMemo(() => {
+    if (conversation?.type !== 'DIRECT') return null;
+    return conversation.participants?.find(p => p.user?.id !== user?.id)?.user;
+  }, [conversation, user?.id]);
+
+  const isFriend = useMemo(() => {
+    if (!recipient) return false;
+    return friends.some(f => f.id === recipient.id);
+  }, [recipient, friends]);
+
+  const isPendingRequest = useMemo(() => {
+    if (!recipient) return false;
+    return pendingOutgoing.some(r => r.receiverId === recipient.id) || 
+           pendingIncoming.some(r => r.senderId === recipient.id);
+  }, [recipient, pendingOutgoing, pendingIncoming]);
+
+  // Check if there is a pending message request for this conversation
   const incomingRequest = useMemo(() => {
     if (!activeConversationId || !conversation || conversation.type !== 'DIRECT') return null;
-    const otherParticipant = conversation.participants?.find(p => p.user.id !== user?.id);
+    const otherParticipant = conversation.participants?.find(p => p.user?.id !== user?.id);
     if (!otherParticipant) return null;
-    return pendingIncoming.find(req => req.senderId === otherParticipant.user.id);
+    return pendingIncoming.find(req => req.senderId === otherParticipant.user?.id);
   }, [pendingIncoming, activeConversationId, conversation, user]);
 
-  const { messages: allMessages, localHiddenIds } = useMessagesStore();
+  const allMessages = useMessagesStore(state => state.messages);
+  const localHiddenIds = useMessagesStore(state => state.localHiddenIds);
   const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
   const [preview, setPreview] = useState<any>(null);
   const { fetchPreview, joinChannel } = useConversationsStore();
@@ -65,10 +93,18 @@ export const ChatArea: React.FC = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const outgoingRequest = useMemo(() => {
+    if (!recipient) return null;
+    return pendingOutgoing.find(r => r.receiverId === recipient.id);
+  }, [recipient, pendingOutgoing]);
+
   // Fetch messages when conversation changes
   useEffect(() => {
     if (activeConversationId) {
-      const conv = getConversationById(activeConversationId);
+      const conv = useConversationsStore.getState().conversations.find(c => c.id === activeConversationId);
       if (conv) {
         setPreview(null);
         fetchMessages(activeConversationId);
@@ -87,7 +123,7 @@ export const ChatArea: React.FC = () => {
         fetchPreview(activeConversationId).then(setPreview);
       }
     }
-  }, [activeConversationId, fetchMessages, markAsRead, joinRoom, getConversationById, fetchPreview]);
+  }, [activeConversationId, fetchMessages, markAsRead, joinRoom, fetchPreview]);
 
 
   // Auto-scroll to bottom on new messages
@@ -121,7 +157,7 @@ export const ChatArea: React.FC = () => {
 
   if (!conversation) return null;
 
-  const onlineParticipants = conversation.participants.filter(p => p.user.status !== 'OFFLINE');
+  const onlineParticipants = conversation.participants?.filter(p => p.user?.status !== 'OFFLINE') || [];
 
   return (
     <div className="flex flex-col h-full bg-transparent relative selection:bg-primary/20">
@@ -129,22 +165,22 @@ export const ChatArea: React.FC = () => {
       <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-2xl backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div 
-            onClick={() => conversation.type === 'DIRECT' ? toggleProfilePanel(conversation.participants.find(p => p.user.id !== user?.id)?.user.id) : setActiveView('info')}
-            className="flex items-center gap-4 cursor-pointer group/header-title"
+            onClick={() => conversation.type === 'DIRECT' ? (recipient && toggleProfilePanel(recipient.id)) : setActiveView('info')}
+            className="flex items-center gap-4 cursor-pointer group/header-title active:scale-[0.98] transition-transform"
           >
             <div className="flex items-center gap-3">
               {conversation.type === 'DIRECT' ? (
                 <Avatar 
-                  src={conversation.participants.find(p => p.user.id !== user?.id)?.user.avatar} 
+                  src={recipient?.avatar} 
                   size="sm" 
-                  className="h-10 w-10 shadow-lg"
+                  className="h-10 w-10 shadow-lg group-hover/header-title:scale-105 transition-all duration-300"
                 />
               ) : (
                 <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
               )}
               <div className="flex flex-col text-left">
-                <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase">
-                  {conversation.type !== 'DIRECT' && '# '}{conversation.name || conversation.participants.find(p => p.user.id !== user?.id)?.user.username || 'Unknown'}
+                <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase text-left">
+                  {conversation.type !== 'DIRECT' && '# '}{conversation.name || conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Unknown'}
                 </h2>
                 <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/20 leading-none">
                   <span className="group-hover/header-title:text-foreground/40 transition-colors">
@@ -170,7 +206,7 @@ export const ChatArea: React.FC = () => {
                       src={p.user.avatar}
                       alt={p.user.username}
                       size="sm"
-                      className="h-6 w-6 transition-all !rounded-full cursor-pointer hover:ring-2 hover:ring-primary/50"
+                      className="h-6 w-6 transition-all !rounded-full cursor-pointer hover:scale-110"
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleProfilePanel(p.user.id);
@@ -190,6 +226,43 @@ export const ChatArea: React.FC = () => {
                 </span>
                 <span className="text-[8px] font-black text-foreground/20 uppercase tracking-[0.1em]">Online</span>
               </div>
+            </div>
+          )}
+
+          {conversation.type === 'DIRECT' && (
+            <div className="flex items-center gap-1 mr-2">
+              {!isFriend && recipient && (
+                <>
+                  {outgoingRequest ? (
+                    <Button 
+                      variant="ghost" 
+                      className="px-3 py-1.5 h-auto rounded-xl bg-white/5 text-foreground/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all flex items-center gap-2 group/cancel-btn border border-white/[0.05]"
+                      onClick={() => cancelRequest(outgoingRequest.id)}
+                    >
+                      <XCircle size={14} className="group-hover/cancel-btn:scale-110 transition-transform" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Cancel Request</span>
+                    </Button>
+                  ) : !isPendingRequest ? (
+                    <Button 
+                      variant="ghost" 
+                      className="px-3 py-1.5 h-auto rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all flex items-center gap-2 group/add-btn shadow-glow-sm"
+                      onClick={() => sendRequest(recipient.username)}
+                    >
+                      <UserPlus size={14} className="group-hover/add-btn:scale-110 transition-transform" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Add Friend</span>
+                    </Button>
+                  ) : null}
+                </>
+              )}
+              
+              <Button 
+                variant="ghost" 
+                className="p-2 h-auto rounded-xl hover:bg-rose-500/5 text-foreground/25 hover:text-rose-500 transition-all group/del-btn" 
+                onClick={() => setShowDeleteModal(true)}
+                title="Delete Conversation"
+              >
+                <Trash2 size={17} className="group-hover/del-btn:scale-110 transition-transform" />
+              </Button>
             </div>
           )}
 
@@ -220,16 +293,16 @@ export const ChatArea: React.FC = () => {
           <div className="flex flex-col items-start text-left mb-6 px-4 pt-8">
             <div className="h-12 w-12 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-2xl flex items-center justify-center mb-3 ring-1 ring-white/[0.05] shadow-[0_4px_20px_rgba(99,102,241,0.08)]">
               {conversation.type === 'DIRECT' ? (
-                <Avatar src={conversation.participants.find(p => p.user.id !== user?.id)?.user.avatar} size="md" />
+                <Avatar src={conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.avatar} size="md" />
               ) : (
                 <Hash size={24} className="text-primary/60" />
               )}
             </div>
-            <h4 className="text-xl font-black text-foreground tracking-tighter mb-1.5 uppercase tracking-wide">
-              {conversation.type === 'DIRECT' ? `Beginning of your conversation with ${conversation.participants.find(p => p.user.id !== user?.id)?.user.username || 'this user'}` : `Welcome to #${conversation.name}`}
+            <h4 className="text-2xl font-black text-foreground tracking-tight mb-1 uppercase">
+              {conversation.type === 'DIRECT' ? (conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Private Chat') : `#${conversation.name}`}
             </h4>
-            <p className="text-[13px] text-foreground/40 font-medium max-w-xl leading-relaxed">
-              {conversation.description || "This is the very beginning of the history for this connection."}
+            <p className="text-[13px] text-foreground/30 font-medium max-w-xl leading-relaxed">
+              {conversation.description || (conversation.type === 'DIRECT' ? `This is the beginning of your message history.` : `This is the start of the #${conversation.name} channel.`)}
             </p>
             <div className="h-px w-full bg-gradient-to-r from-white/[0.05] to-transparent mt-8 mb-4" />
           </div>
@@ -245,8 +318,10 @@ export const ChatArea: React.FC = () => {
                   delay={i * 0.02} 
                   onImageClick={(url, name) => setSelectedImage({ url, name })}
                   readers={conversation.participants
-                    .filter(p => p.user.id !== user?.id && readReceipts[activeConversationId]?.[p.user.id] === msg.id)
+                    ?.filter(p => p.user?.id !== user?.id && readReceipts[activeConversationId]?.[p.user.id] === msg.id)
                     .map(p => p.user)}
+                  setActiveThread={setActiveThread}
+                  setRightPanelTab={setRightPanelTab}
                 />
               ))}
             </AnimatePresence>
@@ -256,29 +331,110 @@ export const ChatArea: React.FC = () => {
 
       {/* Input or Request Bar */}
       <div className="relative border-t border-white/[0.05] bg-bg-deep/50 backdrop-blur-xl">
-        {incomingRequest ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-6 p-8">
-            <div className="flex flex-col items-center gap-2 text-center max-w-md">
-              <h4 className="text-[14px] font-black uppercase tracking-widest text-foreground/80">Friend Request Received</h4>
-              <p className="text-[12px] font-medium text-foreground/25 leading-relaxed">
-                "{conversation.participants.find(p => p.user.id !== user?.id)?.user.username} wants to be your friend. Accept to start chatting."
-              </p>
+        {conversation.status === 'PENDING' ? (
+          user?.id === conversation.creatorId ? (
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 px-6 py-2 bg-white/[0.02] border-b border-white/[0.05]">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/30">
+                  Waiting for {conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'them'} to accept your message request
+                </span>
+                <span className="ml-auto text-[9px] font-black text-foreground/10 uppercase tracking-widest">Pending</span>
+              </div>
+              <MessageInput 
+                channelName={conversation.name || conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'this conversation'} 
+              />
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => acceptRequest(incomingRequest.id)} className="h-11 px-8 rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[11px] shadow-glow-sm">
-                Accept Request
+          ) : (
+            <div className="flex flex-col items-center gap-4 p-8 bg-black/20 border-t border-white/[0.05]">
+              <div className="text-center">
+                <h4 className="text-[14px] font-black text-foreground uppercase tracking-tight">
+                  Message Request from {conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Someone'}
+                </h4>
+                <p className="text-[12px] font-medium text-foreground/30 mt-1">
+                  Accept to start chatting. They'll see your status and when you've read messages.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => useConversationsStore.getState().resolveRequest(conversation.id, 'ACCEPT')} 
+                  className="h-9 px-6 rounded-lg bg-primary text-white font-bold uppercase tracking-widest text-[10px]"
+                >
+                  Accept
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => useConversationsStore.getState().resolveRequest(conversation.id, 'REJECT')} 
+                  className="h-9 px-6 rounded-lg bg-white/[0.05] text-foreground/40 hover:text-rose-500 font-bold uppercase tracking-widest text-[10px]"
+                >
+                  Ignore
+                </Button>
+              </div>
+            </div>
+          )
+        ) : incomingRequest ? (
+          <div className="flex flex-col items-center gap-4 p-6 bg-black/10">
+            <div className="text-center">
+              <h4 className="text-[12px] font-black uppercase tracking-widest text-foreground/60">Friend Request Received</h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => acceptRequest(incomingRequest.id)} className="h-9 px-6 rounded-lg bg-primary text-white font-bold uppercase tracking-widest text-[10px]">
+                Accept
               </Button>
-              <Button variant="ghost" onClick={() => declineRequest(incomingRequest.id)} className="h-11 px-6 rounded-xl border border-white/5 text-foreground/30 hover:text-rose-500 font-black uppercase tracking-widest text-[11px]">
+              <Button variant="ghost" onClick={() => declineRequest(incomingRequest.id)} className="h-9 px-6 rounded-lg bg-white/[0.05] text-foreground/30 hover:text-rose-500 font-bold uppercase tracking-widest text-[10px]">
                 Decline
               </Button>
             </div>
-          </motion.div>
+          </div>
         ) : (
           <MessageInput 
-            channelName={conversation.name || conversation.participants.find(p => p.user.id !== user?.id)?.user.username || 'this conversation'} 
+            channelName={conversation.name || conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'this conversation'} 
           />
         )}
       </div>
+
+      {/* Delete Conversation Confirmation Modal */}
+      <Modal 
+        isOpen={showDeleteModal} 
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        className="max-w-[420px] bg-[#0F0F12] border border-white/[0.08]"
+      >
+        <div className="flex flex-col items-center text-center p-2">
+          <div className="h-16 w-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-6 ring-1 ring-rose-500/20 shadow-[0_0_30px_rgba(244,63,94,0.15)]">
+            <AlertTriangle className="text-rose-500 h-8 w-8" />
+          </div>
+          
+          <h3 className="text-xl font-black text-foreground uppercase tracking-tight mb-2">Clear History?</h3>
+          <p className="text-[13px] font-medium text-foreground/30 leading-relaxed mb-8">
+            This will permanently remove all messages for you. This action cannot be reversed.
+          </p>
+          
+          <div className="flex flex-col w-full gap-2">
+            <Button 
+              className="w-full h-12 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-glow-sm transition-all active:scale-95"
+              disabled={isDeleting}
+              onClick={async () => {
+                setIsDeleting(true);
+                try {
+                  await useConversationsStore.getState().deleteConversation(conversation.id);
+                  setShowDeleteModal(false);
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? <Loader2 className="animate-spin h-4 w-4" /> : 'Confirm Clear'}
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full h-12 text-foreground/40 hover:text-foreground font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-white/5 transition-all"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              Maybe later
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Image Lightbox */}
       <Modal 
@@ -332,14 +488,16 @@ const MessageBubble: React.FC<{
   delay: number;
   onImageClick?: (url: string, name: string) => void;
   readers?: Participant[];
-}> = ({ message, isOwn, delay, onImageClick, readers = [] }) => {
+  setActiveThread: (id: string | null) => void;
+  setRightPanelTab: (tab: 'members' | 'threads' | 'pinned') => void;
+}> = ({ message, isOwn, delay, onImageClick, readers = [], setActiveThread, setRightPanelTab }) => {
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content || '');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const toggleProfilePanel = useAppStore((state) => state.toggleProfilePanel);
-  const { reactToMessage, deleteMessage, pinMessage, editMessage, hideMessage } = useMessagesStore();
+  const { reactToMessage, deleteMessage, pinMessage, editMessage, hideMessage, setReplyTo } = useMessagesStore();
 
   const handleEdit = async () => {
     if (editContent.trim() && editContent !== message.content) {
@@ -383,6 +541,22 @@ const MessageBubble: React.FC<{
             {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
+
+        {/* Reply Thread Header */}
+        {message.parentId && (
+          <div className="flex items-center gap-2 mb-1.5 px-2 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.05] max-w-full">
+            <Reply size={10} className="text-primary/40 shrink-0" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[10px] font-black text-primary/60 uppercase truncate shrink-0">
+                Replied to
+              </span>
+              <span className="text-[10px] font-bold text-foreground/40 truncate italic">
+                {useMessagesStore.getState().messages[message.conversationId]?.find(m => m.id === message.parentId)?.content || 'Original message'}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className={clsx(
           'relative text-[14px] font-bold leading-relaxed shadow-md border transition-all duration-200', 
           message.type === 'IMAGE' && !message.content 
@@ -475,11 +649,65 @@ const MessageBubble: React.FC<{
             </div>
           )}
           {message.isPinned && (
-             <div className="absolute -top-2 flex items-center gap-1 bg-amber-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-lg">
+             <button 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 pinMessage(message.id, message.conversationId);
+               }}
+               className="absolute -top-2 flex items-center gap-1 bg-amber-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-lg hover:bg-amber-600 transition-colors z-10"
+               title="Unpin message"
+             >
                 <Pin size={8} fill="currentColor" /> PINNED
-             </div>
+             </button>
           )}
         </div>
+
+        {/* Reply Count / Thread Link */}
+        {!message.parentId && message._count && message._count.replies > 0 && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveThread(message.id);
+              // Fallback to ensure tab is set if setActiveThread didn't propagate it correctly
+              setRightPanelTab('threads');
+            }}
+            className={clsx(
+              "mt-2 flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-primary/10 hover:border-primary/20 transition-all duration-300 group/thread relative z-20",
+              isOwn ? "flex-row-reverse self-end mr-1" : "flex-row self-start ml-1"
+            )}
+          >
+            <div className="flex -space-x-2">
+              {(() => {
+                const repliers = useMessagesStore.getState().messages[message.conversationId]
+                  ?.filter(m => m.parentId === message.id)
+                  .map(m => m.sender)
+                  .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+                  .slice(0, 3) || [];
+                
+                return repliers.length > 0 ? (
+                  repliers.map((sender, i) => (
+                    <Avatar 
+                      key={sender.id}
+                      src={sender.avatar} 
+                      size="xs" 
+                      className="h-4 w-4 ring-2 ring-bg-deep shrink-0" 
+                      style={{ zIndex: 10 - i }}
+                    />
+                  ))
+                ) : (
+                  <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-bg-deep">
+                    <MessageSquare size={8} className="text-primary" />
+                  </div>
+                );
+              })()}
+            </div>
+            <span className="text-[10px] font-black text-primary/70 uppercase tracking-[0.1em] group-hover/thread:text-primary transition-colors">
+              {message._count.replies} {message._count.replies === 1 ? 'reply' : 'replies'}
+            </span>
+            <div className="w-px h-2.5 bg-white/10" />
+            <span className="text-[9px] font-black text-foreground/20 uppercase tracking-widest group-hover/thread:text-primary/60">View Thread</span>
+          </button>
+        )}
         
         {isEditing && (
           <div className="flex gap-2 mt-1 px-1">
@@ -515,6 +743,13 @@ const MessageBubble: React.FC<{
                 <button key={emoji} onClick={() => reactToMessage(message.id, message.conversationId, emoji)} className="p-1.5 rounded-lg hover:bg-white/10 transition-all">{emoji}</button>
               ))}
               <div className="w-px h-3 bg-white/10 mx-1" />
+              <button 
+                onClick={() => setReplyTo(message)} 
+                className="p-1.5 rounded-lg hover:bg-white/10 text-foreground/30 hover:text-primary transition-all"
+                title="Reply"
+              >
+                <Reply size={13} />
+              </button>
               {isOwn && (
                 <button 
                   onClick={() => {

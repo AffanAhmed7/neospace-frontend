@@ -22,6 +22,8 @@ import { useConversationsStore } from '../../store/useConversationsStore';
 import { useFriendsStore } from '../../store/useFriendsStore';
 import { useNotificationsStore } from '../../store/useNotificationsStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { ChannelInviteModal } from '../discovery/ChannelInviteModal';
+import { ChannelStatusModal } from '../discovery/ChannelStatusModal';
 
 export const AppShell: React.FC = () => {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
@@ -194,7 +196,7 @@ export const AppShell: React.FC = () => {
       <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group' || activeView === 'message-requests') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
         <AnimatePresence mode="popLayout">
           {/* Right Panel */}
-          {rightPanelOpen && activeView === 'chat' && conversation && conversation.type !== 'DIRECT' && (
+          {rightPanelOpen && activeView === 'chat' && conversation && (
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -211,6 +213,8 @@ export const AppShell: React.FC = () => {
       {/* Overlays */}
       <CommandPalette />
       <NotificationPanel />
+      <ChannelInviteModal />
+      <ChannelStatusModal />
 
       {/* Profile Modal */}
       <AnimatePresence>

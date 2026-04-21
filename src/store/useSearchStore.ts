@@ -18,7 +18,7 @@ interface SearchState {
   results: {
     users: User[];
     messages: Message[];
-    files: FileResult[];
+    files: Message[];
   };
   isLoading: boolean;
   error: string | null;

@@ -11,7 +11,6 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useFriendsStore, type User } from '../../store/useFriendsStore';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
-import { formatDistanceToNow } from 'date-fns';
 
 const statusColor = {
   ONLINE: 'bg-emerald-500',
@@ -201,12 +200,12 @@ export const FriendsPage: React.FC = () => {
                         {searchResults.map(u => (
                           <div 
                             key={u.id}
-                            onClick={() => handleAddFriend(u.username)}
+                            onClick={() => toggleProfilePanel(u.id)}
                             className="flex items-center gap-3 px-4 py-2 hover:bg-white/[0.05] cursor-pointer transition-colors border-b border-white/[0.02] last:border-0"
                           >
                             <Avatar src={u.avatar} size="xs" />
                             <span className="text-[13px] font-bold text-foreground/70">{u.username}</span>
-                            <span className="ml-auto text-[9px] font-black tracking-tighter text-primary uppercase">Click to Add</span>
+                            <span className="ml-auto text-[9px] font-black tracking-tighter text-foreground/20 uppercase group-hover:text-primary transition-colors">View Profile</span>
                           </div>
                         ))}
                       </div>
@@ -295,22 +294,22 @@ export const FriendsPage: React.FC = () => {
           )}
 
           {activeTab === 'Pending' && (
-            <motion.div key="pending" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 space-y-8">
+            <div className="p-4 space-y-6">
               {/* Incoming */}
               <div className="text-left">
                 <div className="px-2 py-3 mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/15">Incoming — {pendingIncoming.length}</span>
                 </div>
                 {pendingIncoming.map((req) => (
-                  <div key={req.id} className="group flex items-center px-4 py-3 rounded-2xl bg-white/[0.02] border border-white/[0.03] hover:border-white/[0.08] transition-all">
-                    <Avatar src={req.sender?.avatar} alt={req.sender?.username} size="md" className="mr-3" />
+                  <div key={req.id} className="flex items-center px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.05] mb-2">
+                    <Avatar src={req.sender?.avatar} alt={req.sender?.username} size="sm" className="mr-3" />
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-[14px] font-bold text-foreground/80">{req.sender?.username}</span>
-                      <span className="text-[11px] text-foreground/25 font-medium">Incoming request · {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}</span>
+                      <span className="text-[13px] font-bold text-foreground/80">{req.sender?.username}</span>
+                      <span className="text-[11px] text-foreground/20 font-medium">Request pending</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => acceptRequest(req.id)} className="h-9 px-4 rounded-xl bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider hover:scale-105 transition-all shadow-glow-sm">Accept</button>
-                      <button onClick={() => declineRequest(req.id)} className="h-9 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-foreground/40 text-[11px] font-bold uppercase tracking-wider hover:text-rose-500 transition-all">Ignore</button>
+                      <button onClick={() => acceptRequest(req.id)} className="h-8 px-4 rounded-lg bg-primary text-white text-[10px] font-bold uppercase tracking-widest">Accept</button>
+                      <button onClick={() => declineRequest(req.id)} className="h-8 px-4 rounded-lg bg-white/5 text-foreground/40 text-[10px] font-bold uppercase tracking-widest hover:text-rose-500">Ignore</button>
                     </div>
                   </div>
                 ))}
@@ -322,17 +321,17 @@ export const FriendsPage: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/15">Outgoing — {pendingOutgoing.length}</span>
                 </div>
                 {pendingOutgoing.map((req) => (
-                   <div key={req.id} className="group flex items-center px-4 py-3 rounded-2xl bg-white/[0.02] border border-white/[0.03] opacity-60">
-                      <Avatar src={req.receiver?.avatar} alt={req.receiver?.username} size="md" className="mr-3" />
+                   <div key={req.id} className="flex items-center px-4 py-3 rounded-xl bg-white/[0.01] border border-white/[0.03] opacity-60 mb-2">
+                      <Avatar src={req.receiver?.avatar} alt={req.receiver?.username} size="sm" className="mr-3" />
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[14px] font-bold text-foreground/80">{req.receiver?.username}</span>
-                        <span className="text-[11px] text-foreground/25 font-medium">Request sent · {formatDistanceToNow(new Date(req.createdAt), { addSuffix: true })}</span>
+                        <span className="text-[13px] font-bold text-foreground/80">{req.receiver?.username}</span>
+                        <span className="text-[11px] text-foreground/20 font-medium">Sent</span>
                       </div>
-                      <button onClick={() => declineRequest(req.id)} className="h-9 px-4 rounded-xl text-foreground/20 hover:text-rose-500 transition-all"><X size={15} /></button>
+                      <button onClick={() => declineRequest(req.id)} className="text-foreground/20 hover:text-rose-500 transition-all"><X size={14} /></button>
                    </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'Blocked' && (

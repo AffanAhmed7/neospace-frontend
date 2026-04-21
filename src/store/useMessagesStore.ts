@@ -63,6 +63,10 @@ interface MessagesState {
   onReactionUpdated: (data: { messageId: string; userId: string; emoji: string; action: 'added' | 'removed'; conversationId: string }) => void;
   onPinnedUpdated: (data: { messageId: string; isPinned: boolean; conversationId: string }) => void;
   onReadReceipt: (data: { conversationId: string; userId: string; lastRead: string }) => void;
+
+  // Threading
+  replyTo: Message | null;
+  setReplyTo: (message: Message | null) => void;
 }
 
 interface SocketResponse {
@@ -80,6 +84,9 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   isLoading: {},
   readReceipts: {},
   localHiddenIds: new Set(),
+  replyTo: null,
+
+  setReplyTo: (message) => set({ replyTo: message }),
 
   fetchMessages: async (conversationId, cursor) => {
     set((s) => ({ isLoading: { ...s.isLoading, [conversationId]: true } }));
@@ -108,11 +115,57 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   },
 
   sendMessage: async (data) => {
+    const { useAuthStore } = await import('./useAuthStore');
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+
+    // Create optimistic message
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: tempId,
+      content: data.content,
+      type: (data.type as any) || 'TEXT',
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      senderId: user.id,
+      conversationId: data.conversationId,
+      parentId: data.parentId,
+      isPinned: false,
+      isEdited: false,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      sender: { id: user.id, username: user.username, avatar: user.avatar || undefined },
+      reactions: [],
+      _count: { replies: 0 }
+    };
+
+    // Add optimistically
+    set((s) => ({
+      messages: {
+        ...s.messages,
+        [data.conversationId]: [...(s.messages[data.conversationId] || []), optimisticMessage]
+      }
+    }));
+
     return new Promise((resolve, reject) => {
       const socket = getSocket();
       socket.emit('message:send', { ...data, type: data.type || 'TEXT' }, (res: SocketResponse) => {
-        if (res.status === 'success') resolve();
-        else reject(new Error(res.message));
+        if (res.status === 'success') {
+          // Remove optimistic message will be handled by onNewMessage (broadcast)
+          // or we can remove it here if preferred. But broadcast is safer for sync.
+          resolve();
+        } else {
+          // Rollback on error
+          set((s) => ({
+            messages: {
+              ...s.messages,
+              [data.conversationId]: (s.messages[data.conversationId] || []).filter(m => m.id !== tempId)
+            }
+          }));
+          reject(new Error(res.message));
+        }
       });
     });
   },
@@ -184,16 +237,44 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   onNewMessage: (message) => {
     set((s) => {
       const existing = s.messages[message.conversationId] || [];
-      // Avoid duplicates
-      if (existing.find((m) => m.id === message.id)) return s;
       
-      // Safety check for reactions
-      const safeMessage = {
-        ...message,
-        reactions: message.reactions || []
+      // 1. Handle Optimistic Replacement or Duplicates
+      // Check if we have an optimistic message with same content/parent/sender
+      const optimisticIdx = existing.findIndex(m => 
+        m.id.startsWith('temp-') && 
+        m.senderId === message.senderId && 
+        (m.content || '') === (message.content || '') &&
+        (m.parentId || null) === (message.parentId || null)
+      );
+
+      let newMessages = [...existing];
+      if (optimisticIdx !== -1) {
+        newMessages[optimisticIdx] = message;
+      } else if (!existing.find((m) => m.id === message.id)) {
+        newMessages.push(message);
+      } else {
+        return s; // Total duplicate
+      }
+      
+      // 2. Update parent reply count locally for real-time threading
+      if (message.parentId) {
+        newMessages = newMessages.map(m => {
+          if (m.id === message.parentId) {
+            return {
+              ...m,
+              _count: {
+                ...m._count,
+                replies: (m._count?.replies || 0) + 1
+              }
+            };
+          }
+          return m;
+        });
+      }
+      
+      return { 
+        messages: { ...s.messages, [message.conversationId]: newMessages } 
       };
-      
-      return { messages: { ...s.messages, [message.conversationId]: [...existing, safeMessage] } };
     });
   },
 

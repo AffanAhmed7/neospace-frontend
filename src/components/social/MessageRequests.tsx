@@ -2,11 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   Search, ArrowLeft, Shield
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useConversationsStore } from '../../store/useConversationsStore';
-import { useFriendsStore } from '../../store/useFriendsStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { Avatar } from '../ui/Avatar';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -17,18 +16,12 @@ export const MessageRequests: React.FC = () => {
   
   const { user } = useAuthStore();
   const { conversations } = useConversationsStore();
-  const { friends } = useFriendsStore();
 
 
-  // Message Requests are DMs from people who are not friends
+  // Message Requests are DMs from people who are not friends, flagged with PENDING status
   const requests = useMemo(() => {
-    const friendIds = new Set(friends.map(f => f.id));
-    return conversations.filter(c => {
-      if (c.type !== 'DIRECT') return false;
-      const other = c.participants.find(p => p.user.id !== user?.id);
-      return other && !friendIds.has(other.user.id);
-    });
-  }, [conversations, friends, user]);
+    return conversations.filter(c => c.type === 'DIRECT' && c.status === 'PENDING' && c.creatorId !== user?.id);
+  }, [conversations, user?.id]);
 
 
   const filteredRequests = requests.filter(req => {
@@ -36,106 +29,108 @@ export const MessageRequests: React.FC = () => {
     return other?.user.username.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const { resolveRequest } = useConversationsStore();
+  const { addToast } = useSettingsStore();
+
   const handleOpenPreview = (id: string) => {
     setActiveConversation(id);
     setActiveView('chat');
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  const handleResolve = async (e: React.MouseEvent, id: string, action: 'ACCEPT' | 'REJECT') => {
+    e.stopPropagation();
+    try {
+      await resolveRequest(id, action);
+      addToast(action === 'ACCEPT' ? 'Request accepted' : 'Request ignored', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to resolve request', 'error');
+    }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
-  };
 
   return (
-    <div className="flex flex-col h-full bg-transparent overflow-hidden relative">
-      <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-2xl backdrop-blur-md">
-        <div className="flex items-center gap-8">
-          <button onClick={() => setActiveView('home')} className="flex items-center gap-2 pr-6 border-r border-white/[0.05] group">
-            <ArrowLeft size={18} className="text-foreground/30 group-hover:text-primary transition-colors" />
-            <h2 className="font-black text-foreground text-[14px] tracking-widest uppercase group-hover:text-glow transition-all">Back</h2>
+    <div className="flex flex-col h-full bg-transparent overflow-hidden">
+      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.05] px-8 shrink-0 bg-bg-deep/50">
+        <div className="flex items-center gap-6">
+          <button onClick={() => setActiveView('home')} className="flex items-center gap-2 group">
+            <ArrowLeft size={16} className="text-foreground/40 group-hover:text-primary transition-colors" />
+            <span className="font-bold text-foreground/60 text-[12px] uppercase tracking-widest">Back</span>
           </button>
           
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[17px] font-black uppercase tracking-tighter text-foreground">Message Requests</span>
-              {requests.length > 0 && (
-                <span className="ml-1.5 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black border border-primary/20">
-                  {requests.length}
-                </span>
-              )}
-            </div>
-            <p className="text-[9px] text-foreground/20 font-black uppercase tracking-[0.2em] mt-1">Pending Connections</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-[14px] font-black uppercase tracking-tight text-foreground">Message Requests</h2>
+            {requests.length > 0 && (
+              <span className="px-2 py-0.5 rounded-md bg-primary text-white text-[10px] font-bold">
+                {requests.length}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full max-w-sm ml-auto">
-          <div className="relative w-full group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" size={14} />
+        <div className="flex items-center gap-3 w-64 ml-auto">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/20" size={12} />
             <input 
               type="text"
-              placeholder="Filter requests..."
+              placeholder="Filter..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-white/[0.02] border border-white/[0.05] rounded-xl text-[13px] font-medium focus:outline-none focus:border-primary/30 transition-all outline-none text-foreground"
+              className="w-full h-8 pl-9 pr-3 bg-white/[0.03] border border-white/[0.05] rounded-md text-[12px] focus:outline-none focus:border-primary/30 transition-all outline-none text-foreground"
             />
           </div>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="max-w-3xl mx-auto w-full px-6 py-12">
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-            <AnimatePresence mode="popLayout">
-              {filteredRequests.map(req => {
-                const other = req.participants.find(p => p.user.id !== user?.id);
-                if (!other) return null;
-                return (
-                  <motion.div
-                    key={req.id}
-                    variants={itemVariants}
-                    layout
-                    onClick={() => handleOpenPreview(req.id)}
-                    className="group relative flex items-start gap-5 cursor-pointer hover:bg-white/[0.02] p-4 rounded-2xl transition-all"
-                  >
-                    <div className="relative shrink-0">
-                      <Avatar src={other.user.avatar} alt={other.user.username} size="md" className="h-10 w-10 ring-1 ring-white/10" />
-                    </div>
+        <div className="max-w-2xl mx-auto w-full px-6 py-8">
+          <div className="space-y-1">
+            {filteredRequests.map(req => {
+              const other = req.participants.find(p => p.user.id !== user?.id);
+              if (!other) return null;
+              return (
+                <div
+                  key={req.id}
+                  onClick={() => handleOpenPreview(req.id)}
+                  className="group flex items-center gap-4 cursor-pointer hover:bg-white/[0.03] p-3 rounded-lg transition-all border border-transparent hover:border-white/[0.02]"
+                >
+                  <Avatar src={other.user.avatar} alt={other.user.username} size="sm" />
 
-                    <div className="flex-grow min-w-0 py-0.5">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="text-[14px] font-black text-foreground/80 lowercase tracking-tight group-hover:text-primary transition-colors">
-                          {other.user.username}
-                        </h4>
-                        <span className="text-[10px] font-bold text-foreground/10 uppercase tracking-widest">
-                          {req.updatedAt ? formatDistanceToNow(new Date(req.updatedAt), { addSuffix: true }) : ''}
-                        </span>
-                      </div>
-                      <p className="text-[13px] text-foreground/30 font-medium line-clamp-1 pr-10 italic">
-                        Click to preview this message request
-                      </p>
+                  <div className="flex-grow min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[13px] font-bold text-foreground/80">
+                        {other.user.username}
+                      </h4>
+                      <span className="text-[10px] text-foreground/20 font-medium">
+                        {req.updatedAt ? formatDistanceToNow(new Date(req.updatedAt), { addSuffix: true }) : ''}
+                      </span>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                  </div>
+
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button 
+                      onClick={(e) => handleResolve(e, req.id, 'ACCEPT')}
+                      className="p-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest px-3"
+                    >
+                      Accept
+                    </button>
+                    <button 
+                      onClick={(e) => handleResolve(e, req.id, 'REJECT')}
+                      className="p-1.5 rounded-md bg-white/5 text-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-all text-[10px] font-bold uppercase tracking-widest px-3"
+                    >
+                      Ignore
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
 
             {filteredRequests.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-24 text-center select-none space-y-4">
-                <div className="h-16 w-16 rounded-3xl bg-white/[0.02] flex items-center justify-center border border-white/[0.05]">
-                  <Shield size={24} strokeWidth={1.5} className="text-foreground/10" />
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-foreground/40">Inbox Optimized</h4>
-                  <p className="text-[11px] text-foreground/20 font-medium mt-1">Clean slate! No pending stranger requests.</p>
-                </div>
+              <div className="flex flex-col items-center justify-center py-20 text-center select-none opacity-20">
+                <Shield size={32} strokeWidth={1} className="mb-4" />
+                <p className="text-[11px] font-bold uppercase tracking-wider">No pending requests</p>
               </div>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>

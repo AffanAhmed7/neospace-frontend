@@ -122,12 +122,12 @@ export const CommandPalette: React.FC = () => {
     if (activeTab === 'all' || activeTab === 'files') {
       searchResults.files.forEach(f => res.push({
         id: f.id,
-        title: f.name,
-        subtitle: `${(f.size / 1024).toFixed(1)} KB • ${f.type}`,
+        title: f.fileName || 'Shared Document',
+        subtitle: `${((f.fileSize || 0) / 1024).toFixed(1)} KB • ${f.type}`,
         type: 'file',
         icon: <FileText size={16} />,
         action: () => {
-          window.open(f.url, '_blank');
+          if (f.fileUrl) window.open(f.fileUrl, '_blank');
           toggleCommandPalette();
         }
       }));

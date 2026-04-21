@@ -27,7 +27,8 @@ export const ExploreChannels: React.FC = () => {
   const setActiveConversation = useAppStore((state) => state.setActiveConversation);
   const setActiveView = useAppStore((state) => state.setActiveView);
   
-  const { exploreChannels, fetchExploreChannels, joinChannel, isLoading, conversations } = useConversationsStore();
+  const { exploreChannels, fetchExploreChannels, joinChannel, isLoading, conversations, pendingInvites } = useConversationsStore();
+  const setActivePromptInvite = useConversationsStore((state) => state.setActivePromptInvite);
 
   useEffect(() => {
     fetchExploreChannels({ 
@@ -39,7 +40,8 @@ export const ExploreChannels: React.FC = () => {
 
   const filteredChannels = exploreChannels.map(ch => {
      const isJoined = conversations.some(c => c.id === ch.id);
-     return { ...ch, isJoined };
+     const invite = pendingInvites.find(i => i.conversationId === ch.id);
+     return { ...ch, isJoined, isInvited: !!invite, invite };
   }).filter(ch => {
      return hideJoined ? !ch.isJoined : true;
   });
@@ -254,6 +256,16 @@ export const ExploreChannels: React.FC = () => {
                       <div className="flex items-center gap-1.5 text-[11px] font-black text-emerald-500 uppercase tracking-widest px-3 py-1.5">
                         <CheckCircle2 size={14} /> Joined
                       </div>
+                    ) : channel.isInvited ? (
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          if (channel.invite) setActivePromptInvite(channel.invite);
+                        }}
+                        className="px-4 py-1.5 rounded-lg bg-primary/10 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-glow-sm"
+                      >
+                        Respond
+                      </button>
                     ) : (
                       <button 
                         onClick={async (e) => { 

@@ -37,7 +37,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const addToast = useSettingsStore(state => state.addToast);
-  const updateProfile = useSettingsStore(state => state.updateProfile);
   const setAuth = useAuthStore(state => state.setAuth);
 
   // Sync mode with initialMode when modal opens

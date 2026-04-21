@@ -22,6 +22,7 @@ export interface Conversation {
   messages?: import('./useMessagesStore').Message[];
   isPublic?: boolean;
   isHidden?: boolean;
+  status?: 'ACTIVE' | 'PENDING' | 'DECLINED';
 
   // Frontend-computed
   displayName?: string;
@@ -62,8 +63,12 @@ interface ConversationsState {
   isLoading: boolean;
   error: string | null;
   typingUsers: TypingState;
+  activePromptInvite: ChannelInvite | null;
+  activeStatusModalChannel: Conversation | null;
 
   // Actions
+  setActivePromptInvite: (invite: ChannelInvite | null) => void;
+  setActiveStatusModalChannel: (channel: Conversation | null) => void;
   fetchConversations: () => Promise<void>;
   fetchExploreChannels: (params?: { category?: string; query?: string; sortBy?: string }) => Promise<void>;
   joinChannel: (id: string) => Promise<boolean>;
@@ -97,8 +102,10 @@ interface ConversationsState {
   fetchPreview: (id: string) => Promise<Conversation | null>;
   fetchJoinRequests: (conversationId: string) => Promise<JoinRequest[]>;
   resolveJoinRequest: (requestId: string, status: 'APPROVED' | 'DECLINED') => Promise<void>;
+  resolveRequest: (id: string, action: 'ACCEPT' | 'REJECT') => Promise<void>;
   onJoinRequestReceived: (data: { request: JoinRequest; user: any; conversation: any }) => void;
   onConversationRemoved: (id: string) => void;
+  onConversationUpdated: (conv: Conversation) => void;
   onParticipantRemoved: (conversationId: string, userId: string) => void;
 }
 
@@ -109,6 +116,11 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   isLoading: false,
   error: null,
   typingUsers: {},
+  activePromptInvite: null,
+  activeStatusModalChannel: null,
+
+  setActivePromptInvite: (invite) => set({ activePromptInvite: invite }),
+  setActiveStatusModalChannel: (channel) => set({ activeStatusModalChannel: channel }),
 
   fetchConversations: async () => {
     set({ isLoading: true, error: null });
@@ -135,6 +147,20 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
 
   joinChannel: async (id) => {
     try {
+      // 1. Optimistic check: are we already invited?
+      const existingInvite = get().pendingInvites.find(i => i.conversationId === id);
+      if (existingInvite) {
+        set({ activePromptInvite: existingInvite });
+        return false;
+      }
+
+      // 2. Optimistic check: are we already a member?
+      const existingConv = get().conversations.find(c => c.id === id);
+      if (existingConv) {
+        set({ activeStatusModalChannel: existingConv });
+        return false;
+      }
+
       const { data } = await api.post(`/conversations/${id}/join`);
       
       if (data.data.status === 'pending') {
@@ -144,7 +170,10 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
       }
 
       const conv = data.data.conversation;
-      set((state) => ({ conversations: [conv, ...state.conversations] }));
+      set((state) => {
+        if (state.conversations.find((c) => c.id === conv.id)) return state;
+        return { conversations: [conv, ...state.conversations] };
+      });
       
       const socket = getSocket();
       socket.emit('conversation:join', { conversationId: conv.id });
@@ -152,8 +181,23 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
       return true;
     } catch (err: any) {
       console.error('[ConversationsStore] joinChannel error:', err);
+      const message = err.response?.data?.message || '';
+      
+      // Handle specific "Already" states from backend
+      if (message.includes('already a member')) {
+        const ch = get().exploreChannels.find(c => c.id === id);
+        if (ch) set({ activeStatusModalChannel: ch });
+        return false;
+      }
+
+      if (message.includes('already been sent')) {
+        const inv = get().pendingInvites.find(i => i.conversationId === id);
+        if (inv) set({ activePromptInvite: inv });
+        return false;
+      }
+
       const useSettingsStore = (await import('./useSettingsStore')).useSettingsStore;
-      useSettingsStore.getState().addToast(err.response?.data?.message || 'Failed to join channel.', 'error');
+      useSettingsStore.getState().addToast(message || 'Failed to join channel.', 'error');
       return false;
     }
   },
@@ -171,7 +215,10 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
         parentId,
       });
       const conv: Conversation = data.data.conversation;
-      set((state) => ({ conversations: [conv, ...state.conversations] }));
+      set((state) => {
+        if (state.conversations.find((c) => c.id === conv.id)) return state;
+        return { conversations: [conv, ...state.conversations] };
+      });
 
       // Join the new conversation room via socket
       const socket = getSocket();
@@ -215,10 +262,9 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     }));
 
     // 2. Auto-unpin if pinned
-    const useAppStore = (await import('./useAppStore')).useAppStore;
-    const { togglePinChannel, pinnedChannelIds } = useAppStore.getState();
+    const { unpinChannel, pinnedChannelIds } = (await import('./useAppStore')).useAppStore.getState();
     if (pinnedChannelIds.includes(id)) {
-      togglePinChannel(id);
+      unpinChannel(id);
     }
 
     // 3. Inform server
@@ -431,7 +477,28 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     }
   },
 
+  resolveRequest: async (id, action) => {
+    try {
+      const { data } = await api.post(`/conversations/${id}/resolve`, { action });
+      
+      if (action === 'REJECT') {
+        set((state) => ({
+          conversations: state.conversations.filter((c) => c.id !== id),
+        }));
+      } else {
+        const updated = data.data;
+        set((state) => ({
+          conversations: state.conversations.map((c) => (c.id === id ? { ...c, ...updated } : c)),
+        }));
+      }
+    } catch (err) {
+      console.error('[ConversationsStore] resolveRequest error:', err);
+      throw err;
+    }
+  },
+
   onJoinRequestReceived: async (data) => {
+    const { useSettingsStore } = await import('./useSettingsStore');
     useSettingsStore.getState().addToast(
       `New join request for ${data.conversation.name} from ${data.user.username}`,
       'info'
@@ -441,19 +508,26 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   onConversationRemoved: async (id) => {
     set((state) => ({
       conversations: state.conversations.filter((c) => c.id !== id),
+      exploreChannels: state.exploreChannels.filter((c) => c.id !== id),
     }));
 
     // Cleanup active view and pinning if necessary
     const { useAppStore } = await import('./useAppStore');
-    const { activeConversationId, setActiveView, togglePinChannel, pinnedChannelIds } = useAppStore.getState();
-
+    const { activeConversationId, setActiveView, unpinChannel, pinnedChannelIds } = useAppStore.getState();
+    
     if (pinnedChannelIds.includes(id)) {
-      togglePinChannel(id);
+      unpinChannel(id);
     }
 
     if (activeConversationId === id) {
       setActiveView('home');
     }
+  },
+
+  onConversationUpdated: (conv) => {
+    set((state) => ({
+      conversations: state.conversations.map((c) => (c.id === conv.id ? { ...c, ...conv } : c)),
+    }));
   },
 
   onParticipantRemoved: (conversationId, userId) => {
@@ -466,5 +540,5 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
         };
       }),
     }));
-  }
+  },
 }));

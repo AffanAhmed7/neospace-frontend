@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   Paperclip, Send, Smile, AtSign, 
-  X, File as FileIcon, Loader2
+  X, File as FileIcon, Loader2, CornerDownRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -11,7 +11,6 @@ import { useMessagesStore } from '../../store/useMessagesStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { getSocket } from '../../lib/socket';
 import api from '../../lib/api';
-import axios from 'axios';
 import { Avatar } from '../ui/Avatar';
 
 interface MessageInputProps {
@@ -35,7 +34,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
   
   const activeConversationId = useAppStore(state => state.activeConversationId);
   const { conversations } = useConversationsStore();
-  const { sendMessage } = useMessagesStore();
+  const { sendMessage, replyTo, setReplyTo } = useMessagesStore();
   const addToast = useSettingsStore(s => s.addToast);
   
   const conversation = conversations.find(c => c.id === activeConversationId);
@@ -150,8 +149,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
         try {
           await sendMessage({
             conversationId: activeConversationId,
-            content: text.trim()
+            content: text.trim(),
+            parentId: replyTo?.id
           });
+          setReplyTo(null);
         } catch (err: unknown) {
           const error = err as { message: string };
           addToast(`Failed to send message: ${error.message}`, 'error');
@@ -160,6 +161,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
 
       setText('');
       setAttachments([]);
+      setReplyTo(null);
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
       
       // Stop typing immediately
@@ -252,9 +254,38 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
       </AnimatePresence>
 
       <div className={clsx(
-        "relative bg-transparent transition-all duration-500",
         attachments.length > 0 && "pt-2"
       )}>
+        {/* Reply Preview */}
+        <AnimatePresence>
+          {replyTo && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-4 py-2 border-b border-white/[0.03] bg-white/[0.02] flex items-center justify-between group/reply"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <CornerDownRight size={14} className="text-primary/60 shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] font-black text-primary/60 uppercase tracking-widest leading-none mb-1">
+                    Replying to {replyTo.sender.username}
+                  </span>
+                  <p className="text-[12px] font-medium text-foreground/40 truncate italic">
+                    {replyTo.content || "Image or File"}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setReplyTo(null)}
+                className="h-6 w-6 rounded-lg bg-white/5 text-foreground/30 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-500 transition-all opacity-0 group-hover/reply:opacity-100"
+              >
+                <X size={12} strokeWidth={3} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Attachment Previews */}
         <AnimatePresence>
           {attachments.length > 0 && (

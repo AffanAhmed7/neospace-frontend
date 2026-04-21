@@ -33,7 +33,7 @@ export const Sidebar: React.FC = () => {
   const togglePinChannel = useAppStore((state) => state.togglePinChannel);
 
   
-  const { conversations } = useConversationsStore();
+  const { conversations, pendingInvites, setActivePromptInvite } = useConversationsStore();
   const { messages, readReceipts } = useMessagesStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -83,8 +83,16 @@ export const Sidebar: React.FC = () => {
     };
   };
 
-  const channels = conversations.filter(c => c.type === 'CHANNEL');
-  const dms = conversations.filter(c => c.type === 'DIRECT');
+  const channels = (conversations || []).filter(c => 
+    c.type === 'CHANNEL' && c.status !== 'PENDING' && !pinnedChannelIds.includes(c.id)
+  );
+  const activeDMs = (conversations || []).filter(c => 
+    c.type === 'DIRECT' && (c.status === 'ACTIVE' || (c.status === 'PENDING' && c.creatorId === user?.id)) && !pinnedChannelIds.includes(c.id)
+  );
+  const messageRequests = (conversations || []).filter(c => 
+    c.type === 'DIRECT' && c.status === 'PENDING' && c.creatorId !== user?.id && !pinnedChannelIds.includes(c.id)
+  );
+  const pendingRequestCount = messageRequests.length;
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
@@ -146,6 +154,11 @@ export const Sidebar: React.FC = () => {
               <span className={clsx("text-[13px] font-semibold tracking-wide transition-colors", activeView === 'friends' ? "text-foreground" : "text-foreground/50 group-hover:text-foreground/80")}>
                 Friends
               </span>
+              {pendingRequestCount > 0 && (
+                <span className="ml-auto px-1.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-black shadow-glow-sm">
+                  {pendingRequestCount}
+                </span>
+              )}
             </div>
           </motion.button>
 
@@ -274,6 +287,97 @@ export const Sidebar: React.FC = () => {
           })}
         </div>
 
+        {/* Channel Requests */}
+        {pendingInvites.length > 0 && (
+          <div>
+            <div className="px-3 mb-2 flex items-center justify-between group/cr-header">
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
+                <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.12em]">Channel Requests</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-black">{pendingInvites.length}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-0.5">
+              {pendingInvites.map((invite) => (
+                <div
+                  key={invite.id}
+                  onClick={() => setActivePromptInvite(invite)}
+                  className="group relative flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-200 outline-none overflow-hidden hover:bg-white/[0.02] cursor-pointer"
+                >
+                  <div className="relative shrink-0">
+                    <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                      <Hash size={14} />
+                    </div>
+                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-bg-deep flex items-center justify-center animate-pulse">
+                      <div className="h-1 w-1 rounded-full bg-white" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col text-left overflow-hidden flex-grow min-w-0">
+                    <span className="text-[12px] font-bold leading-tight truncate text-foreground/50">
+                      #{invite.conversation?.name || 'channel'}
+                    </span>
+                    <span className="text-[10px] leading-tight truncate text-foreground/20 font-medium mt-0.5">
+                      from {invite.inviter?.username || 'someone'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Message Requests */}
+        {messageRequests.length > 0 && (
+          <div>
+            <div className="px-3 mb-2 flex items-center justify-between group/mr-header">
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
+                <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.12em]">Message Requests</span>
+              </div>
+            </div>
+            
+            <div className="space-y-0.5">
+              {messageRequests.map((dm) => {
+                const isActive = activeConversationId === dm.id;
+                const dmInfo = getDMInfo(dm);
+                return (
+                  <motion.button
+                    key={dm.id}
+                    onClick={() => setActiveConversation(dm.id)}
+                    className={clsx(
+                      'group relative flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-200 outline-none overflow-hidden',
+                      isActive
+                        ? 'bg-primary/10'
+                        : 'hover:bg-white/[0.02]'
+                    )}
+                  >
+                    <div className="relative shrink-0">
+                      <Avatar src={dmInfo.avatar} alt={dmInfo.name} size="sm" className="h-7 w-7 opacity-70" />
+                      <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-bg-deep flex items-center justify-center animate-pulse">
+                         <div className="h-1 w-1 rounded-full bg-white" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col text-left overflow-hidden flex-grow min-w-0">
+                      <span className={clsx(
+                        'text-[12px] font-bold leading-tight truncate',
+                        isActive ? 'text-primary' : 'text-foreground/50 group-hover:text-foreground/80'
+                      )}>
+                        {dmInfo.name}
+                      </span>
+                      <span className="text-[10px] leading-tight truncate text-primary/60 font-black uppercase tracking-widest mt-0.5">
+                        New Request
+                      </span>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Direct Messages */}
         <div>
           <div className="px-3 mb-2 flex items-center justify-between group/dm-header">
@@ -284,7 +388,7 @@ export const Sidebar: React.FC = () => {
           </div>
           
           <div className="space-y-0.5">
-            {dms.map((dm) => {
+            {activeDMs.map((dm) => {
               const isActive = activeConversationId === dm.id;
               const dmInfo = getDMInfo(dm);
               const status = statusConfig[dmInfo.status] || statusConfig.OFFLINE;

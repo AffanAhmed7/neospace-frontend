@@ -24,7 +24,6 @@ export const ChannelInfo: React.FC = () => {
   const { user } = useAuthStore();
   const openConfirm = useAppStore((state) => state.openConfirm);
   const { 
-    getConversationById, 
     updateConversation, 
     leaveConversation, 
     addParticipant, 
@@ -47,7 +46,7 @@ export const ChannelInfo: React.FC = () => {
   const [customHeroUrl, setCustomHeroUrl] = useState('');
   const [searchFriendQuery, setSearchFriendQuery] = useState('');
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'requests'>('info');
+
 
   const { fetchJoinRequests, resolveJoinRequest } = useConversationsStore();
 

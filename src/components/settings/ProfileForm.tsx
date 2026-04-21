@@ -43,7 +43,7 @@ export const ProfileForm: React.FC = () => {
     try {
       // Execute sequentially to avoid race conditions in auth store updates
       await updateProfile({ username, bio, avatar, banner });
-      await updateStatus(status, customStatus);
+      await updateStatus(status as any, customStatus);
       addToast('Profile and status updated successfully!', 'success');
     } catch (err: unknown) {
       console.error('[ProfileForm] Save error:', err);

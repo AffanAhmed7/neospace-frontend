@@ -22,9 +22,10 @@ export const RightPanel: React.FC = () => {
 
   
   const { user } = useAuthStore();
-  const { getConversationById, updateConversation } = useConversationsStore();
-
-  const { messages: allMessages, sendMessage } = useMessagesStore();
+  const getConversationById = useConversationsStore(state => state.getConversationById);
+  const updateConversation = useConversationsStore(state => state.updateConversation);
+  const sendMessage = useMessagesStore(state => state.sendMessage);
+  const allMessages = useMessagesStore(state => state.messages);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -59,6 +60,13 @@ export const RightPanel: React.FC = () => {
   const activeThread = useMemo(() => 
     messages.find(m => m.id === activeThreadId)
   , [messages, activeThreadId]);
+  
+  // Auto-switch away from members tab in DMs
+  React.useEffect(() => {
+    if (conversation?.type === 'DIRECT' && activeTab === 'members') {
+      setRightPanelTab('threads');
+    }
+  }, [conversation?.type, activeTab, setRightPanelTab]);
 
   if (!conversation) return null;
 
@@ -270,7 +278,11 @@ export const RightPanel: React.FC = () => {
                     <Avatar src={t.sender.avatar} size="sm" />
                     <span className="text-[11px] font-semibold text-foreground/50">{t.sender.username}</span>
                   </div>
-                  <h4 className="text-[13px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-snug truncate">{t.content}</h4>
+                  <h4 className="text-[13px] font-bold text-foreground/80 group-hover:text-primary transition-colors leading-snug truncate">{t.content || (t.type === 'IMAGE' ? 'Image' : 'File')}</h4>
+                  <div className="flex items-center gap-2 pt-1 border-t border-white/[0.02]">
+                    <MessageSquare size={10} className="text-primary/40" />
+                    <span className="text-[10px] font-black text-foreground/20 uppercase tracking-widest">{t._count?.replies || 0} {(t._count?.replies === 1 ? 'reply' : 'replies')}</span>
+                  </div>
                 </div>
               ))}
             </motion.div>

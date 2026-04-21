@@ -139,6 +139,10 @@ export const useSocket = () => {
       useConversationsStore.getState().onConversationRemoved(id);
     });
 
+    socket.on('conversation:updated', (conversation: Conversation) => {
+      useConversationsStore.getState().onConversationUpdated(conversation);
+    });
+
     socket.on('participant:left', ({ conversationId, userId }: { conversationId: string, userId: string }) => {
       useConversationsStore.getState().onParticipantRemoved(conversationId, userId);
     });
@@ -160,10 +164,11 @@ export const useSocket = () => {
     // ─── Channel Invites ──────────────────────────────────────────────────────
     socket.on('channel_invite:received', (invite) => {
       useConversationsStore.getState().onInviteReceived(invite);
+      useConversationsStore.getState().setActivePromptInvite(invite);
       addToast(`New invite from ${invite.inviter?.username || 'someone'} to join ${invite.conversation?.name || 'a channel'}!`, 'info');
     });
 
-    socket.on('channel_invite:accepted', (data) => {
+    socket.on('channel_invite:accepted', () => {
       // Could re-fetch the conversation or add the user locally
       // For now we do a simple sync by refetching conversation list or it is handled by 'conversation:new'
     });
@@ -191,6 +196,7 @@ export const useSocket = () => {
       socket.off('conversation:new');
       socket.off('conversation:removed');
       socket.off('conversation:deleted');
+      socket.off('conversation:updated');
       socket.off('participant:left');
       socket.off('notification:new');
       socket.off('notification:count_updated');
