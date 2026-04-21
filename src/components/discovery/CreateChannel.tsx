@@ -132,7 +132,7 @@ export const CreateChannel: React.FC = () => {
         >
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Page Header */}
-            <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 z-50">
+            <header className="flex h-[64px] items-center justify-between px-6 shrink-0 z-50">
               <div className="flex items-start gap-5">
                 <button
                   onClick={() => setActiveView('home')}
@@ -142,7 +142,7 @@ export const CreateChannel: React.FC = () => {
                   <ArrowLeft size={18} />
                 </button>
                 <div>
-                  <h2 className="text-5xl font-black text-foreground tracking-tighter uppercase leading-none">Create a channel</h2>
+                  <h2 className="text-4xl font-semibold text-foreground tracking-tight uppercase leading-none">Create a channel</h2>
                   <p className="text-[14px] text-foreground/30 font-medium mt-3 max-w-lg leading-relaxed">
                     Channels are where your team communicates. They’re best when organized around a topic — like #design.
                   </p>
@@ -200,7 +200,7 @@ export const CreateChannel: React.FC = () => {
                           setName(e.target.value.toLowerCase().replace(/\s+/g, '-'));
                         }}
                         placeholder="e.g. design-critique"
-                        className="w-full h-14 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[15px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                        className="w-full h-14 pl-11 pr-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[15px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -213,7 +213,7 @@ export const CreateChannel: React.FC = () => {
                     </div>
                     
                     {/* Live Preview */}
-                    <div className="relative h-32 rounded-3xl overflow-hidden bg-bg-deep/90 border border-white/10 group/preview">
+                    <div className="relative h-32 rounded-3xl overflow-hidden bg-card border border-border group/preview">
                       <img 
                         src={customHeroUrl || heroImage} 
                         alt="Hero Preview" 
@@ -222,7 +222,7 @@ export const CreateChannel: React.FC = () => {
                           (e.target as HTMLImageElement).src = HERO_PRESETS[0].url;
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-transparent to-transparent opacity-80" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-80" />
                       <div className="absolute bottom-4 left-6 flex items-center gap-3">
                         <div className="h-8 w-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary border border-primary/20">
                           <Hash size={16} />
@@ -269,7 +269,7 @@ export const CreateChannel: React.FC = () => {
                           readOnly={customHeroUrl.startsWith('data:')}
                           onChange={(e) => setCustomHeroUrl(e.target.value)}
                           placeholder="Or paste custom image URL..."
-                          className="w-full h-12 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[12px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                          className="w-full h-12 pl-11 pr-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[12px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
                         />
                         {customHeroUrl && (
                           <button 
@@ -297,7 +297,7 @@ export const CreateChannel: React.FC = () => {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className="h-12 px-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-[11px] font-black uppercase tracking-widest text-foreground hover:bg-white/[0.06] hover:text-primary transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
+                        className="h-12 px-5 rounded-2xl bg-foreground/5 border border-border text-[11px] font-black uppercase tracking-widest text-foreground hover:bg-foreground/10 hover:text-primary transition-all flex items-center gap-2 shrink-0 disabled:opacity-50"
                       >
                         {isUploading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
                         Upload
@@ -321,7 +321,7 @@ export const CreateChannel: React.FC = () => {
                             'px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                             category === cat
                               ? 'bg-primary text-white shadow-glow-sm'
-                              : 'bg-white/[0.02] text-foreground/20 border border-white/[0.04] hover:border-white/[0.1] hover:text-foreground/50'
+                              : 'bg-foreground/5 text-foreground/20 border border-border hover:border-foreground/20 hover:text-foreground/50'
                           )}
                         >
                           {cat}
@@ -341,7 +341,7 @@ export const CreateChannel: React.FC = () => {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="What's this channel about?"
                       rows={5}
-                      className="w-full p-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[14px] font-medium text-foreground placeholder:text-foreground/10 outline-none resize-none transition-all leading-relaxed"
+                      className="w-full p-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[14px] font-medium text-foreground placeholder:text-foreground/10 outline-none resize-none transition-all leading-relaxed"
                     />
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export const CreateChannel: React.FC = () => {
                           'flex items-center gap-4 p-5 rounded-3xl border text-left transition-all',
                           !isPrivate
                             ? 'bg-primary/10 border-primary/25 text-foreground ring-1 ring-primary/20'
-                            : 'bg-white/[0.02] border-white/[0.05] text-foreground/40 hover:bg-white/[0.04]'
+                            : 'bg-foreground/5 border-border text-foreground/40 hover:bg-foreground/10'
                         )}
                       >
                         <Globe size={22} className={!isPrivate ? 'text-primary' : 'text-foreground/25'} />
@@ -393,7 +393,7 @@ export const CreateChannel: React.FC = () => {
                   {/* Generate Link */}
                   <div className="space-y-3 pt-4">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30">Invite Link</label>
-                    <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/[0.06] space-y-4">
+                    <div className="p-6 rounded-3xl bg-foreground/5 border border-border space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-black uppercase tracking-widest text-foreground/40">Shareable URL</span>
                         {generatedLink && (
@@ -452,7 +452,7 @@ export const CreateChannel: React.FC = () => {
                       value={friendSearch}
                       onChange={(e) => setFriendSearch(e.target.value)}
                       placeholder="Search people to invite..."
-                      className="w-full h-12 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[13px] font-medium text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                      className="w-full h-12 pl-11 pr-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[13px] font-medium text-foreground placeholder:text-foreground/10 outline-none transition-all"
                     />
                   </div>
 

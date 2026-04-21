@@ -40,7 +40,7 @@ export const ChannelInviteModal: React.FC = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         />
 
         {/* Modal */}
@@ -48,7 +48,7 @@ export const ChannelInviteModal: React.FC = () => {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-[440px] bg-[#0F0F12] border border-white/[0.08] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] rounded-[32px] overflow-hidden"
+          className="relative w-full max-w-[440px] bg-card border border-border shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] rounded-[32px] overflow-hidden"
         >
           {/* Header Image Header */}
           <div className="relative h-32 w-full overflow-hidden">
@@ -57,7 +57,7 @@ export const ChannelInviteModal: React.FC = () => {
                alt="Channel Hero"
                className="w-full h-full object-cover opacity-50"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F12] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
             <button 
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white/40 hover:text-white transition-all backdrop-blur-md"
@@ -75,29 +75,29 @@ export const ChannelInviteModal: React.FC = () => {
                   src={activePromptInvite.inviter.avatar} 
                   alt={activePromptInvite.inviter.username} 
                   size="lg" 
-                  className="ring-4 ring-[#0F0F12] shadow-2xl"
+                  className="ring-4 ring-card shadow-2xl"
                 />
-                <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-xl p-1.5 border-4 border-[#0F0F12] shadow-glow">
+                <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-xl p-1.5 border-4 border-card shadow-glow">
                   <Hash size={14} strokeWidth={3} />
                 </div>
               </div>
 
               <div className="space-y-1 mb-8">
-                <h3 className="text-xl font-black text-white tracking-tight uppercase">
+                <h3 className="text-xl font-black text-foreground tracking-tight uppercase">
                    New Invitation
                 </h3>
                 <p className="text-[13px] text-foreground/40 font-medium">
-                  <span className="text-white font-bold">{activePromptInvite.inviter.username}</span> wants you to join their channel
+                  <span className="text-foreground font-bold">{activePromptInvite.inviter.username}</span> wants you to join their channel
                 </p>
               </div>
 
               {/* Channel Card */}
-              <div className="w-full bg-white/[0.02] border border-white/[0.05] rounded-3xl p-5 mb-8 flex items-center gap-4 group/card hover:bg-white/[0.04] transition-all cursor-default">
+              <div className="w-full bg-foreground/5 border border-border rounded-3xl p-5 mb-8 flex items-center gap-4 group/card hover:bg-foreground/10 transition-all cursor-default">
                 <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover/card:scale-110 transition-transform">
                   <Hash size={24} />
                 </div>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-[15px] font-black text-white truncate">
+                  <div className="text-[15px] font-black text-foreground truncate">
                     #{activePromptInvite.conversation.name}
                   </div>
                   <div className="text-[11px] font-bold text-foreground/20 uppercase tracking-widest mt-0.5">
@@ -111,7 +111,7 @@ export const ChannelInviteModal: React.FC = () => {
                 <Button 
                   onClick={handleDecline}
                   variant="ghost"
-                  className="h-13 rounded-2xl border border-white/[0.05] bg-white/[0.02] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-500 text-foreground/40 font-black uppercase tracking-widest text-[11px] transition-all"
+                  className="h-13 rounded-2xl border border-border bg-foreground/5 hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-500 text-foreground/40 font-black uppercase tracking-widest text-[11px] transition-all"
                 >
                    Ignore
                 </Button>

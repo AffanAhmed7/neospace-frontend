@@ -225,13 +225,13 @@ export const FriendsPage: React.FC = () => {
             <motion.div key={activeTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
               <div className="px-4 pt-10 pb-2">
                 <div className="relative group">
-                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/20 group-focus-within:text-primary transition-colors" />
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/55 group-focus-within:text-primary transition-colors" />
                   <input
                     type="text"
                     placeholder="Search friends"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-9 pl-10 pr-4 bg-white/[0.03] border border-white/[0.06] rounded-lg text-[13px] font-medium focus:outline-none focus:border-primary/20 transition-all"
+                    className="w-full h-10 pl-10 pr-4 bg-white/[0.07] border border-white/[0.16] rounded-xl text-[13px] font-semibold text-foreground/90 placeholder:text-foreground/45 shadow-[0_8px_24px_rgba(0,0,0,0.22)] focus:outline-none focus:border-primary/45 focus:bg-white/[0.1] transition-all"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export const FriendsPage: React.FC = () => {
                 {filteredFriends.map((friend) => (
                   <div
                     key={friend.id}
-                    className="group flex items-center px-3 py-2.5 mx-1 rounded-xl hover:bg-white/[0.04] transition-all cursor-pointer border border-transparent hover:border-white/[0.02]"
+                    className="group flex items-center px-3 py-2.5 mx-1 mb-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-all cursor-pointer border border-white/[0.06] hover:border-white/[0.12] shadow-[0_8px_22px_rgba(0,0,0,0.22)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.30)]"
                     onClick={() => toggleProfilePanel(friend.id)}
                   >
                     <div className="relative mr-3 shrink-0">

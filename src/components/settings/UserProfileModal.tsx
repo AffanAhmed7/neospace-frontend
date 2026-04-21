@@ -129,14 +129,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={() => onClose()}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
       />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-[500px] bg-[#111214] rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-white/[0.05]"
+        className="relative w-full max-w-[500px] bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-border"
       >
         <div className={clsx(
           "h-[120px] w-full relative", 
@@ -147,7 +147,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           )}
           <button 
             onClick={() => onClose()}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors z-20"
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-foreground/10 hover:bg-foreground/20 text-foreground transition-colors z-20"
           >
             <X size={16} />
           </button>
@@ -155,15 +155,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
         <div className="px-5 pb-5 relative">
           <div className="absolute -top-12 left-5">
-            <div className="relative group rounded-full bg-[#111214] p-1.5 shadow-xl">
+            <div className="relative group rounded-full bg-card p-1.5 shadow-xl">
               <div className="h-24 w-24 rounded-full overflow-hidden bg-bg-deep relative">
                 <img src={profileUser.avatar} alt={profileUser.username} className="w-full h-full object-cover" />
               </div>
               <div className={clsx(
-                "absolute bottom-2 right-2 w-5 h-5 rounded-full border-4 border-[#111214]",
+                "absolute bottom-2 right-2 w-5 h-5 rounded-full border-4 border-card",
                 profileUser.status === 'ONLINE' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : 
                 profileUser.status === 'IDLE' ? "bg-amber-400" :
-                profileUser.status === 'DND' ? "bg-rose-500" : "bg-white/20"
+                profileUser.status === 'DND' ? "bg-rose-500" : "bg-foreground/20"
               )} />
             </div>
           </div>
@@ -172,7 +172,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             {isOwnProfile ? (
               <Button 
                 onClick={() => { onClose(); navigate('/settings'); }} 
-                className="h-8 px-4 text-[11px] font-black uppercase tracking-widest bg-white/[0.05] hover:bg-white/[0.1] text-white rounded-lg"
+                className="h-8 px-4 text-[11px] font-black uppercase tracking-widest bg-foreground/5 hover:bg-foreground/10 text-foreground rounded-lg"
                 variant="ghost"
               >
                 Settings
@@ -236,7 +236,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 <div className="relative">
                   <Button 
                     variant="ghost" 
-                    className="w-9 h-9 p-0 flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] rounded-xl"
+                    className="w-9 h-9 p-0 flex items-center justify-center bg-foreground/5 hover:bg-foreground/10 rounded-xl"
                     onClick={() => setShowMoreMenu(!showMoreMenu)}
                   >
                     <MoreHorizontal size={14} />
@@ -248,7 +248,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: 5 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-[#1B1C21] border border-white/[0.05] rounded-2xl shadow-2xl overflow-hidden z-50 text-left py-1"
+                        className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 text-left py-1"
                       >
                         {isFriend && (
                           <button 
@@ -277,13 +277,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             )}
           </div>
 
-          <div className="mt-4 bg-[#1B1C21] rounded-2xl p-5 border border-white/[0.03]">
+          <div className="mt-4 bg-background/50 rounded-2xl p-5 border border-border">
             <div className="flex items-center justify-between mb-1">
-               <h4 className="text-[22px] font-black text-white tracking-tight leading-none">{profileUser.username}</h4>
+               <h4 className="text-[22px] font-black text-foreground tracking-tight leading-none">{profileUser.username}</h4>
             </div>
             <p className="text-[14px] text-foreground/40 font-medium mb-4">{profileUser.email || 'Email Protected'}</p>
 
-            <div className="w-full h-px bg-white/[0.03] my-4" />
+            <div className="w-full h-px bg-border my-4" />
 
             <div className="space-y-6">
               <div className="space-y-2">

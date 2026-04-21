@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
           className={cn(
-            'relative z-50 w-full max-w-lg overflow-hidden rounded-3xl p-6 shadow-2xl',
+            'relative z-50 w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-2xl',
             className
           )}
         >
@@ -69,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="absolute top-5 right-5 z-[60] rounded-full p-2 transition-all duration-200 hover:bg-white/10 text-white/30 hover:text-white active:scale-90"
+              className="absolute top-5 right-5 z-[60] rounded-full p-2 transition-all duration-200 hover:bg-foreground/5 text-foreground/20 hover:text-foreground active:scale-90"
             >
               <X className="h-5 w-5" />
             </button>

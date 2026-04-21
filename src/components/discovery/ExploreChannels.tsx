@@ -64,9 +64,9 @@ export const ExploreChannels: React.FC = () => {
       <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
 
       {/* ─── Standardized Header ────────────────────────────────────────────── */}
-      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 bg-bg-deep/90 z-50 sticky top-0">
+      <header className="flex h-[64px] items-center justify-between px-6 shrink-0 bg-background/90 z-50 sticky top-0">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 pr-4 border-r border-white/[0.05]">
+          <div className="flex items-center gap-2 pr-4 border-r border-border/50">
             <Globe size={18} className="text-foreground/30" />
             <h2 className="font-bold text-foreground text-[14px] tracking-tight uppercase">Browse</h2>
           </div>
@@ -79,8 +79,8 @@ export const ExploreChannels: React.FC = () => {
                 className={clsx(
                   "px-3 py-1 rounded-md text-[11px] font-black uppercase tracking-widest transition-all",
                   activeCategory === cat 
-                    ? "bg-white/[0.08] text-foreground" 
-                    : "text-foreground/30 hover:text-foreground/60 hover:bg-white/[0.03]"
+                    ? "bg-foreground/10 text-foreground" 
+                    : "text-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
                 )}
               >
                 {cat}
@@ -97,7 +97,7 @@ export const ExploreChannels: React.FC = () => {
               placeholder="Search channels..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-9 pr-4 bg-white/[0.02] border border-white/[0.05] rounded-lg text-[13px] font-medium focus:outline-none focus:border-primary/30 transition-all outline-none"
+              className="w-full h-8 pl-9 pr-4 bg-foreground/5 border border-border rounded-lg text-[13px] font-medium focus:outline-none focus:border-primary/30 transition-all outline-none"
             />
           </div>
           <div className="relative">
@@ -105,7 +105,7 @@ export const ExploreChannels: React.FC = () => {
               onClick={() => setShowFilter(!showFilter)}
               className={clsx(
                 "h-8 px-2 rounded-lg transition-all",
-                showFilter ? "text-primary bg-primary/10" : "text-foreground/40 hover:text-primary hover:bg-white/[0.04]"
+                showFilter ? "text-primary bg-primary/10" : "text-foreground/40 hover:text-primary hover:bg-foreground/5"
               )}
             >
               <Filter size={16} />
@@ -124,7 +124,7 @@ export const ExploreChannels: React.FC = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-[#0A0A0C] border border-white/[0.08] rounded-2xl shadow-2xl z-[70] overflow-hidden backdrop-blur-xl p-2"
+                    className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-[70] overflow-hidden backdrop-blur-xl p-2"
                   >
                     <div className="p-3 space-y-4">
                       {/* Sort Section */}
@@ -140,7 +140,7 @@ export const ExploreChannels: React.FC = () => {
                               onClick={() => { setSortBy(opt.id as 'popularity' | 'name'); setShowFilter(false); }}
                               className={clsx(
                                 "flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all",
-                                sortBy === opt.id ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-white/[0.03] hover:text-foreground/60"
+                                sortBy === opt.id ? "bg-primary/10 text-primary" : "text-foreground/40 hover:bg-foreground/5 hover:text-foreground/60"
                               )}
                             >
                               {opt.label}
@@ -150,7 +150,7 @@ export const ExploreChannels: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="h-px bg-white/[0.03] mx-2" />
+                      <div className="h-px bg-border mx-2" />
 
                       {/* Toggles */}
                       <div className="space-y-1">
@@ -166,7 +166,7 @@ export const ExploreChannels: React.FC = () => {
                           </span>
                           <div className={clsx(
                             "w-8 h-4 rounded-full relative transition-all duration-300",
-                            hideJoined ? "bg-primary" : "bg-white/[0.06]"
+                            hideJoined ? "bg-primary" : "bg-foreground/10"
                           )}>
                             <div className={clsx(
                               "absolute top-1 w-2 h-2 rounded-full bg-white transition-all duration-300",
@@ -191,19 +191,19 @@ export const ExploreChannels: React.FC = () => {
           {/* Sub Header for context */}
           <div className="mb-6 flex items-center justify-between">
             <div className="flex flex-col">
-              <h3 className="text-2xl font-black text-foreground tracking-tight uppercase">Browse Channels</h3>
+              <h3 className="text-xl font-semibold text-foreground tracking-tight uppercase">Browse Channels</h3>
               <p className="text-[12px] text-foreground/40 font-medium mt-1">Find and join communities across the workspace.</p>
             </div>
             <button
               onClick={() => setActiveView('create-channel')}
-              className="h-9 px-5 rounded-full border border-white/[0.08] text-[11px] font-semibold tracking-widest text-foreground/50 hover:text-foreground hover:border-white/[0.18] hover:bg-white/[0.04] transition-all duration-200"
+              className="h-9 px-5 rounded-full border border-border text-[11px] font-semibold tracking-widest text-foreground/50 hover:text-foreground hover:border-foreground/20 hover:bg-foreground/5 transition-all duration-200"
             >
               Create Channel
             </button>
           </div>
 
           {/* Tabular List Headers */}
-          <div className="grid grid-cols-[1fr_200px_120px] gap-4 px-4 py-2 border-b border-white/[0.05] mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+          <div className="grid grid-cols-[1fr_200px_120px] gap-4 px-4 py-2 border-b border-border/50 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
             <div>Channel</div>
             <div className="text-right">Activity</div>
             <div className="text-right"></div>
@@ -222,7 +222,7 @@ export const ExploreChannels: React.FC = () => {
                   key={channel.id}
                   variants={itemVariants}
                   layout
-                  className="group grid grid-cols-[1fr_200px_120px] gap-4 items-center px-4 py-3 rounded-xl hover:bg-white/[0.02] border border-transparent hover:border-white/[0.04] transition-all cursor-pointer"
+                  className="group grid grid-cols-[1fr_200px_120px] gap-4 items-center px-4 py-3 rounded-xl hover:bg-foreground/5 border border-transparent hover:border-border transition-all cursor-pointer"
                   onClick={() => setActiveConversation(channel.id)}
                 >
                   {/* Left: Identity & Description */}
@@ -232,7 +232,7 @@ export const ExploreChannels: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-[15px] font-bold text-foreground/90 group-hover:text-foreground transition-colors truncate">
+                        <h4 className="text-[14px] font-semibold text-foreground/90 group-hover:text-foreground transition-colors truncate">
                           {channel.name}
                         </h4>
                       </div>
@@ -275,7 +275,7 @@ export const ExploreChannels: React.FC = () => {
                             setActiveConversation(channel.id);
                           }
                         }}
-                        className="px-4 py-1.5 rounded-lg bg-white/[0.05] text-foreground/70 text-[11px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-foreground transition-all"
+                        className="px-4 py-1.5 rounded-lg bg-foreground/5 text-foreground/70 text-[11px] font-black uppercase tracking-widest hover:bg-foreground/10 hover:text-foreground transition-all"
                       >
                         Join
                       </button>

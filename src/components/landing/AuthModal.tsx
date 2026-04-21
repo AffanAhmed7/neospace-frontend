@@ -137,7 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      className="max-w-[380px] p-0 overflow-hidden bg-white/[0.02] backdrop-blur-3xl border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)]"
+      className="max-w-[380px] p-0 overflow-hidden bg-card backdrop-blur-3xl border border-border shadow-[0_0_80px_rgba(0,0,0,0.4)]"
     >
       <motion.div 
         layout
@@ -155,10 +155,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <div className="flex flex-col items-center text-center gap-1.5 mb-6">
-              <h2 className="text-2xl font-bold tracking-tight text-white">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 {mode === 'login' ? 'Welcome back' : 'Create an account'}
               </h2>
-              <p className="text-slate-400 text-[13px] max-w-[260px] leading-snug">
+              <p className="text-foreground/40 text-[13px] max-w-[260px] leading-snug">
                 {mode === 'login' 
                   ? 'Sign in to access your platform' 
                   : 'Get started with the home for elite teams'}
@@ -183,13 +183,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="name@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10.5 bg-white/[0.02] border-white/10 focus:border-primary/40 focus:ring-primary/10 rounded-xl placeholder:text-slate-600 text-[13px]"
+                className="h-10.5 bg-foreground/5 border-border focus:border-primary/40 focus:ring-primary/10 rounded-xl placeholder:text-foreground/20 text-[13px]"
                 icon={<Mail size={15} className="text-slate-500" />}
               />
               
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between px-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</label>
+                  <label className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">Password</label>
                   {mode === 'login' && (
                     <button type="button" className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors">
                       Forgot?
@@ -201,7 +201,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   placeholder={mode === 'login' ? '••••••••' : 'Password (min. 8 characters)'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10.5 bg-white/[0.02] border-white/10 focus:border-primary/40 focus:ring-primary/10 rounded-xl placeholder:text-slate-600 text-[13px]"
+                  className="h-10.5 bg-foreground/5 border-border focus:border-primary/40 focus:ring-primary/10 rounded-xl placeholder:text-foreground/20 text-[13px]"
                   icon={<Lock size={15} className="text-slate-500" />}
                 />
               </div>
@@ -225,32 +225,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           className="flex flex-col gap-4 mt-6"
         >
           <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-white/5" />
-            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest whitespace-nowrap">or securely with</span>
-            <div className="h-px flex-1 bg-white/5" />
+            <div className="h-px flex-1 bg-border/40" />
+            <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest whitespace-nowrap">or securely with</span>
+            <div className="h-px flex-1 bg-border/40" />
           </div>
 
           <Button 
             variant="ghost" 
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full bg-white/[0.02] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 h-10.5 rounded-xl flex items-center justify-center gap-3 transition-all scale-100 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
+            className="w-full bg-foreground/5 border border-border hover:bg-foreground/10 hover:border-foreground/20 h-10.5 rounded-xl flex items-center justify-center gap-3 transition-all scale-100 hover:scale-[1.01] active:scale-[0.99] group shadow-sm"
           >
             <GoogleIcon />
-            <span className="text-[13px] font-semibold text-white/90">
+            <span className="text-[13px] font-semibold text-foreground/90">
               {isLoading && !email ? 'Authenticating...' : 'Continue with Google'}
             </span>
           </Button>
         </motion.div>
 
         <motion.div 
-          className="mt-6 pt-5 border-t border-white/5 text-center"
+          className="mt-6 pt-5 border-t border-border/40 text-center"
         >
-          <p className="text-[12px] text-slate-400">
+          <p className="text-[12px] text-foreground/40">
             {mode === 'login' ? "New here?" : "Already a member?"}{' '}
             <button 
               onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-              className="text-primary font-bold hover:text-white transition-all ml-1"
+              className="text-primary font-bold hover:text-foreground transition-all ml-1"
             >
               {mode === 'login' ? 'Create an account' : 'Log in instead'}
             </button>

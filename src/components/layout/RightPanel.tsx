@@ -194,7 +194,7 @@ export const RightPanel: React.FC = () => {
           <input 
             type="text" 
             placeholder={`Search ${activeTab}...`} 
-            className="w-full h-9 pl-9 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.05] focus:border-primary/20 focus:bg-white/[0.05] transition-all outline-none text-[13px] font-medium placeholder:text-foreground/20"
+            className="w-full h-9 pl-9 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.05] shadow-[0_6px_18px_rgba(0,0,0,0.22)] focus:border-primary/20 focus:bg-white/[0.05] transition-all outline-none text-[13px] font-medium placeholder:text-foreground/20"
           />
         </div>
       </div>
@@ -233,9 +233,14 @@ export const RightPanel: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] text-foreground/50 leading-relaxed font-medium">
-                {conversation.description || 'No description set for this channel.'}
-              </p>
+              <div className="space-y-2.5">
+                <h4 className="text-[13px] font-semibold text-foreground/75 drop-shadow-[0_1px_6px_rgba(0,0,0,0.35)]">
+                  #{conversation.name}
+                </h4>
+                <p className="text-[13px] text-foreground/50 leading-relaxed font-medium drop-shadow-[0_1px_8px_rgba(0,0,0,0.28)]">
+                  {conversation.description || 'No description set for this channel.'}
+                </p>
+              </div>
             )}
           </div>
         </div>

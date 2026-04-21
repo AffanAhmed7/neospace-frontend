@@ -11,7 +11,7 @@ interface LogoutModalProps {
 
 export const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} showCloseButton={true} className="max-w-md bg-[#0B0D11] border border-white/[0.05]">
+    <Modal isOpen={isOpen} onClose={onClose} showCloseButton={true} className="max-w-md bg-card border border-border">
       <div className="flex flex-col items-center text-center py-4">
         {/* Warning Icon with Glow */}
         <div className="relative mb-6">
@@ -19,7 +19,7 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onCon
           <div className="relative w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
             <LogOut size={32} />
           </div>
-          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-[#0B0D11] border border-white/[0.05] flex items-center justify-center text-rose-500">
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-card border border-border flex items-center justify-center text-rose-500">
             <AlertCircle size={14} />
           </div>
         </div>
@@ -40,7 +40,7 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onCon
           </Button>
           <button 
             onClick={onClose}
-            className="w-full h-12 rounded-xl text-foreground/30 hover:text-foreground hover:bg-white/[0.03] transition-all font-bold text-[12px] uppercase tracking-widest"
+            className="w-full h-12 rounded-xl text-foreground/30 hover:text-foreground hover:bg-foreground/5 transition-all font-bold text-[12px] uppercase tracking-widest"
           >
             Stay Logged In
           </button>

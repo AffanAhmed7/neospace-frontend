@@ -162,7 +162,7 @@ export const ChatArea: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent relative selection:bg-primary/20">
       {/* Header */}
-      <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-2xl backdrop-blur-md">
+      <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div 
             onClick={() => conversation.type === 'DIRECT' ? (recipient && toggleProfilePanel(recipient.id)) : setActiveView('info')}
@@ -178,8 +178,8 @@ export const ChatArea: React.FC = () => {
               ) : (
                 <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
               )}
-              <div className="flex flex-col text-left">
-                <h2 className="font-black text-foreground text-[19px] tracking-tight leading-none group-hover/header-title:text-glow transition-all duration-300 mb-1.5 uppercase text-left">
+              <div className="flex flex-col text-left pl-3 border-l border-white/10 shadow-[-8px_0_16px_-12px_rgba(99,102,241,0.55)]">
+                <h2 className="font-semibold text-foreground/90 text-[18px] tracking-tight leading-none group-hover/header-title:text-foreground transition-all duration-300 mb-1.5 uppercase text-left">
                   {conversation.type !== 'DIRECT' && '# '}{conversation.name || conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Unknown'}
                 </h2>
                 <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/20 leading-none">
@@ -298,12 +298,13 @@ export const ChatArea: React.FC = () => {
                 <Hash size={24} className="text-primary/60" />
               )}
             </div>
-            <h4 className="text-2xl font-black text-foreground tracking-tight mb-1 uppercase">
+            <h4 className="text-[20px] font-medium text-foreground/75 tracking-tight mb-2 normal-case">
               {conversation.type === 'DIRECT' ? (conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Private Chat') : `#${conversation.name}`}
             </h4>
             <p className="text-[13px] text-foreground/30 font-medium max-w-xl leading-relaxed">
               {conversation.description || (conversation.type === 'DIRECT' ? `This is the beginning of your message history.` : `This is the start of the #${conversation.name} channel.`)}
             </p>
+            <div className="h-px w-full bg-white/10 shadow-[0_1px_10px_rgba(0,0,0,0.35)] mt-3 mb-3" />
             <div className="h-px w-full bg-gradient-to-r from-white/[0.05] to-transparent mt-8 mb-4" />
           </div>
 
@@ -396,7 +397,7 @@ export const ChatArea: React.FC = () => {
       <Modal 
         isOpen={showDeleteModal} 
         onClose={() => !isDeleting && setShowDeleteModal(false)}
-        className="max-w-[420px] bg-[#0F0F12] border border-white/[0.08]"
+        className="max-w-[420px] bg-card border border-border"
       >
         <div className="flex flex-col items-center text-center p-2">
           <div className="h-16 w-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-6 ring-1 ring-rose-500/20 shadow-[0_0_30px_rgba(244,63,94,0.15)]">
@@ -738,7 +739,7 @@ const MessageBubble: React.FC<{
         {/* Hover Actions */}
         <AnimatePresence>
           {showActions && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className={clsx('absolute bottom-full mb-2 flex items-center gap-1 p-1 bg-[#0A0A0C] border border-white/[0.1] rounded-xl shadow-2xl z-[100]', isOwn ? 'right-0' : 'left-0')}>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className={clsx('absolute bottom-full mb-2 flex items-center gap-1 p-1 bg-card border border-border rounded-xl shadow-2xl z-[100]', isOwn ? 'right-0' : 'left-0')}>
               {quickReactions.slice(0, 4).map(emoji => (
                 <button key={emoji} onClick={() => reactToMessage(message.id, message.conversationId, emoji)} className="p-1.5 rounded-lg hover:bg-white/10 transition-all">{emoji}</button>
               ))}
@@ -780,7 +781,7 @@ const MessageBubble: React.FC<{
       </div>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} className="bg-[#0F0F12] border border-white/10 max-w-[340px] p-6 rounded-3xl">
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} className="bg-card border border-border max-w-[340px] p-6 rounded-3xl">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3 text-rose-500 mb-3">
             <div className="h-10 w-10 rounded-full bg-rose-500/10 flex items-center justify-center">

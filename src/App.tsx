@@ -19,6 +19,9 @@ function AppContent() {
   const location = useLocation();
   const checkAuth = useAuthStore(state => state.checkAuth);
 
+  // Initialize theme hook
+  useTheme();
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -53,9 +56,6 @@ function AppContent() {
 }
 
 function App() {
-  // Initialize theme hook
-  useTheme();
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>

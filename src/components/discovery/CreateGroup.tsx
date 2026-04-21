@@ -34,7 +34,7 @@ export const CreateGroup: React.FC = () => {
 
   if (!isAdmin) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-bg-deep/90">
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-background/90">
         <div className="h-20 w-20 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-8 border border-rose-500/20">
           <Shield size={32} className="text-rose-500/60" />
         </div>
@@ -44,7 +44,7 @@ export const CreateGroup: React.FC = () => {
         </p>
         <button 
           onClick={() => setActiveView('info')}
-          className="px-8 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white/[0.03] border border-white/[0.06] text-foreground/40 hover:text-foreground hover:bg-white/[0.08] transition-all"
+          className="px-8 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-foreground/5 border border-border text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all"
         >
           Return to Channel Info
         </button>
@@ -86,12 +86,12 @@ export const CreateGroup: React.FC = () => {
         >
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Page Header */}
-            <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-6 shrink-0 z-50 sticky top-0 backdrop-blur-md">
+            <header className="flex h-[64px] items-center justify-between border-b border-border px-6 shrink-0 z-50 sticky top-0 backdrop-blur-md">
               <div className="flex items-start gap-5">
                 <button
                   onClick={() => setActiveView('info')}
                   type="button"
-                  className="mt-1 group flex items-center justify-center w-10 h-10 rounded-full bg-white/[0.03] border border-white/[0.06] text-foreground/20 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all"
+                  className="mt-1 group flex items-center justify-center w-10 h-10 rounded-full bg-foreground/5 border border-border text-foreground/20 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all"
                 >
                   <ArrowLeft size={18} />
                 </button>
@@ -154,7 +154,7 @@ export const CreateGroup: React.FC = () => {
                           setName(e.target.value.toLowerCase().replace(/\s+/g, '-'));
                         }}
                         placeholder="e.g. backend-api"
-                        className="w-full h-14 pl-11 pr-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[15px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
+                        className="w-full h-14 pl-11 pr-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[15px] font-bold text-foreground placeholder:text-foreground/10 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export const CreateGroup: React.FC = () => {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="What is the focus of this group?"
                       rows={4}
-                      className="w-full p-4 bg-white/[0.02] border border-white/[0.06] focus:border-primary/40 rounded-2xl text-[14px] font-medium text-foreground placeholder:text-foreground/10 outline-none resize-none transition-all leading-relaxed"
+                      className="w-full p-4 bg-foreground/5 border border-border focus:border-primary/40 rounded-2xl text-[14px] font-medium text-foreground placeholder:text-foreground/10 outline-none resize-none transition-all leading-relaxed"
                     />
                   </div>
                 </div>
@@ -191,7 +191,7 @@ export const CreateGroup: React.FC = () => {
                           'flex items-center gap-4 p-5 rounded-3xl border text-left transition-all',
                           !isPrivate
                             ? 'bg-primary/10 border-primary/25 text-foreground ring-1 ring-primary/20'
-                            : 'bg-white/[0.02] border-white/[0.05] text-foreground/40 hover:bg-white/[0.04]'
+                            : 'bg-foreground/5 border-border text-foreground/40 hover:bg-foreground/10'
                         )}
                       >
                         <Globe size={22} className={!isPrivate ? 'text-primary' : 'text-foreground/25'} />

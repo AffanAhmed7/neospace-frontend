@@ -82,17 +82,17 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
         {/* Status Icon with inner glow */}
         <div className={clsx(
           "shrink-0 w-6 h-6 rounded-md flex items-center justify-center border",
-          style.border, "bg-white/[0.05] shadow-inner"
+          style.border, "bg-foreground/5 shadow-inner"
         )}>
           {style.icon}
         </div>
 
         {/* Content */}
         <div className="flex-1">
-          <p className="text-[10px] font-black uppercase text-white/90 tracking-[0.08em] leading-none mb-1">
+          <p className="text-[10px] font-black uppercase text-foreground tracking-[0.08em] leading-none mb-1">
             {toast.type === 'success' ? 'Confirmed' : toast.type === 'error' ? 'Security' : 'System'}
           </p>
-          <p className="text-[11px] font-medium text-white/50 leading-tight">
+          <p className="text-[11px] font-medium text-foreground/50 leading-tight">
             {toast.message}
           </p>
         </div>
@@ -100,14 +100,14 @@ const ToastItem: React.FC<{ toast: ToastType; onClose: () => void }> = ({ toast,
         {/* Close button */}
         <button 
           onClick={onClose}
-          className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-white/10 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
+          className="shrink-0 p-1.5 rounded-lg hover:bg-foreground/10 text-foreground/10 hover:text-foreground/50 transition-all opacity-0 group-hover:opacity-100"
         >
           <X size={12} />
         </button>
       </div>
 
       {/* Modern Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white/[0.05]">
+      <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-foreground/5">
         <motion.div 
           className={clsx("h-full opacity-60", style.progress)}
           initial={{ width: '100%' }}

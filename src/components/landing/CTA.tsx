@@ -21,7 +21,7 @@ export const CTA: React.FC = () => {
         >
           {/* Reduced weight to font-semibold and smaller tracking */}
           <h2
-            className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight uppercase leading-tight text-white/80 text-center"
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight uppercase leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 text-center drop-shadow-sm"
           >
             What are you
             <br />
@@ -32,12 +32,12 @@ export const CTA: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setAuthModal(true, 'signup')}
-            className="group flex items-center gap-2 px-8 py-3.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-white font-bold uppercase tracking-tight hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+            className="group flex items-center gap-2 px-8 py-3.5 rounded-xl border border-blue-400/20 bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold uppercase tracking-tight shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300"
           >
             <span className="text-xs">Get started</span>
             <ArrowRight
               size={14}
-              className="group-hover:translate-x-1 transition-transform opacity-70"
+              className="group-hover:translate-x-1 transition-transform opacity-90"
             />
           </motion.button>
         </motion.div>

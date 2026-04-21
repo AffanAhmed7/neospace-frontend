@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import api from '../lib/api';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'dark' | 'offwhite';
 
 interface AppState {
   theme: Theme;

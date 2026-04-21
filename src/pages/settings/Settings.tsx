@@ -87,27 +87,21 @@ export const Settings: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
                   { 
-                    id: 'light', 
-                    label: 'Light Mode', 
-                    desc: 'Clean & Bright',
-                    bg: 'bg-[#F8FAFC]',
-                  },
-                  { 
                     id: 'dark', 
                     label: 'Dark Mode', 
                     desc: 'Calm & Focused',
-                    bg: 'bg-[#020617]',
+                    bg: 'bg-[#010204]',
                   },
                   { 
-                    id: 'system', 
-                    label: 'System', 
-                    desc: 'Auto-sync',
-                    bg: 'bg-gradient-to-br from-[#F8FAFC] to-[#020617]',
+                    id: 'offwhite', 
+                    label: 'Premium Off-White', 
+                    desc: 'Elegant & Crisp',
+                    bg: 'bg-[#F5F5F7]',
                   },
                 ].map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => setTheme(t.id as 'light' | 'dark' | 'system')}
+                    onClick={() => setTheme(t.id as 'dark' | 'offwhite')}
                     className={clsx(
                       "group relative flex flex-col items-start gap-3 p-4 rounded-2xl border transition-all duration-300",
                       theme === t.id 

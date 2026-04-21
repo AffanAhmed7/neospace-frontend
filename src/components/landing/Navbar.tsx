@@ -22,8 +22,8 @@ export const Navbar: React.FC = () => {
       <nav className={`nav-container ${scrolled ? 'nav-scrolled' : 'nav-initial'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group z-10 relative">
-            <Hexagon className="text-white group-hover:text-primary transition-all duration-300" size={24} strokeWidth={1.5} />
-            <span className="text-[1.6rem] font-serif italic tracking-[0.05em] text-foreground lowercase pr-1 mt-1">neo.</span>
+            <Hexagon className="text-brand group-hover:text-primary transition-all duration-300" size={24} strokeWidth={1.5} />
+            <span className="text-[1.6rem] font-serif italic tracking-[0.05em] text-brand lowercase pr-1 mt-1">neo.</span>
           </Link>
 
           <div className="hidden md:flex items-center justify-center gap-10 absolute left-1/2 -translate-x-1/2">

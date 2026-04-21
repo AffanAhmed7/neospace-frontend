@@ -22,23 +22,23 @@ export const ConfirmModal: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeConfirm}
-            className="absolute inset-0 bg-black/80"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
           />
           
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-[380px] bg-[#141517] border border-white/[0.08] rounded-[40px] overflow-hidden shadow-[0_32px_128px_-16px_rgba(0,0,0,0.7)] p-10 flex flex-col items-center text-center"
+            className="relative w-full max-w-[380px] bg-card border border-border rounded-[40px] overflow-hidden shadow-[0_32px_128px_-16px_rgba(0,0,0,0.7)] p-10 flex flex-col items-center text-center"
           >
             <div className="w-20 h-20 rounded-[32px] bg-rose-500/10 flex items-center justify-center text-rose-500 mb-8 border border-rose-500/20 shadow-inner">
               <AlertCircle size={40} />
             </div>
 
-            <h3 className="text-[22px] font-black text-white tracking-tight mb-3">
+            <h3 className="text-[22px] font-black text-foreground tracking-tight mb-3">
               {title}
             </h3>
-            <p className="text-[13px] font-bold text-white/40 leading-relaxed mb-10 px-4">
+            <p className="text-[13px] font-bold text-foreground/40 leading-relaxed mb-10 px-4">
               {message}
             </p>
 
@@ -52,7 +52,7 @@ export const ConfirmModal: React.FC = () => {
               <Button 
                 variant="ghost"
                 onClick={closeConfirm}
-                className="w-full h-14 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] text-white/40 font-black uppercase tracking-widest text-[11px] transition-all hover:text-white"
+                className="w-full h-14 rounded-2xl bg-foreground/5 hover:bg-foreground/10 text-foreground/40 font-black uppercase tracking-widest text-[11px] transition-all hover:text-foreground"
               >
                 Cancel
               </Button>
@@ -60,7 +60,7 @@ export const ConfirmModal: React.FC = () => {
 
             <button 
               onClick={closeConfirm}
-              className="absolute top-8 right-8 p-2 rounded-full hover:bg-white/5 text-white/10 hover:text-white/40 transition-all"
+              className="absolute top-8 right-8 p-2 rounded-full hover:bg-foreground/5 text-foreground/10 hover:text-foreground/40 transition-all"
             >
               <X size={20} />
             </button>

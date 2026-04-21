@@ -227,7 +227,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-3 w-64 bg-[#0F0F12]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute bottom-full left-0 mb-3 w-64 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden z-[100]"
           >
             <div className="p-2 border-b border-white/[0.03] bg-white/[0.02]">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/30 px-2">Mentions</span>
@@ -370,7 +370,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ channelName }) => {
                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    className="absolute bottom-full right-0 mb-4 p-2 bg-[#0F0F12]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-2xl z-[100] w-[240px]"
+                    className="absolute bottom-full right-0 mb-4 p-2 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-[100] w-[240px]"
                   >
                     <div className="grid grid-cols-6 gap-1">
                       {['👍', '❤️', '😂', '🔥', '🤯', '🎉', '👀', '✨', '🫡', '💯', '🚀', '🤔', '👋', '👏', '🙌', '🎈', '⭐', '🌈'].map(emoji => (

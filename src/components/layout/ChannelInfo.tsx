@@ -17,6 +17,14 @@ import { clsx } from 'clsx';
 import { format } from 'date-fns';
 import { Trash2, UserPlus, ShieldAlert, Edit3 } from 'lucide-react';
 
+interface JoinRequest {
+  id: string;
+  user: {
+    avatar?: string;
+    username: string;
+  };
+}
+
 export const ChannelInfo: React.FC = () => {
   const activeConversationId = useAppStore((state) => state.activeConversationId);
   const setActiveView = useAppStore((state) => state.setActiveView);
@@ -45,7 +53,7 @@ export const ChannelInfo: React.FC = () => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [customHeroUrl, setCustomHeroUrl] = useState('');
   const [searchFriendQuery, setSearchFriendQuery] = useState('');
-  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
 
 
   const { fetchJoinRequests, resolveJoinRequest } = useConversationsStore();
@@ -192,7 +200,7 @@ export const ChannelInfo: React.FC = () => {
     try {
       await resolveJoinRequest(requestId, status);
       setJoinRequests(prev => prev.filter(r => r.id !== requestId));
-    } catch (err) {
+    } catch {
       alert('Failed to resolve request');
     }
   };

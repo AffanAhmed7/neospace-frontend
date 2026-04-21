@@ -72,6 +72,7 @@ export const AppShell: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-40 bg-bg-deep/90 lg:hidden"
+            style={{ opacity: 'var(--glass-opacity)' }}
             onClick={toggleSidebar}
           />
         )}
@@ -80,9 +81,10 @@ export const AppShell: React.FC = () => {
       {/* Sidebar - Elevated Glass */}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 border-r border-white/[0.03] bg-bg-deep/90 shadow-2xl shadow-black/50",
+          "fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-500 ease-in-out lg:relative lg:translate-x-0 border-r border-border bg-bg-deep shadow-2xl shadow-black/10",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)))' }}
       >
         <Sidebar />
       </aside>
@@ -90,7 +92,10 @@ export const AppShell: React.FC = () => {
       {/* Main Content - Broader Overview */}
       <main className="flex flex-col flex-grow min-w-0 min-h-0 bg-transparent relative z-10 overflow-hidden">
         <div className="flex-grow flex flex-col min-w-0 min-h-0 overflow-hidden">
-          <div className="flex-grow flex flex-col min-w-0 min-h-0 bg-bg-deep/90">
+          <div 
+            className="flex-grow flex flex-col min-w-0 min-h-0 bg-bg-deep"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)))' }}
+          >
             <AnimatePresence mode="wait">
               {activeView === 'home' && (
                 <motion.div
@@ -202,7 +207,8 @@ export const AppShell: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="w-72 border-l border-white/[0.03] bg-bg-deep/90 shadow-2xl shadow-black/50"
+              className="w-72 border-l border-border bg-bg-deep shadow-2xl shadow-black/10"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)))' }}
             >
               <RightPanel />
             </motion.aside>

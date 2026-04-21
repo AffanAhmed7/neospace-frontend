@@ -97,7 +97,7 @@ export const Sidebar: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
       {/* Workspace Header */}
-      <div className="px-6 flex items-center justify-between h-[64px] shrink-0 border-b border-white/[0.03]">
+      <div className="px-6 flex items-center justify-between h-[64px] shrink-0 border-b border-border">
         <div 
           onClick={() => {
             setActiveConversation(null);
@@ -108,7 +108,12 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center justify-center text-foreground transition-all duration-300 group-hover:text-primary">
             <Hexagon size={22} strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-xl tracking-tighter text-foreground uppercase group-hover:text-glow transition-all duration-300">neo.</span>
+          <span 
+            className="font-bold text-xl tracking-tighter uppercase group-hover:text-glow transition-all duration-300 brand-text"
+            style={{ color: 'var(--brand)' }}
+          >
+            neo.
+          </span>
         </div>
       </div>
 
@@ -445,7 +450,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* User Footer */}
-      <div className="p-2 border-t border-white/[0.03]">
+      <div className="p-2 border-t border-border">
         <div className="flex items-center gap-1">
           <button
             onClick={() => toggleProfilePanel(user?.id)}
