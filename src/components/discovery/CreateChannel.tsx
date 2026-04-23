@@ -124,7 +124,7 @@ export const CreateChannel: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
       {/* Body */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar flex items-start justify-center px-10 pt-20 pb-12">
+      <div className="flex-1 overflow-y-auto custom-scrollbar flex items-start justify-center px-4 sm:px-8 md:px-10 pt-8 sm:pt-12 md:pt-20 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,33 +132,34 @@ export const CreateChannel: React.FC = () => {
         >
           <form onSubmit={handleSubmit} className="space-y-10">
             {/* Page Header */}
-            <header className="flex h-[64px] items-center justify-between px-6 shrink-0 z-50">
-              <div className="flex items-start gap-5">
+            <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-2 sm:px-6 shrink-0 z-50">
+              {/* Top row on mobile: title left, back button right */}
+              <div className="flex items-center justify-between sm:items-start sm:justify-start sm:gap-4">
+                <div>
+                  <h2 className="text-2xl sm:text-4xl font-semibold text-foreground tracking-tight uppercase leading-none">Create a channel</h2>
+                  <p className="text-[13px] text-foreground/30 font-medium mt-2 max-w-lg leading-relaxed hidden sm:block">
+                    Channels are where your team communicates. They're best when organized around a topic — like #design.
+                  </p>
+                </div>
                 <button
                   onClick={() => setActiveView('home')}
                   type="button"
-                  className="mt-1 group flex items-center justify-center w-10 h-10 rounded-full bg-white/[0.03] border border-white/[0.06] text-foreground/20 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all"
+                  className="group flex items-center justify-center w-10 h-10 rounded-full bg-white/[0.03] border border-white/[0.06] text-foreground/20 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all shrink-0 sm:order-first sm:mt-1"
                 >
                   <ArrowLeft size={18} />
                 </button>
-                <div>
-                  <h2 className="text-4xl font-semibold text-foreground tracking-tight uppercase leading-none">Create a channel</h2>
-                  <p className="text-[14px] text-foreground/30 font-medium mt-3 max-w-lg leading-relaxed">
-                    Channels are where your team communicates. They’re best when organized around a topic — like #design.
-                  </p>
-                </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 self-end sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setActiveView('home')}
-                  className="px-6 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest text-foreground/30 hover:text-foreground transition-all"
+                  className="px-4 sm:px-6 h-10 sm:h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest text-foreground/30 hover:text-foreground transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-8 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/90 transition-all shadow-glow hover:shadow-glow-lg disabled:opacity-40"
+                  className="px-5 sm:px-8 h-10 sm:h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/90 transition-all shadow-glow hover:shadow-glow-lg disabled:opacity-40"
                   disabled={name.trim().length < 3}
                 >
                   Create Channel
@@ -178,7 +179,7 @@ export const CreateChannel: React.FC = () => {
               </motion.div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
               {/* Column 1: About */}
               <div className="space-y-8">
                 <div className="space-y-4 pt-1">

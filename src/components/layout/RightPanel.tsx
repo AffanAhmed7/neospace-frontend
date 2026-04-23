@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, MessageSquare, Pin, Search, 
-  Hash, ArrowLeft, Send, Edit3
+  Hash, ArrowLeft, Send, Edit3, X
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { clsx } from 'clsx';
@@ -107,7 +107,7 @@ export const RightPanel: React.FC = () => {
           <button onClick={() => setActiveThread(null)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-white/5 text-foreground/30 hover:text-primary transition-all shrink-0">
             <ArrowLeft size={16} />
           </button>
-          <div className="flex flex-col overflow-hidden">
+          <div className="flex flex-col overflow-hidden flex-1">
             <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/15 leading-none mb-1.5">
               <span>{conversation?.name || 'Channel'}</span>
               <span className="opacity-40">/</span>
@@ -115,6 +115,12 @@ export const RightPanel: React.FC = () => {
             </div>
             <h3 className="text-[15px] font-bold text-foreground tracking-tight leading-none truncate">{activeThread.content?.slice(0, 20)}...</h3>
           </div>
+          <button
+            onClick={() => useAppStore.getState().toggleRightPanel()}
+            className="p-1.5 rounded-lg hover:bg-white/5 text-foreground/30 hover:text-primary transition-all shrink-0 lg:hidden"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar-compact p-4 space-y-6">
@@ -172,7 +178,6 @@ export const RightPanel: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setRightPanelTab(tab.id as 'members' | 'threads' | 'pinned')}
-
               className={clsx(
                 "relative flex-1 flex flex-col items-center justify-center h-[48px] rounded-xl transition-all duration-300 gap-1",
                 isActive ? "bg-primary/10 text-primary" : "text-foreground/30 hover:bg-white/[0.03] hover:text-foreground/60"
@@ -186,6 +191,12 @@ export const RightPanel: React.FC = () => {
             </button>
           );
         })}
+        <button
+          onClick={() => useAppStore.getState().toggleRightPanel()}
+          className="p-2 rounded-lg hover:bg-white/5 text-foreground/30 hover:text-primary transition-all shrink-0 lg:hidden"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       <div className="px-4 py-3 shrink-0">

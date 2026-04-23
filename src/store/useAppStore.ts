@@ -37,6 +37,7 @@ interface AppState {
   // Actions
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
   toggleRightPanel: () => void;
   setActiveConversation: (id: string | null) => void;
   setActiveGroup: (id: string | null) => void;
@@ -91,6 +92,7 @@ export const useAppStore = create<AppState>()(
 
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
       toggleRightPanel: () => set((state) => ({ rightPanelOpen: !state.rightPanelOpen })),
       setActiveConversation: (id) => set((state) => {
         if (!id) {
@@ -106,8 +108,8 @@ export const useAppStore = create<AppState>()(
           activeConversationId: id, 
           activeGroupId: null,
           activeView: 'chat',
-          // Auto-open right panel for channels, but keep logic in UI components for better control
-          rightPanelOpen: state.activeConversationId !== id ? true : state.rightPanelOpen
+          // Close right panel when switching conversations (user opens manually)
+          rightPanelOpen: false
         };
       }),
       setActiveGroup: (id) => set({ activeGroupId: id }),

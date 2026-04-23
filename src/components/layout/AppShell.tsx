@@ -24,6 +24,7 @@ import { useNotificationsStore } from '../../store/useNotificationsStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { ChannelInviteModal } from '../discovery/ChannelInviteModal';
 import { ChannelStatusModal } from '../discovery/ChannelStatusModal';
+import { MobileHeader } from './MobileHeader';
 
 export const AppShell: React.FC = () => {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
@@ -90,12 +91,13 @@ export const AppShell: React.FC = () => {
       </aside>
 
       {/* Main Content - Broader Overview */}
-      <main className="flex flex-col flex-grow min-w-0 min-h-0 bg-transparent relative z-10 overflow-hidden">
+      <main className="flex flex-col flex-grow min-w-0 min-h-0 bg-transparent relative z-10 overflow-hidden pt-14 lg:pt-0">
         <div className="flex-grow flex flex-col min-w-0 min-h-0 overflow-hidden">
           <div 
             className="flex-grow flex flex-col min-w-0 min-h-0 bg-bg-deep"
             style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)))' }}
           >
+            <MobileHeader />
             <AnimatePresence mode="wait">
               {activeView === 'home' && (
                 <motion.div
@@ -198,23 +200,31 @@ export const AppShell: React.FC = () => {
       </main>
 
       {/* Right Panels Container */}
-      <div className={clsx("relative flex h-full shrink-0 z-20 transition-all duration-500", (activeView === 'info' || activeView === 'explore' || activeView === 'friends' || activeView === 'create-channel' || activeView === 'create-group' || activeView === 'message-requests') ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100")}>
-        <AnimatePresence mode="popLayout">
-          {/* Right Panel */}
-          {rightPanelOpen && activeView === 'chat' && conversation && (
+      <AnimatePresence mode="popLayout">
+        {/* Right Panel */}
+        {rightPanelOpen && activeView === 'chat' && conversation && (
+          <>
+            {/* Mobile overlay backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-bg-deep/70 lg:hidden"
+              onClick={() => useAppStore.getState().toggleRightPanel()}
+            />
             <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 250 }}
-              className="w-72 border-l border-border bg-bg-deep shadow-2xl shadow-black/10"
+              className="fixed inset-y-0 right-0 z-50 w-72 border-l border-border bg-bg-deep shadow-2xl shadow-black/10 lg:relative lg:z-20 shrink-0"
               style={{ backgroundColor: 'color-mix(in srgb, var(--color-bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)))' }}
             >
               <RightPanel />
             </motion.aside>
-          )}
-        </AnimatePresence>
-      </div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Overlays */}
       <CommandPalette />

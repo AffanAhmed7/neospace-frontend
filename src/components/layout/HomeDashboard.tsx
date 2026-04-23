@@ -103,7 +103,7 @@ export const HomeDashboard: React.FC = () => {
         variants={container}
         initial="hidden"
         animate="show"
-        className="flex-1 p-6 pt-12 space-y-6 max-w-3xl w-full mx-auto"
+        className="flex-1 p-4 md:p-6 pt-8 md:pt-12 space-y-8 max-w-5xl w-full mx-auto"
       >
         {/* Greeting */}
         <motion.div variants={item} className="pt-2">
@@ -116,11 +116,11 @@ export const HomeDashboard: React.FC = () => {
         </motion.div>
 
         {/* Stats Row */}
-        <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {stats.map((s) => (
             <div
               key={s.label}
-              className="flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-all group shadow-premium"
+              className="flex flex-col gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-all group shadow-premium last:col-span-2 md:last:col-span-1"
             >
               <s.icon size={16} className={s.color} />
               <div>
@@ -137,7 +137,7 @@ export const HomeDashboard: React.FC = () => {
             <div className="w-1 h-[10px] bg-primary/40 rounded-full shrink-0" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/55">Quick Access Channels</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {recentConversations.map((ch) => (
               <button
                 key={ch.id}
@@ -160,7 +160,7 @@ export const HomeDashboard: React.FC = () => {
               </button>
             ))}
             {recentConversations.length === 0 && (
-              <div className="col-span-3 py-6 px-4 text-center border border-dashed border-white/5 rounded-2xl">
+              <div className="col-span-1 sm:col-span-2 md:col-span-3 py-6 px-4 text-center border border-dashed border-white/5 rounded-2xl">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-foreground/45">No active conversations found</p>
               </div>
             )}
@@ -215,12 +215,12 @@ export const HomeDashboard: React.FC = () => {
             <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/55">Quick Access</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {/* Conditional: Pending Requests */}
             {pendingIncoming.length > 0 && (
               <button 
                 onClick={() => setActiveView('friends')}
-                className="col-span-1 sm:col-span-3 p-5 rounded-2xl bg-primary/5 border border-primary/20 flex items-center gap-5 hover:bg-primary/10 transition-all group shadow-premium"
+                className="col-span-2 md:col-span-3 p-5 rounded-2xl bg-primary/5 border border-primary/20 flex items-center gap-5 hover:bg-primary/10 transition-all group shadow-premium"
               >
                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/20 text-primary shrink-0 shadow-glow-sm">
                   <UserPlus size={24} />
@@ -236,7 +236,7 @@ export const HomeDashboard: React.FC = () => {
             {/* Quick Actions */}
             <button 
               onClick={() => setActiveView('explore')}
-              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium last:col-span-2 md:last:col-span-1"
             >
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-400 shrink-0">
                 <Compass size={20} />
@@ -249,7 +249,7 @@ export const HomeDashboard: React.FC = () => {
 
             <button 
               onClick={() => setActiveView('friends')}
-              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium last:col-span-2 md:last:col-span-1"
             >
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 shrink-0">
                 <Users size={20} />
@@ -262,7 +262,7 @@ export const HomeDashboard: React.FC = () => {
 
             <button 
               onClick={() => setActiveView('create-channel')}
-              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium"
+              className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] flex items-center gap-4 hover:bg-white/[0.04] transition-all group shadow-premium last:col-span-2 md:last:col-span-1"
             >
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary shrink-0">
                 <Plus size={20} />

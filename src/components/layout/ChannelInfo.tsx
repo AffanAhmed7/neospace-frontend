@@ -243,22 +243,22 @@ export const ChannelInfo: React.FC = () => {
         
         <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/40 to-transparent" />
 
-        <div className="absolute top-6 right-6 z-20 flex flex-col gap-4">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex flex-col gap-2 sm:gap-4">
           <button 
             onClick={() => setActiveView('chat')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-bg-deep/90 text-foreground/40 hover:text-primary border border-white/5 transition-all group shadow-xl"
+            className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-bg-deep/90 text-foreground/40 hover:text-primary border border-white/5 transition-all group shadow-xl"
           >
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
             <span className="text-[11px] font-bold uppercase tracking-wider">Chat</span>
           </button>
 
           {isAdmin && (
             <button 
               onClick={() => setIsEditingHero(!isEditingHero)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-bg-deep/90 text-foreground/40 hover:text-primary border border-white/5 transition-all group shadow-xl"
+              className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-bg-deep/90 text-foreground/40 hover:text-primary border border-white/5 transition-all group shadow-xl"
             >
-              {isEditingHero ? <X size={16} /> : <Camera size={16} />}
-              <span className="text-[11px] font-bold uppercase tracking-wider">{isEditingHero ? 'Cancel' : 'Update Hero'}</span>
+              {isEditingHero ? <X size={14} /> : <Camera size={14} />}
+              <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">{isEditingHero ? 'Cancel' : 'Update Hero'}</span>
             </button>
           )}
         </div>
@@ -320,30 +320,31 @@ export const ChannelInfo: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="absolute top-10 left-10 flex items-center gap-6"
+          className="absolute bottom-4 left-4 sm:top-10 sm:left-10 sm:bottom-auto flex items-center gap-3 sm:gap-6"
         >
-          <div className="h-20 w-20 bg-primary/20 rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-2xl shrink-0 relative overflow-hidden group/avatar">
-            <Hash size={36} strokeWidth={2.5} className="relative z-10" />
+          <div className="h-12 w-12 sm:h-20 sm:w-20 bg-primary/20 rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-2xl shrink-0 relative overflow-hidden group/avatar">
+            <Hash size={22} strokeWidth={2.5} className="relative z-10 sm:hidden" />
+            <Hash size={36} strokeWidth={2.5} className="relative z-10 hidden sm:block" />
             {conversation.heroImage && (
               <img src={conversation.heroImage} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm group-hover/avatar:opacity-40 transition-opacity" />
             )}
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">{conversation.name}</h1>
-              <div className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/20 uppercase tracking-wider">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-3xl font-black text-foreground tracking-tighter uppercase leading-none truncate max-w-[160px] sm:max-w-none">{conversation.name}</h1>
+              <div className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-bold text-foreground/20 uppercase tracking-wider hidden sm:block">
                 {conversation.type}
               </div>
             </div>
-            <div className="flex items-center gap-4 mt-2.5">
+            <div className="flex items-center gap-3 sm:gap-4 mt-1.5 sm:mt-2.5">
               <div className="flex items-center gap-1.5 text-foreground/30">
-                <Users size={12} />
-                <span className="text-[11px] font-bold">{conversation.participants.length} Members</span>
+                <Users size={11} />
+                <span className="text-[10px] sm:text-[11px] font-bold">{conversation.participants.length} Members</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-white/10" />
               <div className="flex items-center gap-1.5 text-emerald-400/60">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[11px] font-bold">{conversation.participants.filter(p => p.user.status !== 'OFFLINE').length} Online</span>
+                <span className="text-[10px] sm:text-[11px] font-bold">{conversation.participants.filter(p => p.user.status !== 'OFFLINE').length} Online</span>
               </div>
             </div>
           </div>
@@ -354,7 +355,7 @@ export const ChannelInfo: React.FC = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-12 gap-8 px-10 pt-16 pb-10 max-w-7xl mx-auto w-full"
+        className="grid grid-cols-12 gap-6 lg:gap-8 px-4 sm:px-6 lg:px-10 pt-10 sm:pt-16 pb-10 max-w-7xl mx-auto w-full"
       >
         <div className="col-span-12 lg:col-span-8 space-y-10">
           <motion.section variants={itemVariants} className="space-y-4">
@@ -532,7 +533,7 @@ export const ChannelInfo: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="grid grid-cols-4 gap-4"
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-4"
                   >
                     {mediaFiles.map((m, i) => (
                       <div key={i} className="aspect-square rounded-2xl bg-white/[0.02] border border-white/5 overflow-hidden group cursor-pointer relative">

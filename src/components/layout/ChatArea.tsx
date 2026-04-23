@@ -162,7 +162,7 @@ export const ChatArea: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-transparent relative selection:bg-primary/20">
       {/* Header */}
-      <header className="flex h-[72px] items-center justify-between border-b border-white/[0.03] px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md">
+      <header className="flex h-[64px] items-center justify-between border-b border-white/[0.03] px-4 md:px-10 shrink-0 bg-bg-deep/90 z-50 sticky top-0 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div 
             onClick={() => conversation.type === 'DIRECT' ? (recipient && toggleProfilePanel(recipient.id)) : setActiveView('info')}
@@ -179,7 +179,7 @@ export const ChatArea: React.FC = () => {
                 <div className="w-1 h-4 bg-primary rounded-full shadow-[0_0_12px_rgba(99,102,241,0.4)]" />
               )}
               <div className="flex flex-col text-left pl-3 border-l border-white/10 shadow-[-8px_0_16px_-12px_rgba(99,102,241,0.55)]">
-                <h2 className="font-semibold text-foreground/90 text-[18px] tracking-tight leading-none group-hover/header-title:text-foreground transition-all duration-300 mb-1.5 uppercase text-left">
+                <h2 className="font-semibold text-foreground/90 text-[15px] md:text-[18px] tracking-tight leading-none group-hover/header-title:text-foreground transition-all duration-300 mb-1.5 uppercase text-left truncate max-w-[140px] sm:max-w-none">
                   {conversation.type !== 'DIRECT' && '# '}{conversation.name || conversation.participants?.find(p => p.user?.id !== user?.id)?.user?.username || 'Unknown'}
                 </h2>
                 <div className="flex items-center gap-1.5 text-[9px] uppercase font-black tracking-[0.2em] text-foreground/20 leading-none">
@@ -271,8 +271,8 @@ export const ChatArea: React.FC = () => {
               <Button variant="ghost" className="p-2 h-auto rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" onClick={() => setActiveView('info')}>
                 <Info size={17} />
               </Button>
-              <div className="w-px h-4 bg-white/[0.03] mx-0.5 hidden lg:block" />
-              <Button variant="ghost" className="p-2 h-auto hidden lg:flex rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" onClick={toggleRightPanel}>
+              <div className="w-px h-4 bg-white/[0.03] mx-0.5" />
+              <Button variant="ghost" className="p-2 h-auto flex rounded-xl hover:bg-white/5 text-foreground/25 hover:text-primary transition-all" onClick={toggleRightPanel}>
                 <PanelRight size={17} />
               </Button>
             </>
@@ -286,7 +286,7 @@ export const ChatArea: React.FC = () => {
         onScroll={handleScroll}
         className="flex-grow overflow-y-auto relative flex flex-col min-h-0 custom-scrollbar-compact"
       >
-        <div className="max-w-none w-full px-8 pt-0 pb-0 flex-1 flex flex-col">
+        <div className="max-w-none w-full px-3 md:px-8 pt-0 pb-0 flex-1 flex flex-col">
           <div className="flex-1" />
           
           {/* Channel Start Intro */}

@@ -203,7 +203,7 @@ export const ExploreChannels: React.FC = () => {
           </div>
 
           {/* Tabular List Headers */}
-          <div className="grid grid-cols-[1fr_200px_120px] gap-4 px-4 py-2 border-b border-border/50 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
+          <div className="hidden md:grid grid-cols-[1fr_200px_120px] gap-4 px-4 py-2 border-b border-border/50 mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-foreground/20">
             <div>Channel</div>
             <div className="text-right">Activity</div>
             <div className="text-right"></div>
@@ -222,7 +222,7 @@ export const ExploreChannels: React.FC = () => {
                   key={channel.id}
                   variants={itemVariants}
                   layout
-                  className="group grid grid-cols-[1fr_200px_120px] gap-4 items-center px-4 py-3 rounded-xl hover:bg-foreground/5 border border-transparent hover:border-border transition-all cursor-pointer"
+                  className="group flex flex-col md:grid md:grid-cols-[1fr_200px_120px] gap-4 items-start md:items-center px-4 py-4 md:py-3 rounded-xl hover:bg-foreground/5 border border-transparent hover:border-border transition-all cursor-pointer"
                   onClick={() => setActiveConversation(channel.id)}
                 >
                   {/* Left: Identity & Description */}
@@ -243,7 +243,7 @@ export const ExploreChannels: React.FC = () => {
                   </div>
 
                     {/* Middle: Stats */}
-                  <div className="flex flex-col items-end justify-center">
+                  <div className="flex md:flex-col items-center md:items-end justify-center gap-2 md:gap-0">
                     <div className="flex items-center gap-1.5 text-foreground/60">
                       <span className="text-[12px] font-bold">{((channel as any)?._count?.participants || 0).toLocaleString()}</span>
                       <Users size={12} className="opacity-40" />
@@ -251,7 +251,7 @@ export const ExploreChannels: React.FC = () => {
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex justify-end">
+                  <div className="flex justify-end w-full md:w-auto">
                     {channel.isJoined ? (
                       <div className="flex items-center gap-1.5 text-[11px] font-black text-emerald-500 uppercase tracking-widest px-3 py-1.5">
                         <CheckCircle2 size={14} /> Joined

@@ -286,13 +286,13 @@ export const Settings: React.FC = () => {
       <div className="absolute inset-0 z-0 bg-bg-deep" />
       <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
       
-      <div className="relative z-10 flex h-full w-full">
+      <div className="relative z-10 flex flex-col md:flex-row h-full w-full">
         <SettingsSidebar 
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
           onLogout={handleLogout} 
         />
-        <main className="flex-1 overflow-y-auto px-4 pt-16 pb-10 md:px-8 lg:px-10 flex justify-center selection:bg-primary/30">
+        <main className="flex-1 overflow-y-auto px-4 pt-6 pb-10 md:px-8 lg:px-10 md:pt-16 flex justify-center selection:bg-primary/30">
           <div className="w-full max-w-3xl">
             <AnimatePresence mode="wait">
               {renderContent()}
@@ -304,10 +304,10 @@ export const Settings: React.FC = () => {
       {/* Simple Close Button */}
       <button 
         onClick={() => navigate('/app')}
-        className="fixed top-8 right-8 z-50 h-10 w-10 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-500 transition-all duration-300 group flex items-center justify-center shadow-2xl"
+        className="hidden md:flex fixed top-8 right-8 z-50 h-10 w-10 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-500 transition-all duration-300 group items-center justify-center shadow-2xl"
         title="Close (ESC)"
       >
-        <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+        <X size={18} className="group-hover:rotate-90 transition-transform duration-300" />
       </button>
     </div>
   );

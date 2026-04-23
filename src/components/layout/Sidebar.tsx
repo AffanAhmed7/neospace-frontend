@@ -138,6 +138,7 @@ export const Sidebar: React.FC = () => {
             onClick={() => {
               setActiveConversation(null);
               setActiveView('friends');
+              useAppStore.getState().setSidebarOpen(false);
             }}
             className={clsx(
               "group relative w-full h-11 flex items-center px-4 rounded-xl transition-all duration-300 overflow-hidden",
@@ -173,6 +174,7 @@ export const Sidebar: React.FC = () => {
             onClick={() => {
               setActiveConversation(null);
               setActiveView('explore');
+              useAppStore.getState().setSidebarOpen(false);
             }}
             className={clsx(
               "group relative w-full h-11 flex items-center px-4 rounded-xl transition-all duration-300 overflow-hidden",
@@ -215,7 +217,10 @@ export const Sidebar: React.FC = () => {
               return (
                 <motion.div key={`pinned-chan-${id}`} className="group/item relative">
                   <motion.button
-                    onClick={() => setActiveConversation(id)}
+                    onClick={() => {
+                      setActiveConversation(id);
+                      useAppStore.getState().setSidebarOpen(false);
+                    }}
                     className={clsx(
                       'group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-[14px] font-medium transition-all duration-200 outline-none',
                       isActive
@@ -263,7 +268,10 @@ export const Sidebar: React.FC = () => {
             return (
               <div key={channel.id} className="space-y-0.5">
                 <motion.button
-                  onClick={() => setActiveConversation(channel.id)}
+                  onClick={() => {
+                    setActiveConversation(channel.id);
+                    useAppStore.getState().setSidebarOpen(false);
+                  }}
                   className={clsx(
                     'group relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-[14px] font-medium transition-all duration-200 outline-none',
                     isActive
@@ -350,7 +358,10 @@ export const Sidebar: React.FC = () => {
                 return (
                   <motion.button
                     key={dm.id}
-                    onClick={() => setActiveConversation(dm.id)}
+                    onClick={() => {
+                      setActiveConversation(dm.id);
+                      useAppStore.getState().setSidebarOpen(false);
+                    }}
                     className={clsx(
                       'group relative flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-200 outline-none overflow-hidden',
                       isActive
@@ -402,7 +413,10 @@ export const Sidebar: React.FC = () => {
               return (
                 <motion.button
                   key={dm.id}
-                  onClick={() => setActiveConversation(dm.id)}
+                  onClick={() => {
+                    setActiveConversation(dm.id);
+                    useAppStore.getState().setSidebarOpen(false);
+                  }}
                   className={clsx(
                     'group relative flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-[13px] font-medium transition-all duration-200 outline-none overflow-hidden',
                     isActive
