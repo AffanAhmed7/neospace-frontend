@@ -77,7 +77,7 @@ html {
 
   /* Hero Section */
   .hero-section {
-    @apply relative pt-24 md:pt-32 lg:pt-20 pb-12 md:pb-20 overflow-hidden min-h-[85vh] lg:min-h-[80vh] flex items-start bg-transparent;
+    @apply relative pt-16 md:pt-32 lg:pt-20 pb-8 md:pb-20 overflow-hidden min-h-[85vh] lg:min-h-[80vh] flex items-start bg-transparent;
   }
   .hero-tag {
     @apply inline-flex items-center gap-2 px-3 py-1 border border-white/10 rounded-full w-fit;
@@ -101,7 +101,7 @@ html {
 
   /* Feature Sections */
   .feature-section {
-    @apply pt-10 pb-24 overflow-hidden;
+    @apply pt-8 pb-16 md:pt-10 md:pb-24 overflow-hidden;
   }
   .feature-icon-box {
     @apply h-10 w-10 rounded-2xl flex items-center justify-center text-primary mb-3;

@@ -28,9 +28,9 @@ const useCases = [
 
 export const UseCases: React.FC = () => {
   return (
-    <section id="solutions" className="pt-32 pb-12">
+    <section id="solutions-section" className="pt-16 pb-8 md:pt-32 md:pb-12">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-20">
+        <div className="text-center mb-10 md:mb-20">
           <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-6 text-center">
             Made for <span className="text-primary italic">everyone</span>, really.
           </h2>
@@ -39,7 +39,7 @@ export const UseCases: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
            {useCases.map((useCase, index) => (
              <motion.div
                 key={useCase.title}
@@ -47,7 +47,7 @@ export const UseCases: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
-                className="use-case-card"
+                className="use-case-card w-11/12 md:w-full"
                 style={{ willChange: "transform, opacity" }}
              >
                 <div className={`use-case-icon text-${useCase.color}`}>

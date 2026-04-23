@@ -7,7 +7,6 @@ import { DocsPage } from './pages/DocsPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { AboutPage } from './pages/AboutPage';
 import { PrivacyPage } from './pages/PrivacyPage';
-import { TermsPage } from './pages/TermsPage';
 import { Settings } from './pages/settings/Settings';
 import { useTheme } from './hooks/useTheme';
 import { FluidBackground } from './components/layout/FluidBackground';
@@ -33,9 +32,9 @@ function AppContent() {
     checkAuth();
   }, [checkAuth]);
 
-  const isApp = location.pathname.startsWith('/app') || 
-                location.pathname.startsWith('/settings');
-  
+  const isApp = location.pathname.startsWith('/app') ||
+    location.pathname.startsWith('/settings');
+
   const isSettings = location.pathname.startsWith('/settings');
 
   return (
@@ -52,7 +51,6 @@ function AppContent() {
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
           <Route path="/app" element={
             <ProtectedRoute>
               <ChatPage />

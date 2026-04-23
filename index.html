@@ -5,8 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NeoPlane</title>
+    <script>
+      (function() {
+        if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'manual';
+        }
+        window.scrollTo(0, 0);
+      })();
+    </script>
   </head>
-  <body>
+  <body onload="window.scrollTo(0, 0)">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

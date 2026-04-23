@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Hexagon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthModal } from './AuthModal';
 import { useAppStore } from '../../store/useAppStore';
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
   const { authModalOpen, authModalMode, setAuthModal } = useAppStore();
 
   useEffect(() => {
@@ -16,6 +18,32 @@ export const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {
+    const [path, hash] = target.split('#');
+    
+    // If we're on the landing page and clicking a hash link
+    if (location.pathname === '/' && hash) {
+      e.preventDefault();
+      const hashId = hash === 'solutions' ? 'solutions-section' : hash;
+      const element = document.getElementById(hashId);
+      if (element) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+        
+        // Update URL hash without jumping
+        window.history.pushState(null, '', target);
+      }
+    }
+  };
 
   return (
     <>
@@ -49,9 +77,9 @@ export const Navbar: React.FC = () => {
 
           {/* Row 2 for Mobile: Nav Links (Centered) */}
           <div className="flex items-center justify-center gap-6 sm:gap-8 md:gap-10 md:absolute md:left-1/2 md:-translate-x-1/2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-              <Link to="/#features" className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Features</Link>
-              <Link to="/#product" className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Product</Link>
-              <Link to="/#solutions" className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Solutions</Link>
+              <Link to="/#features" onClick={(e) => handleNavClick(e, '/#features')} className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Features</Link>
+              <Link to="/#product" onClick={(e) => handleNavClick(e, '/#product')} className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Product</Link>
+              <Link to="/#solutions" onClick={(e) => handleNavClick(e, '/#solutions')} className="nav-link text-[10px] sm:text-xs md:text-sm font-medium tracking-wide whitespace-nowrap">Solutions</Link>
           </div>
 
           {/* Desktop Only Auth Buttons (Right) */}

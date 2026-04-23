@@ -85,14 +85,8 @@ export const Hero: React.FC = () => {
             {/* Soft, strictly minimalist ambient glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-gradient-to-tr from-white/10 via-slate-400/5 to-transparent blur-[80px] -z-10 pointer-events-none" />
             
-            <h1 className="text-[2.5rem] md:text-[3.5rem] lg:text-[5rem] font-semibold tracking-tighter leading-[1.1] lg:leading-[1.05]">
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/70 pr-2">
-                Your team's
-              </span>
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-indigo-400 to-sky-500 block mt-1 pb-2">
-                new home base.
-              </span>
+            <h1 className="text-[2.2rem] md:text-[3rem] lg:text-[4.2rem] font-bold tracking-tight leading-[1.1] lg:leading-[1.05] text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-purple-300 to-white pb-2">
+              Communication, <br /> refined.
             </h1>
           </div>
           

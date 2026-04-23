@@ -72,7 +72,7 @@ export const DocsPage: React.FC = () => {
             className="flex flex-col items-center gap-4"
           >
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-              Documentation
+              System <span className="text-primary italic">Orientation</span>
             </h1>
             <p className="text-base md:text-lg text-foreground/50 max-w-xl leading-relaxed font-medium">
               Everything you need to get the most out of NeoPlane. Clear, concise, and always up to date.

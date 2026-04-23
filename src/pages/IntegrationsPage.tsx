@@ -114,7 +114,7 @@ export const IntegrationsPage: React.FC = () => {
             className="flex flex-col items-center gap-4"
           >
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-              Feature <span className="text-primary italic">Architecture</span>
+              Neural <span className="text-primary italic">Stack</span>
             </h1>
             <p className="text-sm md:text-lg text-foreground/50 max-w-xl leading-relaxed font-medium">
               A high-fidelity communication stack, engineered for teams that value absolute performance and clarity.

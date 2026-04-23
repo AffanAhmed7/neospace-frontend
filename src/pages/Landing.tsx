@@ -7,8 +7,52 @@ import { UseCases } from '../components/landing/UseCases';
 import { CTA } from '../components/landing/CTA';
 import { Footer } from '../components/landing/Footer';
 import { MessageSquare, Hash, Search, BellRing } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export const Landing: React.FC = () => {
+  const location = useLocation();
+
+  const isFirstMount = React.useRef(true);
+
+  // Hard reset: If there's a hash on initial load (refresh), strip it silently
+  // to prevent any scroll-jump behavior.
+  React.useEffect(() => {
+    if (location.hash && isFirstMount.current) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (location.hash) {
+      // Skip scrolling on the very first mount (refresh) to stay at the top
+      // as requested by the user.
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        return;
+      }
+
+      const hash = location.hash.substring(1);
+      const id = hash === 'solutions' ? 'solutions-section' : hash;
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          const offset = 80;
+          const bodyRect = document.body.getBoundingClientRect().top;
+          const elementRect = element.getBoundingClientRect().top;
+          const elementPosition = elementRect - bodyRect;
+          const offsetPosition = elementPosition - offset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
+    } else {
+      isFirstMount.current = false;
+    }
+  }, [location.hash]);
+
   return (
     <div className="landing-wrapper">
       <Navbar />

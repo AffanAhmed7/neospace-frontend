@@ -60,7 +60,7 @@ export const Contact: React.FC = () => {
               transition={{ duration: 0.8 }}
             >
               <h2 className="text-3xl sm:text-4xl lg:text-7xl font-bold tracking-tight text-foreground mb-6">
-                Get in <span className="text-primary italic">touch</span>
+                Establish <span className="text-primary italic">Contact</span>
               </h2>
               <p className="text-lg md:text-xl text-foreground/50 mb-10 leading-relaxed font-medium max-w-md">
                 We'd love to hear from you. Drop us a message and we'll get back to you within 24 hours.

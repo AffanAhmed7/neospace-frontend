@@ -17,11 +17,11 @@ export const AboutPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-tight text-foreground mb-8 leading-tight">
-              Communication, <span className="text-primary italic">reimagined</span> for the move.
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground mb-8 leading-tight">
+              Communication <span className="text-primary italic">reimagined</span>
             </h1>
-            <p className="text-base md:text-lg lg:text-xl text-foreground/50 max-w-2xl mx-auto leading-relaxed font-medium">
-              We started NeoPlane with a simple idea: that communication within high-performing teams shouldn't be a source of friction. It should be effortless, fast, and secure.
+            <p className="text-base md:text-lg text-foreground/50 max-w-xl mx-auto leading-relaxed font-medium">
+              We started NeoPlane with a simple idea: that elite collaboration should be effortless, fast, and secure.
             </p>
           </motion.div>
         </section>
@@ -45,7 +45,7 @@ export const AboutPage: React.FC = () => {
                 <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-indigo-500/20 blur-[80px] rounded-full" />
               </div>
             </motion.div>
-
+ 
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -53,8 +53,8 @@ export const AboutPage: React.FC = () => {
               transition={{ duration: 0.8 }}
               className="flex flex-col gap-8"
             >
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-snug">
-                Built for the modern enterprise, <br className="hidden md:block"/>by people who value <span className="text-primary">focus</span>.
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
+                Built for <span className="text-primary">deep work</span>
               </h2>
               <div className="space-y-6 text-lg text-foreground/50 leading-relaxed font-medium">
                 <p>
@@ -82,7 +82,7 @@ export const AboutPage: React.FC = () => {
         {/* Values Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-xs sm:text-xl font-bold text-foreground/40 uppercase tracking-[0.3em]">Core Values</h2>
+            <h2 className="text-xs sm:text-xl font-bold text-foreground/40 uppercase tracking-[0.3em]">Core DNA</h2>
           </div>
           
           <div className="grid grid-cols-3 gap-3 sm:gap-8">
