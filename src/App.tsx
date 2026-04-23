@@ -2,9 +2,16 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChatPage } from './pages/ChatPage';
 import { Landing } from './pages/Landing';
+import { ContactPage } from './pages/ContactPage';
+import { DocsPage } from './pages/DocsPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
+import { AboutPage } from './pages/AboutPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { TermsPage } from './pages/TermsPage';
 import { Settings } from './pages/settings/Settings';
 import { useTheme } from './hooks/useTheme';
 import { FluidBackground } from './components/layout/FluidBackground';
+import { ScrollToTop } from './components/layout/ScrollToTop';
 import { ToastProvider } from './components/ui/Toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuthStore } from './store/useAuthStore';
@@ -33,12 +40,19 @@ function AppContent() {
 
   return (
     <div className="min-h-screen relative text-foreground transition-colors duration-300">
+      <ScrollToTop />
       <FluidBackground isStatic={isApp} variant={isSettings ? 'settings' : 'default'} />
       <ToastProvider />
       <ConfirmModal />
       <div className="relative z-0">
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="/app" element={
             <ProtectedRoute>
               <ChatPage />

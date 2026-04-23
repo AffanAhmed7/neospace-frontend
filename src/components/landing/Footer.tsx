@@ -1,18 +1,19 @@
 import React from 'react';
 import { Hexagon, Globe, Users, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const footerLinks = [
   {
     title: 'Product',
-    links: ['Features', 'Integrations', 'Pricing', 'Documentation']
+    links: ['Integrations', 'Documentation']
   },
   {
     title: 'Company',
-    links: ['About', 'Blog', 'Careers', 'Privacy', 'Terms']
+    links: ['About', 'Privacy', 'Terms']
   },
   {
     title: 'Support',
-    links: ['Help Center', 'API Status', 'Community', 'Contact']
+    links: ['Contact']
   }
 ];
 
@@ -20,7 +21,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="footer-container pt-24 pb-12 border-t border-border bg-card/10">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8 mb-20">
-        <div className="lg:col-span-2 flex flex-col gap-6 text-left">
+        <div className="lg:col-span-2 flex flex-col items-center lg:items-start gap-6 text-center lg:text-left">
            <div className="flex items-center gap-2">
               <div className="h-10 w-10 flex items-center justify-center text-primary transition-all duration-300">
                  <Hexagon size={24} strokeWidth={1.5} />
@@ -43,9 +44,22 @@ export const Footer: React.FC = () => {
               <ul className="flex flex-col gap-3">
                  {section.links.map((link) => (
                     <li key={link}>
-                       <a href="#" className="text-sm text-foreground/40 hover:text-primary font-medium transition-colors">
+                       <Link 
+                          to={
+                            link === 'Contact' ? '/contact' 
+                            : link === 'Features' ? '/#features' 
+                            : link === 'Documentation' ? '/docs' 
+                            : link === 'Integrations' ? '/integrations' 
+                            : link === 'About' ? '/about'
+                            : link === 'Privacy' ? '/privacy'
+                            : link === 'Terms' ? '/terms'
+                            : link === 'Community' ? '/community'
+                            : '/#features'
+                          } 
+                          className="text-sm text-foreground/40 hover:text-primary font-medium transition-colors"
+                       >
                           {link}
-                       </a>
+                       </Link>
                     </li>
                  ))}
               </ul>

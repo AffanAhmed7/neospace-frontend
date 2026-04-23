@@ -48,6 +48,13 @@ export const Hero: React.FC = () => {
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
 
   const { setAuthModal } = useAppStore();
+  const [isMobile, setIsMobile] = React.useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
@@ -63,14 +70,14 @@ export const Hero: React.FC = () => {
 
   return (
     <section className="hero-section" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-      <div className="max-w-[90rem] mx-auto px-6 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10 w-full min-h-[80vh]">
+      <div className="max-w-[90rem] mx-auto px-6 flex flex-col-reverse lg:flex-row items-center justify-between gap-12 lg:gap-16 relative z-10 w-full min-h-[80vh]">
         
         {/* Left: Branding & Title */}
         <motion.div
            initial={{ opacity: 0, x: -50 }}
            animate={{ opacity: 1, x: 0 }}
            transition={{ duration: 0.8, ease: "easeOut" }}
-           className="w-full lg:w-[45%] flex flex-col items-start gap-8 text-left z-20 relative pt-10 pb-10 lg:py-0"
+           className="w-full lg:w-[45%] flex flex-col items-center lg:items-start gap-8 text-center lg:text-left z-20 relative pt-4 pb-12 lg:py-0"
         >
 
 
@@ -78,7 +85,7 @@ export const Hero: React.FC = () => {
             {/* Soft, strictly minimalist ambient glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-gradient-to-tr from-white/10 via-slate-400/5 to-transparent blur-[80px] -z-10 pointer-events-none" />
             
-            <h1 className="text-[3.5rem] lg:text-[5rem] font-semibold tracking-tighter leading-[1.05]">
+            <h1 className="text-[2.5rem] md:text-[3.5rem] lg:text-[5rem] font-semibold tracking-tighter leading-[1.1] lg:leading-[1.05]">
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-foreground to-foreground/70 pr-2">
                 Your team's
               </span>
@@ -89,12 +96,12 @@ export const Hero: React.FC = () => {
             </h1>
           </div>
           
-          <p className="text-foreground/70 max-w-xl text-lg lg:text-xl leading-relaxed mt-2">
+          <p className="text-foreground/70 max-w-xl text-base md:text-lg lg:text-xl leading-relaxed mt-2 mx-auto lg:mx-0">
             NeoPlane is a high-performance communication layer designed for elite teams. 
             Encrypted by default. Layered for absolute clarity. Faster than thought.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-8">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-4 lg:mt-8">
             <Button 
               onClick={() => setAuthModal(true, 'signup')}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border border-blue-400/20 text-white rounded-xl px-7 py-3 text-sm font-bold flex items-center gap-2 group transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5"
@@ -118,10 +125,16 @@ export const Hero: React.FC = () => {
              transformStyle: "preserve-3d",
              willChange: "transform"
            }}
-           className="w-full lg:w-[55%] relative flex items-center justify-center py-10 min-h-[500px]"
+           className="w-full lg:w-[55%] relative flex items-center justify-center py-10 lg:py-10 min-h-[450px] md:min-h-[500px]"
         >
           {/* Card 1: Workspace Activity (Left, Pushed Back) */ }
-          <HeroCard initialRotate={-8} initialX={-140} initialY={40} hoverX={-40} className="absolute left-[5%] lg:left-[10%] shadow-2xl bg-card backdrop-blur-2xl border-border ring-1 ring-border">
+          <HeroCard 
+            initialRotate={-8} 
+            initialX={isMobile ? -60 : -140} 
+            initialY={40} 
+            hoverX={isMobile ? -20 : -40} 
+            className="absolute left-[5%] lg:left-[10%] shadow-2xl bg-card backdrop-blur-2xl border-border ring-1 ring-border scale-90 md:scale-100"
+          >
              <div className="flex items-center gap-2 mb-6 pb-3 border-b border-border">
                 <Users size={14} className="text-foreground/50" />
                 <span className="text-xs font-semibold text-foreground/90 tracking-wide">Active Teams</span>
@@ -179,7 +192,7 @@ export const Hero: React.FC = () => {
           </HeroCard>
 
           {/* Card 2: Development & Chat (Center, Brought Forward) */}
-          <HeroCard initialRotate={0} initialX={0} initialY={0} hoverX={0} className="relative z-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-border bg-card backdrop-blur-2xl ring-1 ring-border scale-[1.05]">
+          <HeroCard initialRotate={0} initialX={0} initialY={0} hoverX={0} className="relative z-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-border bg-card backdrop-blur-2xl ring-1 ring-border scale-95 md:scale-[1.05]">
              <div className="pb-3 border-b border-border flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                    <Hash size={14} className="text-foreground/40" />
@@ -231,7 +244,13 @@ export const Hero: React.FC = () => {
           </HeroCard>
 
           {/* Card 3: Picture Sharing (Right, Pushed Back) */}
-          <HeroCard initialRotate={9} initialX={140} initialY={50} hoverX={40} className="absolute right-[5%] lg:right-[10%] shadow-xl bg-card backdrop-blur-2xl border-border ring-1 ring-border">
+          <HeroCard 
+            initialRotate={9} 
+            initialX={isMobile ? 60 : 140} 
+            initialY={50} 
+            hoverX={isMobile ? 20 : 40} 
+            className="absolute right-[5%] lg:right-[10%] shadow-xl bg-card backdrop-blur-2xl border-border ring-1 ring-border scale-90 md:scale-100"
+          >
              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
                 <div className="flex items-center gap-2">
                    <Hash size={14} className="text-foreground/40" />

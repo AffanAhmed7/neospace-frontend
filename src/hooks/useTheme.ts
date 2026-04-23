@@ -9,11 +9,11 @@ export const useTheme = () => {
   useEffect(() => {
     const root = window.document.documentElement;
     
-    // Check if we are on the landing page
-    const isLanding = location.pathname === '/';
+    // Force dark mode on landing and contact pages
+    const isForcedDark = location.pathname === '/' || location.pathname === '/contact' || location.pathname === '/docs' || location.pathname === '/integrations' || location.pathname === '/about' || location.pathname === '/privacy' || location.pathname === '/terms';
     
-    // Force dark mode on landing, otherwise use store theme
-    const activeTheme = isLanding 
+    // Force dark mode on specific paths, otherwise use store theme
+    const activeTheme = isForcedDark 
       ? 'dark' 
       : (theme === 'dark' || theme === 'offwhite') ? theme : 'dark';
     

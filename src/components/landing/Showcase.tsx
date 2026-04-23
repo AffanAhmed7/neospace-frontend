@@ -4,7 +4,7 @@ import { MessageSquare, Hash, FileText, Send, Smile, Paperclip } from 'lucide-re
 
 export const Showcase: React.FC = () => {
   return (
-    <section id="showcase" className="py-24 bg-surface/30 relative">
+    <section id="product" className="py-24 bg-surface/30 relative">
       <div className="max-w-7xl mx-auto px-6 text-center mb-16">
         <h2 className="text-4xl lg:text-6xl font-bold tracking-tight text-foreground mb-6">
           Everything you need to <span className="text-primary italic">work together</span> efficiently.

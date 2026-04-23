@@ -28,7 +28,7 @@ const useCases = [
 
 export const UseCases: React.FC = () => {
   return (
-    <section id="use-cases" className="pt-32 pb-12">
+    <section id="solutions" className="pt-32 pb-12">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-20">
           <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-6 text-center">

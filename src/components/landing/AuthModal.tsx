@@ -188,14 +188,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
               
               <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between px-1">
-                  <label className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">Password</label>
-                  {mode === 'login' && (
-                    <button type="button" className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors">
-                      Forgot?
-                    </button>
-                  )}
-                </div>
+                  <label className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest px-1">Password</label>
                 <Input
                   type="password"
                   placeholder={mode === 'login' ? '••••••••' : 'Password (min. 8 characters)'}

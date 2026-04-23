@@ -13,8 +13,8 @@ export const FluidBackground: React.FC<FluidBackgroundProps> = ({ isStatic = fal
   const location = useLocation();
   const { scrollYProgress } = useScroll();
 
-  const isLanding = location.pathname === '/';
-  const effectiveTheme = isLanding ? 'dark' : theme;
+  const isForcedDark = location.pathname === '/' || location.pathname === '/contact' || location.pathname === '/docs' || location.pathname === '/integrations' || location.pathname === '/about' || location.pathname === '/privacy' || location.pathname === '/terms';
+  const effectiveTheme = isForcedDark ? 'dark' : theme;
   
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
