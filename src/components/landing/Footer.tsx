@@ -9,7 +9,7 @@ const footerLinks = [
   },
   {
     title: 'Company',
-    links: ['About', 'Privacy', 'Terms']
+    links: ['About', 'Privacy']
   },
   {
     title: 'Support',
@@ -52,7 +52,6 @@ export const Footer: React.FC = () => {
                             : link === 'Integrations' ? '/integrations' 
                             : link === 'About' ? '/about'
                             : link === 'Privacy' ? '/privacy'
-                            : link === 'Terms' ? '/terms'
                             : link === 'Community' ? '/community'
                             : '/#features'
                           } 
